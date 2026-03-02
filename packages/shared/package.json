@@ -1,0 +1,7 @@
+{
+  "name": "@agents/shared",
+  "private": true,
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {}
+}

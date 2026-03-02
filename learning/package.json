@@ -1,0 +1,26 @@
+{
+  "name": "claude-agent-sdk-learn",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Claude Agent SDK 인터랙티브 학습 프로그램",
+  "scripts": {
+    "m01": "npx tsx src/m01-hello/hello.ts",
+    "m02": "npx tsx src/m02-tools/tools.ts",
+    "m03": "npx tsx src/m03-prompt/prompt.ts",
+    "m04": "npx tsx src/m04-permissions/permissions.ts",
+    "m05": "npx tsx src/m05-hooks/hooks.ts",
+    "m06": "npx tsx src/m06-sessions/sessions.ts",
+    "m07": "npx tsx src/m07-subagents/subagents.ts",
+    "m08": "npx tsx src/m08-mcp/mcp.ts",
+    "m09": "npx tsx src/m09-custom-tools/custom-tools.ts",
+    "m10": "npx tsx src/m10-streaming/streaming.ts",
+    "m11": "npx tsx src/m11-hosting/hosting.ts",
+    "m12": "npx tsx src/m12-integration/integration.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.2.50",
+    "@types/node": "^25.3.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
