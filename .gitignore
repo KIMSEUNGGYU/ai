@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Skills (npx skills add로 설치된 파일)
+.agents/
+.agent/
+skills-lock.json
+
+# Claude Code symlinked skills (외부 설치)
+pptx
