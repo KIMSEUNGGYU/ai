@@ -4,11 +4,17 @@
 SDK 에이전트 모노레포 — Claude Agent SDK 기반 자동화 서비스 개발
 
 ## 서비스 맵
-| 서비스 | 역할 | 기술스택 |
-|--------|------|----------|
-| services/morning-brief | 모닝 브리핑 에이전트 | Claude Agent SDK, tsx |
-| packages/shared | 공용 모듈 | TypeScript |
+| 서비스 | 역할 | 상태 |
+|--------|------|------|
+| services/fe-auto | FE 자동화 에이전트 (Linear→스펙→코드→PR) | 진행 중 |
+| services/morning-brief | 모닝 브리핑 에이전트 | 보류 (todo) |
+| packages/shared | 공용 모듈 | — |
 | learning/ | 학습 자료 (agent-study, claude-code) | — |
+
+## 작업 현황
+- **active**: fe-auto (workflow-automation) — Phase 1 SDK 파이프라인
+- **todo**: morning-brief, isc-sync (daily-sync-plugin)
+- **archive**: agents-monorepo (완료)
 
 ## 구조
 - 모노레포: pnpm workspace (`packages/*`, `services/*`)
