@@ -3,9 +3,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "morning": "pnpm --filter morning-brief run dev"
+    "morning": "pnpm --filter morning-brief run dev",
+    "fe-auto": "unset CLAUDECODE && pnpm --filter fe-auto run dev --"
   },
   "devDependencies": {
+    "@types/node": "^25.3.3",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0"
   }
