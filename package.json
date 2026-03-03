@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "morning": "pnpm --filter morning-brief run dev",
-    "fe-auto": "unset CLAUDECODE && pnpm --filter fe-auto run dev --"
+    "fe-auto": "unset CLAUDECODE && pnpm --filter fe-auto run dev --",
+    "dual-review": "unset CLAUDECODE && pnpm --filter dual-review run dev --"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",

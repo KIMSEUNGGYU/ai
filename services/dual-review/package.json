@@ -1,0 +1,12 @@
+{
+  "name": "dual-review",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx main.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.1",
+    "@openai/codex-sdk": "latest"
+  }
+}
