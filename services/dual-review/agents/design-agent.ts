@@ -26,7 +26,7 @@ export async function runDesignAgent(
     for await (const message of query({
       prompt: isFirst
         ? buildDesignPrompt(input)
-        : `설계가 불충분합니다. 보완해주세요:\n\n${lastResult}`,
+        : buildRetryPrompt(lastResult),
       options: {
         model: "opus" as const,
         permissionMode: "bypassPermissions" as const,
@@ -78,6 +78,15 @@ export async function runDesignAgent(
 
   console.log("  최대 재시도 도달. 현재 결과로 진행.\n");
   return { output: lastResult, sessionId, turns, cost };
+}
+
+function buildRetryPrompt(lastResult: string): string {
+  const missing: string[] = [];
+  if (!/컴포넌트|component/i.test(lastResult)) missing.push("컴포넌트 구조");
+  if (!/파일|file|폴더|directory/i.test(lastResult)) missing.push("파일 구조");
+  if (!/구현|implement|지시|instruction/i.test(lastResult))
+    missing.push("구현 지시사항");
+  return `설계에 다음 섹션이 누락되었습니다: ${missing.join(", ")}. 해당 섹션을 추가해주세요.`;
 }
 
 function buildDesignPrompt(input: DualReviewInput): string {

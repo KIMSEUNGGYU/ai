@@ -29,11 +29,13 @@ export async function runReviewAgent(
   const reviewText = turn.finalResponse;
   console.log("  Codex 리뷰 완료\n");
 
-  // 비용 계산 (토큰 기반 추정)
+  // 비용: 토큰 수만 로깅 (모델별 가격이 달라 정확한 추정 불가)
   const usage = turn.usage;
-  const estimatedCost = usage
-    ? (usage.input_tokens * 0.003 + usage.output_tokens * 0.015) / 1000
-    : 0;
+  if (usage) {
+    console.log(
+      `  토큰: input=${usage.input_tokens} output=${usage.output_tokens}`
+    );
+  }
 
   const result = parseReviewResult(reviewText);
 
@@ -44,7 +46,7 @@ export async function runReviewAgent(
       ` LOW=${result.issues.filter((i) => i.severity === "LOW").length}`
   );
 
-  return { result, cost: estimatedCost };
+  return { result, cost: 0 };
 }
 
 function buildReviewPrompt(
@@ -106,13 +108,18 @@ function parseReviewResult(reviewText: string): ReviewResult {
     (i) => i.severity === "CRITICAL" || i.severity === "HIGH"
   );
 
-  // 요약: 마지막 문단
-  const lines = reviewText.trim().split("\n");
+  // fallback: 정규식 파싱 실패 시 단순 문자열 매칭 (fe-auto 패턴)
+  const fallbackCritical =
+    issues.length === 0 && /CRITICAL/i.test(reviewText);
+  const fallbackHigh = issues.length === 0 && /HIGH/i.test(reviewText);
+
+  // 요약: 마지막 비빈 줄
+  const lines = reviewText.trim().split("\n").filter(Boolean);
   const summary = lines[lines.length - 1] || "리뷰 완료";
 
   return {
     issues,
     summary,
-    pass: !hasCriticalOrHigh,
+    pass: !hasCriticalOrHigh && !fallbackCritical && !fallbackHigh,
   };
 }

@@ -1,3 +1,5 @@
+import { resolve } from "path";
+import { homedir } from "os";
 import { runDesignAgent } from "./agents/design-agent.js";
 import { runImplAgent } from "./agents/impl-agent.js";
 import { runReviewAgent } from "./agents/review-agent.js";
@@ -27,10 +29,15 @@ function parseArgs(): DualReviewInput {
   }
 
   const targetIdx = args.indexOf("--target");
-  const targetProject =
+  const raw =
     targetIdx !== -1 && args[targetIdx + 1]
       ? args[targetIdx + 1]
       : "~/work/ishopcare-frontend";
+
+  // ~ 경로 해석
+  const targetProject = raw.startsWith("~")
+    ? resolve(homedir(), raw.slice(2))
+    : resolve(raw);
 
   return { requirement, targetProject };
 }
@@ -131,6 +138,7 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error("에러:", err.message);
+  console.error("에러:", err.message ?? err);
+  if (err.stack) console.error(err.stack);
   process.exit(1);
 });
