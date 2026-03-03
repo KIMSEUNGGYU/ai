@@ -8,15 +8,9 @@ export async function runReviewAgent(
 ): Promise<{ result: ReviewResult; cost: number }> {
   console.log("\n[Review Agent] Codex 코드 리뷰 시작\n");
 
+  // CODEX_API_KEY가 있으면 사용, 없으면 codex login 인증 자동 사용
   const apiKey = process.env.CODEX_API_KEY;
-  if (!apiKey) {
-    throw new Error(
-      "CODEX_API_KEY 환경변수가 설정되지 않았습니다.\n" +
-        "export CODEX_API_KEY=<your-openai-api-key>"
-    );
-  }
-
-  const codex = new Codex({ apiKey });
+  const codex = new Codex(apiKey ? { apiKey } : {});
   const thread = codex.startThread({
     workingDirectory: targetProject,
     sandboxMode: "read-only",
