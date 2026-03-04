@@ -33,7 +33,8 @@ export function processEvent(event: HookEvent, userId: string): Omit<StoredEvent
     base.tool_use_id = toolEvent.tool_use_id ?? null;
   } else if (event.hook_event_name === "UserPromptSubmit") {
     const promptEvent = event as { prompt?: string };
-    base.prompt_text = promptEvent.prompt?.substring(0, 500) ?? null;
+    const raw = promptEvent.prompt?.substring(0, 500) ?? null;
+    base.prompt_text = raw ? maskSensitiveData(raw) : null;
   }
 
   return base;
@@ -75,4 +76,23 @@ function summarizeToolInput(
 
 function truncate(str: string, max: number): string {
   return str.length > max ? str.slice(0, max) + "..." : str;
+}
+
+const SENSITIVE_PATTERNS: Array<[RegExp, string]> = [
+  // API keys: sk-xxx, key-xxx, token-xxx 등
+  [/\b(sk-|key-|token-|api[_-]?key[=:\s]+)[a-zA-Z0-9\-_]{8,}/gi, "***MASKED***"],
+  // Bearer tokens
+  [/Bearer\s+[a-zA-Z0-9\-_.~+/]+=*/gi, "Bearer ***MASKED***"],
+  // 비밀번호 패턴: password=xxx, passwd: xxx
+  [/(password|passwd|secret|credentials?)[=:\s]+\S+/gi, "$1=***MASKED***"],
+  // 이메일 주소
+  [/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "***MASKED***"],
+];
+
+function maskSensitiveData(text: string): string {
+  let masked = text;
+  for (const [pattern, replacement] of SENSITIVE_PATTERNS) {
+    masked = masked.replace(pattern, replacement);
+  }
+  return masked;
 }

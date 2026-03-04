@@ -36,6 +36,45 @@ const TABLES = `
     total_cache_read_tokens INTEGER,
     num_turns INTEGER
   );
+
+  CREATE TABLE IF NOT EXISTS adoption_snapshots (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    snapshot_date TEXT NOT NULL,
+    period TEXT NOT NULL CHECK(period IN ('day', 'week', 'month')),
+    active_users INTEGER NOT NULL DEFAULT 0,
+    total_sessions INTEGER NOT NULL DEFAULT 0,
+    total_users INTEGER NOT NULL DEFAULT 0,
+    avg_session_duration_min REAL NOT NULL DEFAULT 0,
+    avg_sessions_per_user REAL NOT NULL DEFAULT 0,
+    avg_turns_per_session REAL NOT NULL DEFAULT 0,
+    top_tools_json TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(snapshot_date, period)
+  );
+
+  CREATE TABLE IF NOT EXISTS prompt_logs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL,
+    event_id INTEGER,
+    user_id TEXT NOT NULL,
+    project_path TEXT,
+    prompt_text TEXT NOT NULL,
+    response_text TEXT,
+    model TEXT,
+    permission_mode TEXT,
+    timestamp TEXT NOT NULL,
+    response_timestamp TEXT,
+    duration_ms INTEGER,
+    input_tokens INTEGER,
+    output_tokens INTEGER,
+    cache_create_tokens INTEGER,
+    cache_read_tokens INTEGER,
+    turn_number INTEGER,
+    cost_usd REAL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (session_id) REFERENCES sessions(session_id),
+    FOREIGN KEY (event_id) REFERENCES events(id)
+  );
 `;
 
 const INDEXES = `
@@ -47,6 +86,15 @@ const INDEXES = `
   CREATE INDEX IF NOT EXISTS idx_events_tool_use_id ON events(tool_use_id);
   CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
   CREATE INDEX IF NOT EXISTS idx_sessions_status ON sessions(status);
+  CREATE INDEX IF NOT EXISTS idx_sessions_started_at ON sessions(started_at);
+  CREATE INDEX IF NOT EXISTS idx_adoption_snapshots_date ON adoption_snapshots(snapshot_date);
+  CREATE INDEX IF NOT EXISTS idx_adoption_snapshots_period ON adoption_snapshots(period, snapshot_date);
+  CREATE INDEX IF NOT EXISTS idx_prompt_logs_session ON prompt_logs(session_id);
+  CREATE INDEX IF NOT EXISTS idx_prompt_logs_user ON prompt_logs(user_id);
+  CREATE INDEX IF NOT EXISTS idx_prompt_logs_timestamp ON prompt_logs(timestamp);
+  CREATE INDEX IF NOT EXISTS idx_prompt_logs_project ON prompt_logs(project_path);
+  CREATE INDEX IF NOT EXISTS idx_prompt_logs_model ON prompt_logs(model);
+  CREATE INDEX IF NOT EXISTS idx_prompt_logs_event ON prompt_logs(event_id);
 `;
 
 function migrate(db: Database.Database) {
@@ -75,6 +123,27 @@ function migrate(db: Database.Database) {
     if (!sessionColNames.has(col)) {
       const type = col === "transcript_path" ? "TEXT" : "INTEGER";
       db.exec(`ALTER TABLE sessions ADD COLUMN ${col} ${type}`);
+    }
+  }
+
+  // ── prompt_logs 테이블 마이그레이션 ──
+  const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='prompt_logs'").all();
+  if (tables.length > 0) {
+    const promptLogCols = db.prepare("PRAGMA table_info(prompt_logs)").all() as Array<{ name: string }>;
+    const promptLogColNames = new Set(promptLogCols.map((c) => c.name));
+
+    // 향후 컬럼 추가를 위한 마이그레이션
+    const newPromptLogCols: Array<[string, string]> = [
+      ["cost_usd", "REAL"],
+      ["turn_number", "INTEGER"],
+      ["duration_ms", "INTEGER"],
+      ["cache_create_tokens", "INTEGER"],
+      ["cache_read_tokens", "INTEGER"],
+    ];
+    for (const [col, type] of newPromptLogCols) {
+      if (!promptLogColNames.has(col)) {
+        db.exec(`ALTER TABLE prompt_logs ADD COLUMN ${col} ${type}`);
+      }
     }
   }
 }

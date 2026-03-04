@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
+import Link from "next/link";
 import { getSessions } from "@/lib/queries";
 import { getRecentEvents } from "@/lib/queries";
-import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries, getTokenUsageSummary } from "@/lib/queries";
+import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries, getTokenUsageSummary, getAdoptionSummary } from "@/lib/queries";
 import { usePolling } from "@/hooks/usePolling";
 import { ActiveSessions } from "@/components/ActiveSessions";
 import { ActivityFeed } from "@/components/ActivityFeed";
@@ -10,7 +11,11 @@ import { ToolUsageChart } from "@/components/ToolUsageChart";
 import { HourlyActivity } from "@/components/HourlyActivity";
 import { UserSummary } from "@/components/UserSummary";
 import { TokenUsage } from "@/components/TokenUsage";
-import type { Session, StoredEvent, ToolUsageStat, ToolDurationStat, HourlyActivity as HourlyActivityType, UserSummary as UserSummaryType, TokenUsageSummary } from "@/lib/types";
+import { CostTracking } from "@/components/CostTracking";
+import { AdoptionSummaryCards } from "@/components/AdoptionSummaryCards";
+import { AdoptionTrendChart } from "@/components/AdoptionTrendChart";
+import { ToolAdoptionChart } from "@/components/ToolAdoptionChart";
+import type { Session, StoredEvent, ToolUsageStat, ToolDurationStat, HourlyActivity as HourlyActivityType, UserSummary as UserSummaryType, TokenUsageSummary, AdoptionSummary } from "@/lib/types";
 
 interface DashboardData {
   sessions: Session[];
@@ -20,6 +25,7 @@ interface DashboardData {
   hourly: HourlyActivityType[];
   users: UserSummaryType[];
   tokenUsage: TokenUsageSummary;
+  adoption: AdoptionSummary;
 }
 
 export const getServerSideProps: GetServerSideProps<{
@@ -35,6 +41,7 @@ export const getServerSideProps: GetServerSideProps<{
         hourly: getHourlyActivity(24),
         users: getUserSummaries(),
         tokenUsage: getTokenUsageSummary(),
+        adoption: getAdoptionSummary(),
       },
     },
   };
@@ -76,9 +83,17 @@ export default function Dashboard({
     }>;
   }, [buildFilterQuery]);
 
+  const fetchAdoption = useCallback(() => {
+    const params = new URLSearchParams();
+    if (selectedUserId) params.set("userId", selectedUserId);
+    const q = params.toString();
+    return fetch(`/api/adoption${q ? `?${q}` : ""}`).then((r) => r.json()) as Promise<AdoptionSummary>;
+  }, [selectedUserId]);
+
   const { data: sessions } = usePolling(fetchSessions, 10_000);
   const { data: events } = usePolling(fetchFeed, 10_000);
   const { data: analytics } = usePolling(fetchAnalytics, 30_000);
+  const { data: adoptionData } = usePolling(fetchAdoption, 60_000);
 
   // 필터 없을 때만 드롭다운 옵션 갱신
   useEffect(function syncDropdownOptions() {
@@ -95,12 +110,20 @@ export default function Dashboard({
   const h = analytics?.hourly ?? initial.hourly;
   const u = analytics?.users ?? initial.users;
   const tok = analytics?.tokenUsage ?? initial.tokenUsage;
+  const adopt = adoptionData ?? initial.adoption;
 
   return (
     <div style={styles.container}>
       <header style={styles.header}>
-        <h1 style={styles.headerTitle}>cc-monitor</h1>
-        <span style={styles.headerSub}>Claude Code 모니터링 대시보드</span>
+        <div style={styles.headerLeft}>
+          <h1 style={styles.headerTitle}>cc-monitor</h1>
+          <span style={styles.headerSub}>Claude Code 모니터링 대시보드</span>
+        </div>
+        <nav style={styles.nav}>
+          <Link href="/prompt-logs" style={styles.navLink}>
+            프롬프트 로그
+          </Link>
+        </nav>
       </header>
 
       <div style={styles.filterBar}>
@@ -157,10 +180,16 @@ export default function Dashboard({
             <HourlyActivity hourly={h} />
           </div>
           <TokenUsage usage={tok} />
+          <CostTracking userId={selectedUserId || undefined} />
           <UserSummary users={u} />
         </div>
         <div style={styles.right}>
           <ActivityFeed events={e} />
+          <div style={styles.adoptionSection}>
+            <AdoptionSummaryCards summary={adopt} />
+            <AdoptionTrendChart trend={adopt.trend} />
+            <ToolAdoptionChart tools={adopt.top_tools} />
+          </div>
         </div>
       </div>
     </div>
@@ -175,11 +204,17 @@ const styles: Record<string, React.CSSProperties> = {
   },
   header: {
     display: "flex",
-    alignItems: "baseline",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 16,
     marginBottom: 32,
     borderBottom: "1px solid #21262d",
     paddingBottom: 16,
+  },
+  headerLeft: {
+    display: "flex",
+    alignItems: "baseline",
+    gap: 16,
   },
   headerTitle: {
     fontSize: 20,
@@ -189,6 +224,22 @@ const styles: Record<string, React.CSSProperties> = {
   headerSub: {
     fontSize: 13,
     color: "#484f58",
+  },
+  nav: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+  navLink: {
+    fontSize: 13,
+    color: "#58a6ff",
+    textDecoration: "none",
+    padding: "6px 14px",
+    border: "1px solid #30363d",
+    borderRadius: 6,
+    background: "#161b22",
+    fontWeight: 500,
+    transition: "border-color 0.15s",
   },
   layout: {
     display: "grid",
@@ -200,7 +251,11 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: 32,
   },
-  right: {},
+  right: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 32,
+  },
   filterBar: {
     display: "flex",
     alignItems: "center",
@@ -240,5 +295,12 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gridTemplateColumns: "1fr 1fr",
     gap: 24,
+  },
+  adoptionSection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 24,
+    paddingTop: 8,
+    borderTop: "1px solid #21262d",
   },
 };

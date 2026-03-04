@@ -46,4 +46,4 @@
 - 유니온 타입에서 switch/case로 narrowing할 때 optional 필드가 `{} | null`로 추론되는 이슈
 - `"model" in event && typeof event.model === "string"` 같은 타입 가드로 해결
 
-<!-- last-active: 2026-03-04 11:34 -->
+<!-- last-active: 2026-03-04 17:08 -->
