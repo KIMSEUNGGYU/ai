@@ -1,8 +1,14 @@
 // ── 비용 추적 쿼리 ──
 // 기존 세션 토큰 데이터를 활용하여 비용을 산출한다.
 
-import { getDb } from "./db";
+import { getDb, isDemoMode } from "./db";
 import { calculateSessionCost, getAllModelPricing, type CostBreakdown } from "./pricing";
+import {
+  mockCostSummary,
+  mockCostByModel,
+  mockDailyCosts,
+  mockCostResponse,
+} from "./mock-data";
 import type {
   CostSummary,
   ModelCostBreakdown,
@@ -27,7 +33,7 @@ interface SessionTokenRow {
  * 필터 조건에 맞는 토큰 데이터가 있는 세션 목록 조회
  */
 function getSessionsWithTokens(filters?: FilterParams, days?: number): SessionTokenRow[] {
-  const db = getDb();
+  const db = getDb()!;
   const conditions: string[] = ["total_input_tokens IS NOT NULL"];
   const params: unknown[] = [];
 
@@ -61,6 +67,7 @@ function getSessionsWithTokens(filters?: FilterParams, days?: number): SessionTo
  * 전체 비용 요약 산출
  */
 export function getCostSummary(filters?: FilterParams, days?: number): CostSummary {
+  if (isDemoMode()) return mockCostSummary;
   const sessions = getSessionsWithTokens(filters, days);
 
   let inputCost = 0;
@@ -98,6 +105,7 @@ export function getCostSummary(filters?: FilterParams, days?: number): CostSumma
  * 모델별 비용 내역 산출
  */
 export function getCostByModel(filters?: FilterParams, days?: number): ModelCostBreakdown[] {
+  if (isDemoMode()) return mockCostByModel;
   const sessions = getSessionsWithTokens(filters, days);
 
   // 모델별 그룹핑
@@ -165,6 +173,7 @@ export function getCostByModel(filters?: FilterParams, days?: number): ModelCost
  * 일별 비용 추이
  */
 export function getDailyCosts(filters?: FilterParams, days: number = 30): DailyCost[] {
+  if (isDemoMode()) return mockDailyCosts;
   const sessions = getSessionsWithTokens(filters, days);
 
   // 날짜별 그룹핑
@@ -197,6 +206,7 @@ export function getDailyCosts(filters?: FilterParams, days: number = 30): DailyC
  * 전체 비용 응답 데이터 생성
  */
 export function getCostResponse(filters?: FilterParams, days?: number): CostResponse {
+  if (isDemoMode()) return mockCostResponse;
   return {
     summary: getCostSummary(filters, days),
     byModel: getCostByModel(filters, days),

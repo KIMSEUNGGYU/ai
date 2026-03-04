@@ -1,5 +1,15 @@
-import Database from "better-sqlite3";
 import path from "node:path";
+
+// better-sqlite3 타입 — Vercel에서는 타입만 사용하고 런타임에는 로드하지 않음
+type BetterSqlite3Database = import("better-sqlite3").Database;
+
+let Database: ((...args: unknown[]) => BetterSqlite3Database) | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Database = require("better-sqlite3");
+} catch {
+  // better-sqlite3 unavailable (e.g. Vercel serverless)
+}
 
 const TABLES = `
   CREATE TABLE IF NOT EXISTS events (
@@ -97,7 +107,7 @@ const INDEXES = `
   CREATE INDEX IF NOT EXISTS idx_prompt_logs_event ON prompt_logs(event_id);
 `;
 
-function migrate(db: Database.Database) {
+function migrate(db: BetterSqlite3Database) {
   const cols = db.prepare("PRAGMA table_info(events)").all() as Array<{ name: string }>;
   const colNames = new Set(cols.map((c) => c.name));
 
@@ -132,7 +142,6 @@ function migrate(db: Database.Database) {
     const promptLogCols = db.prepare("PRAGMA table_info(prompt_logs)").all() as Array<{ name: string }>;
     const promptLogColNames = new Set(promptLogCols.map((c) => c.name));
 
-    // 향후 컬럼 추가를 위한 마이그레이션
     const newPromptLogCols: Array<[string, string]> = [
       ["cost_usd", "REAL"],
       ["turn_number", "INTEGER"],
@@ -148,17 +157,35 @@ function migrate(db: Database.Database) {
   }
 }
 
-let db: Database.Database | null = null;
+let db: BetterSqlite3Database | null = null;
 
-export function getDb(): Database.Database {
+/**
+ * DB 인스턴스를 반환한다. better-sqlite3를 사용할 수 없으면 null을 반환한다.
+ */
+export function getDb(): BetterSqlite3Database | null {
+  if (!Database) return null;
+
   if (!db) {
-    const dbPath = path.join(process.cwd(), "cc-monitor.db");
-    db = new Database(dbPath);
-    db.pragma("journal_mode = WAL");
-    db.pragma("foreign_keys = ON");
-    db.exec(TABLES);
-    migrate(db);
-    db.exec(INDEXES);
+    try {
+      const dbPath = path.join(process.cwd(), "cc-monitor.db");
+      db = new (Database as unknown as new (filename: string) => BetterSqlite3Database)(dbPath);
+      db.pragma("journal_mode = WAL");
+      db.pragma("foreign_keys = ON");
+      db.exec(TABLES);
+      migrate(db);
+      db.exec(INDEXES);
+    } catch {
+      return null;
+    }
   }
   return db;
+}
+
+/**
+ * Demo Mode 여부를 반환한다.
+ * Vercel 환경이거나 DB를 사용할 수 없을 때 true.
+ */
+export function isDemoMode(): boolean {
+  if (process.env.VERCEL) return true;
+  return getDb() === null;
 }

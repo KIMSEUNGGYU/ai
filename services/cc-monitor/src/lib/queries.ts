@@ -1,4 +1,23 @@
-import { getDb } from "./db";
+import { getDb, isDemoMode } from "./db";
+import {
+  mockSessions,
+  mockEvents,
+  mockToolUsageStats,
+  mockToolDurationStats,
+  mockHourlyActivity,
+  mockUserSummaries,
+  mockTokenUsage,
+  mockAdoptionSummary,
+  mockActiveUsersMetrics,
+  mockFeatureUsageMetrics,
+  mockSessionFrequencyMetrics,
+  mockEngagementMetrics,
+  mockRetentionMetrics,
+  mockAdoptionSnapshots,
+  mockPromptLogListResponse,
+  mockPromptLogUsers,
+  mockPromptLogProjects,
+} from "./mock-data";
 import type {
   StoredEvent,
   Session,
@@ -55,7 +74,8 @@ function buildFilterClause(
 // ── 이벤트 ──
 
 export function insertEvent(event: Omit<StoredEvent, "id">): void {
-  const db = getDb();
+  if (isDemoMode()) return;
+  const db = getDb()!;
   db.prepare(`
     INSERT INTO events (session_id, event_type, user_id, project_path, tool_name, tool_input_summary, model, prompt_text, permission_mode, tool_use_id, tool_duration_ms, timestamp, raw_data)
     VALUES (@session_id, @event_type, @user_id, @project_path, @tool_name, @tool_input_summary, @model, @prompt_text, @permission_mode, @tool_use_id, @tool_duration_ms, @timestamp, @raw_data)
@@ -63,7 +83,8 @@ export function insertEvent(event: Omit<StoredEvent, "id">): void {
 }
 
 export function calcToolDuration(toolUseId: string, postTimestamp: string): number | null {
-  const db = getDb();
+  if (isDemoMode()) return null;
+  const db = getDb()!;
   const preEvent = db
     .prepare("SELECT timestamp FROM events WHERE tool_use_id = ? AND event_type = 'PreToolUse' LIMIT 1")
     .get(toolUseId) as { timestamp: string } | undefined;
@@ -83,7 +104,8 @@ export function calcToolDuration(toolUseId: string, postTimestamp: string): numb
 }
 
 export function getRecentEvents(limit: number = 50, filters?: FilterParams): StoredEvent[] {
-  const db = getDb();
+  if (isDemoMode()) return mockEvents.slice(0, limit);
+  const db = getDb()!;
   const { clause, params } = buildFilterClause(filters);
   return db
     .prepare(`SELECT * FROM events WHERE 1=1 ${clause} ORDER BY timestamp DESC LIMIT ?`)
@@ -91,7 +113,8 @@ export function getRecentEvents(limit: number = 50, filters?: FilterParams): Sto
 }
 
 export function getEventsSince(since: string, limit: number = 100, filters?: FilterParams): StoredEvent[] {
-  const db = getDb();
+  if (isDemoMode()) return mockEvents.slice(0, limit);
+  const db = getDb()!;
   const { clause, params } = buildFilterClause(filters);
   return db
     .prepare(`SELECT * FROM events WHERE timestamp > ? ${clause} ORDER BY timestamp DESC LIMIT ?`)
@@ -111,7 +134,8 @@ export function upsertSession(session: {
   ended_at?: string;
   status?: "active" | "ended";
 }): void {
-  const db = getDb();
+  if (isDemoMode()) return;
+  const db = getDb()!;
   const existing = db
     .prepare("SELECT * FROM sessions WHERE session_id = ?")
     .get(session.session_id) as Session | undefined;
@@ -163,7 +187,12 @@ export function upsertSession(session: {
 }
 
 export function getSessions(status: "active" | "ended" | "all" = "active", filters?: FilterParams): Session[] {
-  const db = getDb();
+  if (isDemoMode()) {
+    return status === "all"
+      ? mockSessions
+      : mockSessions.filter((s) => s.status === status);
+  }
+  const db = getDb()!;
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -211,7 +240,8 @@ export function getSessions(status: "active" | "ended" | "all" = "active", filte
 // ── 분석 ──
 
 export function getToolUsageStats(hours: number = 24, filters?: FilterParams): ToolUsageStat[] {
-  const db = getDb();
+  if (isDemoMode()) return mockToolUsageStats;
+  const db = getDb()!;
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
   const { clause, params } = buildFilterClause(filters);
 
@@ -236,7 +266,8 @@ export function getToolUsageStats(hours: number = 24, filters?: FilterParams): T
 }
 
 export function getToolDurationStats(hours: number = 24, filters?: FilterParams): ToolDurationStat[] {
-  const db = getDb();
+  if (isDemoMode()) return mockToolDurationStats;
+  const db = getDb()!;
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
   const { clause, params } = buildFilterClause(filters);
 
@@ -259,7 +290,8 @@ export function getToolDurationStats(hours: number = 24, filters?: FilterParams)
 }
 
 export function getHourlyActivity(hours: number = 24, filters?: FilterParams): HourlyActivity[] {
-  const db = getDb();
+  if (isDemoMode()) return mockHourlyActivity;
+  const db = getDb()!;
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
   const { clause, params } = buildFilterClause(filters);
 
@@ -275,7 +307,8 @@ export function getHourlyActivity(hours: number = 24, filters?: FilterParams): H
 }
 
 export function getUserSummaries(filters?: FilterParams): UserSummary[] {
-  const db = getDb();
+  if (isDemoMode()) return mockUserSummaries;
+  const db = getDb()!;
   const { clause, params } = buildFilterClause(filters, "e");
 
   return db
@@ -306,7 +339,8 @@ export function updateSessionTokens(
     num_turns: number;
   }
 ): void {
-  const db = getDb();
+  if (isDemoMode()) return;
+  const db = getDb()!;
   db.prepare(`
     UPDATE sessions
     SET total_input_tokens = @total_input_tokens,
@@ -319,7 +353,8 @@ export function updateSessionTokens(
 }
 
 export function getSessionTranscriptPath(sessionId: string): string | null {
-  const db = getDb();
+  if (isDemoMode()) return null;
+  const db = getDb()!;
   const row = db
     .prepare("SELECT transcript_path FROM sessions WHERE session_id = ?")
     .get(sessionId) as { transcript_path: string | null } | undefined;
@@ -327,7 +362,8 @@ export function getSessionTranscriptPath(sessionId: string): string | null {
 }
 
 export function getTokenUsageSummary(filters?: FilterParams): TokenUsageSummary {
-  const db = getDb();
+  if (isDemoMode()) return mockTokenUsage;
+  const db = getDb()!;
   const conditions: string[] = ["total_input_tokens IS NOT NULL"];
   const params: unknown[] = [];
 
@@ -367,7 +403,8 @@ export function getTokenUsageSummary(filters?: FilterParams): TokenUsageSummary 
  * @returns 삽입된 레코드의 id, session_id, timestamp
  */
 export function insertPromptLog(input: PromptLogInput): PromptLogInsertResult {
-  const db = getDb();
+  if (isDemoMode()) return { id: 0, session_id: input.session_id, timestamp: new Date().toISOString() };
+  const db = getDb()!;
   const timestamp = input.timestamp ?? new Date().toISOString();
   const userId = input.user_id ?? "unknown";
   const projectPath = input.project_path ?? "";
@@ -454,7 +491,8 @@ export function insertPromptLog(input: PromptLogInput): PromptLogInsertResult {
  * @returns 삽입된 레코드 목록
  */
 export function insertPromptLogBatch(inputs: PromptLogInput[]): PromptLogInsertResult[] {
-  const db = getDb();
+  if (isDemoMode()) return inputs.map((i) => ({ id: 0, session_id: i.session_id, timestamp: new Date().toISOString() }));
+  const db = getDb()!;
   const results: PromptLogInsertResult[] = [];
 
   const insertBatch = db.transaction(() => {
@@ -468,7 +506,8 @@ export function insertPromptLogBatch(inputs: PromptLogInput[]): PromptLogInsertR
 }
 
 export function getPromptLogs(filters?: PromptLogFilters): PromptLogListResponse {
-  const db = getDb();
+  if (isDemoMode()) return mockPromptLogListResponse;
+  const db = getDb()!;
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -549,7 +588,8 @@ export function getPromptLogs(filters?: PromptLogFilters): PromptLogListResponse
 }
 
 export function getPromptLogDetail(logId: number): PromptLogDetail | null {
-  const db = getDb();
+  if (isDemoMode()) return null;
+  const db = getDb()!;
 
   const log = db
     .prepare(`
@@ -619,7 +659,8 @@ export function getPromptLogDetail(logId: number): PromptLogDetail | null {
 }
 
 export function getPromptLogUsers(): string[] {
-  const db = getDb();
+  if (isDemoMode()) return mockPromptLogUsers;
+  const db = getDb()!;
   const rows = db
     .prepare(`
       SELECT DISTINCT user_id
@@ -632,7 +673,8 @@ export function getPromptLogUsers(): string[] {
 }
 
 export function getPromptLogProjects(): string[] {
-  const db = getDb();
+  if (isDemoMode()) return mockPromptLogProjects;
+  const db = getDb()!;
   const rows = db
     .prepare(`
       SELECT DISTINCT project_path
@@ -648,7 +690,8 @@ export function getPromptLogProjects(): string[] {
 
 /** 전체 채택률 요약 데이터 조회 */
 export function getAdoptionSummary(filters?: AdoptionFilterParams): AdoptionSummary {
-  const db = getDb();
+  if (isDemoMode()) return mockAdoptionSummary;
+  const db = getDb()!;
   const userConditions: string[] = [];
   const userParams: unknown[] = [];
 
@@ -739,7 +782,8 @@ export function getAdoptionSummary(filters?: AdoptionFilterParams): AdoptionSumm
 
 /** 일별 활성 사용자 트렌드 */
 export function getDailyActiveUsersTrend(days: number = 30, filters?: AdoptionFilterParams): ActiveUsersMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockActiveUsersMetrics;
+  const db = getDb()!;
   const userConditions: string[] = [];
   const userParams: unknown[] = [];
 
@@ -776,7 +820,8 @@ export function getDailyActiveUsersTrend(days: number = 30, filters?: AdoptionFi
 
 /** 기능(도구)별 채택률 메트릭 */
 export function getFeatureUsageMetrics(filters?: AdoptionFilterParams): FeatureUsageMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockFeatureUsageMetrics;
+  const db = getDb()!;
   const conditions: string[] = ["e.tool_name IS NOT NULL"];
   const params: unknown[] = [];
 
@@ -833,7 +878,8 @@ export function getFeatureUsageMetrics(filters?: AdoptionFilterParams): FeatureU
 
 /** 사용자별 세션 빈도 메트릭 */
 export function getSessionFrequencyMetrics(filters?: AdoptionFilterParams): SessionFrequencyMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockSessionFrequencyMetrics;
+  const db = getDb()!;
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -902,7 +948,8 @@ export function getSessionFrequencyMetrics(filters?: AdoptionFilterParams): Sess
 
 /** 사용자별 참여 깊이 메트릭 */
 export function getEngagementMetrics(filters?: AdoptionFilterParams): EngagementMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockEngagementMetrics;
+  const db = getDb()!;
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -964,7 +1011,8 @@ export function getEngagementMetrics(filters?: AdoptionFilterParams): Engagement
 
 /** 주간 코호트 기반 리텐션 메트릭 */
 export function getRetentionMetrics(weeks: number = 8, filters?: AdoptionFilterParams): RetentionMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockRetentionMetrics;
+  const db = getDb()!;
   const userCondition = filters?.userId ? "AND user_id = ?" : "";
   const userParams = filters?.userId ? [filters.userId] : [];
 
@@ -1030,7 +1078,8 @@ export function saveAdoptionSnapshot(
   period: AdoptionPeriod = "day",
   date?: string
 ): void {
-  const db = getDb();
+  if (isDemoMode()) return;
+  const db = getDb()!;
   const snapshotDate = date ?? new Date().toISOString().split("T")[0];
   const summary = getAdoptionSummary();
 
@@ -1073,7 +1122,8 @@ export function getAdoptionSnapshots(
   period: AdoptionPeriod = "day",
   limit: number = 30
 ): AdoptionSnapshot[] {
-  const db = getDb();
+  if (isDemoMode()) return mockAdoptionSnapshots.filter((s) => s.period === period).slice(0, limit);
+  const db = getDb()!;
   return db
     .prepare(`
       SELECT * FROM adoption_snapshots

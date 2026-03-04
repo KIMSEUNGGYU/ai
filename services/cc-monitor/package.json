@@ -10,7 +10,9 @@
   "dependencies": {
     "next": "^15.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "optionalDependencies": {
     "better-sqlite3": "^11.0.0"
   },
   "devDependencies": {

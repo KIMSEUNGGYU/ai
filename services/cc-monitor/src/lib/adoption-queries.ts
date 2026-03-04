@@ -4,7 +4,16 @@
  * 기존 sessions/events 테이블 데이터를 활용하여
  * DAU/WAU/MAU, 세션 빈도, 기능 채택률, 참여 깊이, 리텐션 등을 계산한다.
  */
-import { getDb } from "./db";
+import { getDb, isDemoMode } from "./db";
+import {
+  mockActiveUsersMetrics,
+  mockSessionFrequencyMetrics,
+  mockFeatureUsageMetrics,
+  mockEngagementMetrics,
+  mockRetentionMetrics,
+  mockAdoptionSummary,
+  mockAdoptionSnapshots,
+} from "./mock-data";
 import type {
   AdoptionPeriod,
   AdoptionFilterParams,
@@ -94,7 +103,8 @@ function resolveDateRange(filters?: AdoptionFilterParams): {
 export function getActiveUsersMetrics(
   filters?: AdoptionFilterParams
 ): ActiveUsersMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockActiveUsersMetrics;
+  const db = getDb()!;
   const period = filters?.period ?? "day";
   const dateFormat = periodToDateFormat(period);
   const { since, until } = resolveDateRange(filters);
@@ -141,7 +151,8 @@ export function getActiveUsersMetrics(
 export function getSessionFrequencyMetrics(
   filters?: AdoptionFilterParams
 ): SessionFrequencyMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockSessionFrequencyMetrics;
+  const db = getDb()!;
   const { since, until } = resolveDateRange(filters);
   const { clause, params } = buildAdoptionFilterClause(filters);
 
@@ -210,7 +221,8 @@ export function getSessionFrequencyMetrics(
 export function getFeatureUsageMetrics(
   filters?: AdoptionFilterParams
 ): FeatureUsageMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockFeatureUsageMetrics;
+  const db = getDb()!;
   const { since, until } = resolveDateRange(filters);
 
   // 전체 활성 사용자 수 (기간 내 세션이 있는 고유 사용자)
@@ -289,7 +301,8 @@ export function getFeatureUsageMetrics(
 export function getEngagementMetrics(
   filters?: AdoptionFilterParams
 ): EngagementMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockEngagementMetrics;
+  const db = getDb()!;
   const { since, until } = resolveDateRange(filters);
 
   const eventConditions: string[] = [];
@@ -356,7 +369,8 @@ export function getRetentionMetrics(
   filters?: AdoptionFilterParams,
   maxWeeks: number = 8
 ): RetentionMetric[] {
-  const db = getDb();
+  if (isDemoMode()) return mockRetentionMetrics;
+  const db = getDb()!;
   const { since } = resolveDateRange(filters);
 
   const userConditions: string[] = [];
@@ -437,7 +451,8 @@ export function getRetentionMetrics(
 export function getAdoptionSummary(
   filters?: AdoptionFilterParams
 ): AdoptionSummary {
-  const db = getDb();
+  if (isDemoMode()) return mockAdoptionSummary;
+  const db = getDb()!;
   const now = new Date();
 
   // DAU: 지난 24시간, WAU: 지난 7일, MAU: 지난 30일
@@ -557,7 +572,8 @@ export function getAdoptionSummary(
 export function saveAdoptionSnapshot(
   snapshot: Omit<AdoptionSnapshot, "id" | "created_at">
 ): void {
-  const db = getDb();
+  if (isDemoMode()) return;
+  const db = getDb()!;
   db.prepare(
     `
     INSERT INTO adoption_snapshots (
@@ -589,7 +605,8 @@ export function getAdoptionSnapshots(
   period: AdoptionPeriod = "day",
   limit: number = 30
 ): AdoptionSnapshot[] {
-  const db = getDb();
+  if (isDemoMode()) return mockAdoptionSnapshots.filter((s) => s.period === period).slice(0, limit);
+  const db = getDb()!;
   return db
     .prepare(
       `
@@ -608,7 +625,8 @@ export function getAdoptionSnapshots(
  * 기존 데이터를 기반으로 집계한 후 adoption_snapshots 테이블에 캐싱한다.
  */
 export function createDailySnapshot(): AdoptionSnapshot {
-  const db = getDb();
+  if (isDemoMode()) return mockAdoptionSnapshots[0];
+  const db = getDb()!;
   const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
   const dayStart = `${today}T00:00:00.000Z`;
   const dayEnd = `${today}T23:59:59.999Z`;

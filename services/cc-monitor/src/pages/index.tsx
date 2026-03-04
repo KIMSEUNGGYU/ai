@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getSessions } from "@/lib/queries";
 import { getRecentEvents } from "@/lib/queries";
 import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries, getTokenUsageSummary, getAdoptionSummary } from "@/lib/queries";
+import { isDemoMode } from "@/lib/db";
 import { usePolling } from "@/hooks/usePolling";
 import { ActiveSessions } from "@/components/ActiveSessions";
 import { ActivityFeed } from "@/components/ActivityFeed";
@@ -30,6 +31,7 @@ interface DashboardData {
 
 export const getServerSideProps: GetServerSideProps<{
   initial: DashboardData;
+  isDemo: boolean;
 }> = async () => {
   return {
     props: {
@@ -43,12 +45,14 @@ export const getServerSideProps: GetServerSideProps<{
         tokenUsage: getTokenUsageSummary(),
         adoption: getAdoptionSummary(),
       },
+      isDemo: isDemoMode(),
     },
   };
 };
 
 export default function Dashboard({
   initial,
+  isDemo,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedToolName, setSelectedToolName] = useState("");
@@ -118,6 +122,9 @@ export default function Dashboard({
         <div style={styles.headerLeft}>
           <h1 style={styles.headerTitle}>cc-monitor</h1>
           <span style={styles.headerSub}>Claude Code 모니터링 대시보드</span>
+          {isDemo && (
+            <span style={styles.demoBadge}>Demo Mode</span>
+          )}
         </div>
         <nav style={styles.nav}>
           <Link href="/prompt-logs" style={styles.navLink}>
@@ -224,6 +231,16 @@ const styles: Record<string, React.CSSProperties> = {
   headerSub: {
     fontSize: 13,
     color: "#484f58",
+  },
+  demoBadge: {
+    fontSize: 11,
+    color: "#f0883e",
+    background: "rgba(240, 136, 62, 0.15)",
+    border: "1px solid rgba(240, 136, 62, 0.4)",
+    borderRadius: 4,
+    padding: "2px 8px",
+    fontWeight: 600,
+    letterSpacing: "0.02em",
   },
   nav: {
     display: "flex",
