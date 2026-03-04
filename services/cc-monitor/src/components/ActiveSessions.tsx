@@ -28,6 +28,9 @@ export function ActiveSessions({ sessions }: ActiveSessionsProps) {
               <div style={styles.stats}>
                 Events: {s.event_count} &nbsp; Tools: {s.tool_count}
                 {s.model && <> &nbsp; Model: {s.model}</>}
+                {s.permission_mode && (
+                  <span style={styles.modeBadge}>{s.permission_mode}</span>
+                )}
               </div>
               <div style={styles.duration}>{formatDuration(s.started_at)}</div>
             </div>
@@ -80,4 +83,13 @@ const styles: Record<string, React.CSSProperties> = {
   projectPath: { fontFamily: "monospace", marginBottom: 4 },
   stats: { marginBottom: 2 },
   duration: { color: "#484f58" },
+  modeBadge: {
+    marginLeft: 8,
+    padding: "1px 6px",
+    borderRadius: 3,
+    background: "#1f2937",
+    border: "1px solid #374151",
+    color: "#d2a8ff",
+    fontSize: 10,
+  },
 };

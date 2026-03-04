@@ -5,6 +5,7 @@ import type {
   ToolUsageStat,
   HourlyActivity,
   UserSummary,
+  ToolDurationStat,
 } from "./types";
 
 // ── 이벤트 ──
@@ -12,9 +13,29 @@ import type {
 export function insertEvent(event: Omit<StoredEvent, "id">): void {
   const db = getDb();
   db.prepare(`
-    INSERT INTO events (session_id, event_type, user_id, project_path, tool_name, tool_input_summary, model, prompt_text, timestamp, raw_data)
-    VALUES (@session_id, @event_type, @user_id, @project_path, @tool_name, @tool_input_summary, @model, @prompt_text, @timestamp, @raw_data)
+    INSERT INTO events (session_id, event_type, user_id, project_path, tool_name, tool_input_summary, model, prompt_text, permission_mode, tool_use_id, tool_duration_ms, timestamp, raw_data)
+    VALUES (@session_id, @event_type, @user_id, @project_path, @tool_name, @tool_input_summary, @model, @prompt_text, @permission_mode, @tool_use_id, @tool_duration_ms, @timestamp, @raw_data)
   `).run(event);
+}
+
+export function calcToolDuration(toolUseId: string, postTimestamp: string): number | null {
+  const db = getDb();
+  const preEvent = db
+    .prepare("SELECT timestamp FROM events WHERE tool_use_id = ? AND event_type = 'PreToolUse' LIMIT 1")
+    .get(toolUseId) as { timestamp: string } | undefined;
+
+  if (!preEvent) return null;
+
+  const preTime = new Date(preEvent.timestamp).getTime();
+  const postTime = new Date(postTimestamp).getTime();
+  const duration = postTime - preTime;
+
+  if (duration >= 0) {
+    db.prepare("UPDATE events SET tool_duration_ms = ? WHERE tool_use_id = ? AND event_type = 'PostToolUse'")
+      .run(duration, toolUseId);
+  }
+
+  return duration >= 0 ? duration : null;
 }
 
 export function getRecentEvents(limit: number = 50): StoredEvent[] {
@@ -38,6 +59,7 @@ export function upsertSession(session: {
   user_id?: string;
   project_path?: string;
   model?: string | null;
+  permission_mode?: string | null;
   started_at?: string;
   ended_at?: string;
   status?: "active" | "ended";
@@ -63,6 +85,10 @@ export function upsertSession(session: {
       updates.push("model = @model");
       values.model = session.model;
     }
+    if (session.permission_mode) {
+      updates.push("permission_mode = @permission_mode");
+      values.permission_mode = session.permission_mode;
+    }
 
     if (updates.length > 0) {
       db.prepare(
@@ -71,13 +97,14 @@ export function upsertSession(session: {
     }
   } else {
     db.prepare(`
-      INSERT INTO sessions (session_id, user_id, project_path, model, started_at, status)
-      VALUES (@session_id, @user_id, @project_path, @model, @started_at, @status)
+      INSERT INTO sessions (session_id, user_id, project_path, model, permission_mode, started_at, status)
+      VALUES (@session_id, @user_id, @project_path, @model, @permission_mode, @started_at, @status)
     `).run({
       session_id: session.session_id,
       user_id: session.user_id ?? "unknown",
       project_path: session.project_path ?? "",
       model: session.model ?? null,
+      permission_mode: session.permission_mode ?? null,
       started_at: session.started_at ?? new Date().toISOString(),
       status: session.status ?? "active",
     });
@@ -136,6 +163,28 @@ export function getToolUsageStats(hours: number = 24): ToolUsageStat[] {
     count: r.count,
     percentage: total > 0 ? Math.round((r.count / total) * 100) : 0,
   }));
+}
+
+export function getToolDurationStats(hours: number = 24): ToolDurationStat[] {
+  const db = getDb();
+  const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+
+  return db
+    .prepare(`
+      SELECT
+        tool_name,
+        CAST(AVG(tool_duration_ms) AS INTEGER) as avg_ms,
+        MAX(tool_duration_ms) as max_ms,
+        COUNT(*) as count
+      FROM events
+      WHERE tool_name IS NOT NULL
+        AND tool_duration_ms IS NOT NULL
+        AND event_type = 'PostToolUse'
+        AND timestamp > ?
+      GROUP BY tool_name
+      ORDER BY avg_ms DESC
+    `)
+    .all(since) as ToolDurationStat[];
 }
 
 export function getHourlyActivity(hours: number = 24): HourlyActivity[] {

@@ -1,11 +1,13 @@
-import type { ToolUsageStat } from "@/lib/types";
+import type { ToolUsageStat, ToolDurationStat } from "@/lib/types";
 
 interface ToolUsageChartProps {
   tools: ToolUsageStat[];
+  durations: ToolDurationStat[];
 }
 
-export function ToolUsageChart({ tools }: ToolUsageChartProps) {
+export function ToolUsageChart({ tools, durations }: ToolUsageChartProps) {
   const maxCount = tools.length > 0 ? tools[0].count : 1;
+  const durationMap = new Map(durations.map((d) => [d.tool_name, d]));
 
   return (
     <section>
@@ -14,23 +16,36 @@ export function ToolUsageChart({ tools }: ToolUsageChartProps) {
         {tools.length === 0 && (
           <p style={styles.empty}>데이터 없음</p>
         )}
-        {tools.map((t) => (
-          <div key={t.tool_name} style={styles.row}>
-            <span style={styles.name}>{t.tool_name}</span>
-            <div style={styles.barContainer}>
-              <div
-                style={{
-                  ...styles.bar,
-                  width: `${(t.count / maxCount) * 100}%`,
-                }}
-              />
+        {tools.map((t) => {
+          const dur = durationMap.get(t.tool_name);
+          return (
+            <div key={t.tool_name} style={styles.row}>
+              <span style={styles.name}>{t.tool_name}</span>
+              <div style={styles.barContainer}>
+                <div
+                  style={{
+                    ...styles.bar,
+                    width: `${(t.count / maxCount) * 100}%`,
+                  }}
+                />
+              </div>
+              <span style={styles.count}>{t.count}</span>
+              {dur && (
+                <span style={styles.avgDuration}>
+                  avg {formatMs(dur.avg_ms)}
+                </span>
+              )}
             </div>
-            <span style={styles.count}>{t.count}</span>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </section>
   );
+}
+
+function formatMs(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -63,5 +78,11 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 3,
     transition: "width 0.3s ease",
   },
-  count: { minWidth: 40, textAlign: "right", color: "#8b949e", fontSize: 11 },
+  count: { minWidth: 30, textAlign: "right", color: "#8b949e", fontSize: 11 },
+  avgDuration: {
+    minWidth: 60,
+    textAlign: "right",
+    color: "#d29922",
+    fontSize: 10,
+  },
 };

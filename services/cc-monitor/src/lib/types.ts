@@ -69,6 +69,9 @@ export interface StoredEvent {
   tool_input_summary: string | null;
   model: string | null;
   prompt_text: string | null;
+  permission_mode: string | null;
+  tool_use_id: string | null;
+  tool_duration_ms: number | null;
   timestamp: string;
   raw_data: string | null;
 }
@@ -78,6 +81,7 @@ export interface Session {
   user_id: string;
   project_path: string;
   model: string | null;
+  permission_mode: string | null;
   started_at: string;
   ended_at: string | null;
   event_count: number;
@@ -103,4 +107,11 @@ export interface UserSummary {
   active_sessions: number;
   total_events: number;
   last_activity: string;
+}
+
+export interface ToolDurationStat {
+  tool_name: string;
+  avg_ms: number;
+  max_ms: number;
+  count: number;
 }

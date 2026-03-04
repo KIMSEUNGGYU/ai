@@ -31,6 +31,9 @@ export function ActivityFeed({ events }: ActivityFeedProps) {
             />
             <span style={styles.user}>{e.user_id}</span>
             <span style={styles.eventType}>{formatEventType(e)}</span>
+            {e.tool_duration_ms != null && (
+              <span style={styles.duration}>{formatMs(e.tool_duration_ms)}</span>
+            )}
             <span style={styles.time}>
               {new Date(e.timestamp).toLocaleTimeString("ko-KR", {
                 hour: "2-digit",
@@ -55,6 +58,11 @@ function formatEventType(e: StoredEvent): string {
   if (e.event_type === "UserPromptSubmit") return "Prompt submitted";
   if (e.event_type === "Stop") return "Stopped";
   return e.event_type;
+}
+
+function formatMs(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  return `${(ms / 1000).toFixed(1)}s`;
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -88,6 +96,14 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "hidden",
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
+  },
+  duration: {
+    color: "#d29922",
+    fontSize: 10,
+    flexShrink: 0,
+    padding: "1px 4px",
+    background: "#2d2006",
+    borderRadius: 3,
   },
   time: { color: "#484f58", fontSize: 11, flexShrink: 0 },
 };

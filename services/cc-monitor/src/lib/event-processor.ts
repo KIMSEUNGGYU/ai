@@ -10,6 +10,9 @@ export function processEvent(event: HookEvent, userId: string): Omit<StoredEvent
     tool_input_summary: null,
     model: null,
     prompt_text: null,
+    permission_mode: event.permission_mode ?? null,
+    tool_use_id: null,
+    tool_duration_ms: null,
     timestamp: new Date().toISOString(),
     raw_data: null,
   };
@@ -20,9 +23,14 @@ export function processEvent(event: HookEvent, userId: string): Omit<StoredEvent
     event.hook_event_name === "PreToolUse" ||
     event.hook_event_name === "PostToolUse"
   ) {
-    const toolEvent = event as { tool_name: string; tool_input: Record<string, unknown> };
+    const toolEvent = event as {
+      tool_name: string;
+      tool_input: Record<string, unknown>;
+      tool_use_id?: string;
+    };
     base.tool_name = toolEvent.tool_name;
     base.tool_input_summary = summarizeToolInput(toolEvent.tool_name, toolEvent.tool_input);
+    base.tool_use_id = toolEvent.tool_use_id ?? null;
   } else if (event.hook_event_name === "UserPromptSubmit") {
     const promptEvent = event as { prompt?: string };
     base.prompt_text = promptEvent.prompt?.substring(0, 500) ?? null;
@@ -52,8 +60,11 @@ function summarizeToolInput(
       return String(input.url ?? "");
     case "WebSearch":
       return String(input.query ?? "");
+    case "Skill":
+      return `skill: ${input.skill ?? "unknown"}`;
     case "Task":
-      return String(input.description ?? "");
+    case "Agent":
+      return `[${input.subagent_type ?? "agent"}] ${truncate(String(input.description ?? ""), 100)}`;
     default:
       if (toolName.startsWith("mcp__")) {
         return `MCP: ${toolName.split("__").slice(1).join("/")}`;
