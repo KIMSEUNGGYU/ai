@@ -4,11 +4,16 @@
   "type": "module",
   "scripts": {
     "morning": "pnpm --filter morning-brief run dev",
-    "fe-auto": "unset CLAUDECODE && pnpm --filter fe-auto run dev --"
+    "fe-auto": "unset CLAUDECODE && pnpm --filter fe-auto run dev --",
+    "cc-monitor": "pnpm --filter cc-monitor run dev",
+    "cc-monitor:install-hooks": "pnpm --filter cc-monitor exec node scripts/install-hooks.ts"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",
     "tsx": "^4.19.0",
     "typescript": "^5.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild", "sharp"]
   }
 }
