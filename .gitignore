@@ -4,3 +4,9 @@ dist/
 .DS_Store
 
 .serena
+
+# cc-monitor
+*.db
+*.db-wal
+*.db-shm
+.next
