@@ -2,19 +2,20 @@ import { useCallback } from "react";
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { getSessions } from "@/lib/queries";
 import { getRecentEvents } from "@/lib/queries";
-import { getToolUsageStats, getHourlyActivity, getUserSummaries } from "@/lib/queries";
+import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries } from "@/lib/queries";
 import { usePolling } from "@/hooks/usePolling";
 import { ActiveSessions } from "@/components/ActiveSessions";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { ToolUsageChart } from "@/components/ToolUsageChart";
 import { HourlyActivity } from "@/components/HourlyActivity";
 import { UserSummary } from "@/components/UserSummary";
-import type { Session, StoredEvent, ToolUsageStat, HourlyActivity as HourlyActivityType, UserSummary as UserSummaryType } from "@/lib/types";
+import type { Session, StoredEvent, ToolUsageStat, ToolDurationStat, HourlyActivity as HourlyActivityType, UserSummary as UserSummaryType } from "@/lib/types";
 
 interface DashboardData {
   sessions: Session[];
   events: StoredEvent[];
   tools: ToolUsageStat[];
+  toolDurations: ToolDurationStat[];
   hourly: HourlyActivityType[];
   users: UserSummaryType[];
 }
@@ -28,6 +29,7 @@ export const getServerSideProps: GetServerSideProps<{
         sessions: getSessions("active"),
         events: getRecentEvents(30),
         tools: getToolUsageStats(24),
+        toolDurations: getToolDurationStats(24),
         hourly: getHourlyActivity(24),
         users: getUserSummaries(),
       },
@@ -49,6 +51,7 @@ export default function Dashboard({
   const fetchAnalytics = useCallback(
     () => fetch("/api/analytics").then((r) => r.json()) as Promise<{
       tools: ToolUsageStat[];
+      toolDurations: ToolDurationStat[];
       hourly: HourlyActivityType[];
       users: UserSummaryType[];
     }>,
@@ -62,6 +65,7 @@ export default function Dashboard({
   const s = sessions ?? initial.sessions;
   const e = events ?? initial.events;
   const t = analytics?.tools ?? initial.tools;
+  const td = analytics?.toolDurations ?? initial.toolDurations;
   const h = analytics?.hourly ?? initial.hourly;
   const u = analytics?.users ?? initial.users;
 
@@ -76,7 +80,7 @@ export default function Dashboard({
         <div style={styles.left}>
           <ActiveSessions sessions={s} />
           <div style={styles.analyticsGrid}>
-            <ToolUsageChart tools={t} />
+            <ToolUsageChart tools={t} durations={td} />
             <HourlyActivity hourly={h} />
           </div>
           <UserSummary users={u} />

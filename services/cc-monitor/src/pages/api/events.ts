@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { HookEvent } from "@/lib/types";
 import { processEvent } from "@/lib/event-processor";
-import { insertEvent, upsertSession } from "@/lib/queries";
+import { insertEvent, upsertSession, calcToolDuration } from "@/lib/queries";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -24,12 +24,18 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     const stored = processEvent(event, userId);
     insertEvent(stored);
 
+    // PostToolUse: Pre→Post duration 계산
+    if (event.hook_event_name === "PostToolUse" && stored.tool_use_id) {
+      calcToolDuration(stored.tool_use_id, stored.timestamp);
+    }
+
     if (event.hook_event_name === "SessionStart") {
       upsertSession({
         session_id: event.session_id,
         user_id: userId,
         project_path: event.cwd,
         model: "model" in event && typeof event.model === "string" ? event.model : null,
+        permission_mode: event.permission_mode ?? null,
         started_at: stored.timestamp,
         status: "active",
       });

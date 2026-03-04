@@ -2,6 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   getToolUsageStats,
+  getToolDurationStats,
   getHourlyActivity,
   getUserSummaries,
 } from "@/lib/queries";
@@ -14,8 +15,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const hours = Number(req.query.hours) || 24;
 
   const tools = getToolUsageStats(hours);
+  const toolDurations = getToolDurationStats(hours);
   const hourly = getHourlyActivity(hours);
   const users = getUserSummaries();
 
-  return res.status(200).json({ tools, hourly, users });
+  return res.status(200).json({ tools, toolDurations, hourly, users });
 }
