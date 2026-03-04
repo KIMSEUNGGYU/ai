@@ -1,0 +1,77 @@
+{
+  "_comment": "이 설정을 ~/.claude/settings.json의 hooks 섹션에 추가하세요. CC_MONITOR_PATH를 실제 경로로 변경.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node CC_MONITOR_PATH/collector/send-event.ts",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node CC_MONITOR_PATH/collector/send-event.ts",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node CC_MONITOR_PATH/collector/send-event.ts",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node CC_MONITOR_PATH/collector/send-event.ts",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node CC_MONITOR_PATH/collector/send-event.ts",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node CC_MONITOR_PATH/collector/send-event.ts",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
