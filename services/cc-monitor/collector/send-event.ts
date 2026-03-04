@@ -7,12 +7,12 @@
  *   echo '{"session_id":"...","hook_event_name":"..."}' | node send-event.ts
  *
  * 환경변수:
- *   CC_MONITOR_URL  — API 서버 URL (기본: http://localhost:3000)
+ *   CC_MONITOR_URL  — API 서버 URL (기본: http://localhost:4000)
  *   CC_MONITOR_USER — 사용자 식별자 (기본: hostname:username)
  */
 import { hostname, userInfo } from "node:os";
 
-const API_URL = process.env.CC_MONITOR_URL ?? "http://localhost:3000";
+const API_URL = process.env.CC_MONITOR_URL ?? "http://localhost:4000";
 const USER_ID =
   process.env.CC_MONITOR_USER ?? `${hostname()}:${userInfo().username}`;
 
