@@ -1,7 +1,7 @@
 # cc-monitor: Claude Code 팀 모니터링 서비스
 
 > 시작일: 2026-03-04
-> 상태: 진행 중
+> 상태: Phase 1 완료
 
 ## 진행 체크리스트
 
@@ -16,7 +16,7 @@
 - [x] Hook 설치 스크립트
 - [x] 루트 package.json 스크립트 추가
 - [x] 빌드 검증 (next build 성공)
-- [ ] 동작 검증 (curl + 실제 hook 연동)
+- [x] 동작 검증 (send-event.ts + API + DB + 대시보드 전체 파이프라인 확인)
 
 ### Phase 2 — 개선 (미정)
 - [ ] 실시간 업데이트 (SSE/WebSocket)
@@ -46,4 +46,4 @@
 - 유니온 타입에서 switch/case로 narrowing할 때 optional 필드가 `{} | null`로 추론되는 이슈
 - `"model" in event && typeof event.model === "string"` 같은 타입 가드로 해결
 
-<!-- last-active: 2026-03-04 06:17 -->
+<!-- last-active: 2026-03-04 09:20 -->

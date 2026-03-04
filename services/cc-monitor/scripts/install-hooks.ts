@@ -8,14 +8,11 @@
 import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
+import { fileURLToPath } from "node:url";
 
 const SETTINGS_PATH = path.join(os.homedir(), ".claude", "settings.json");
-const COLLECTOR_PATH = path.resolve(
-  import.meta.dirname ?? process.cwd(),
-  "..",
-  "collector",
-  "send-event.ts"
-);
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const COLLECTOR_PATH = path.resolve(__dirname, "..", "collector", "send-event.ts");
 
 const HOOK_EVENTS = [
   "SessionStart",
@@ -55,18 +52,13 @@ function main() {
   for (const event of HOOK_EVENTS) {
     const existing = hooks[event] ?? [];
 
-    // 이미 cc-monitor hook이 있는지 확인
-    const alreadyInstalled = (existing as Array<{ hooks?: Array<{ command?: string }> }>).some(
+    // 기존 cc-monitor hook 제거 (경로가 변경되었을 수 있으므로)
+    const filtered = (existing as Array<{ hooks?: Array<{ command?: string }> }>).filter(
       (entry) =>
-        entry.hooks?.some((h) => h.command?.includes("send-event"))
+        !entry.hooks?.some((h) => h.command?.includes("send-event"))
     );
 
-    if (alreadyInstalled) {
-      console.log(`[${event}] 이미 설치됨 — 스킵`);
-      continue;
-    }
-
-    hooks[event] = [...existing, makeHookEntry()];
+    hooks[event] = [...filtered, makeHookEntry()];
     console.log(`[${event}] hook 추가됨`);
   }
 
