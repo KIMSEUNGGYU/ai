@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getCostResponse } from "@/lib/cost-queries";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -12,7 +12,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const filters = userId ? { userId } : undefined;
 
   try {
-    const data = getCostResponse(filters, days);
+    const data = await getCostResponse(filters, days);
     return res.status(200).json(data);
   } catch (err) {
     console.error("[/api/cost] Error:", err);

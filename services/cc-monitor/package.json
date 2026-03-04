@@ -4,22 +4,23 @@
   "type": "module",
   "scripts": {
     "dev": "next dev -p 4000",
-    "build": "next build",
+    "build": "prisma generate && next build",
+    "db:push": "prisma db push",
     "start": "next start",
     "deploy": "npx vercel --prod --scope kimseunggyus-projects"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.0",
+    "@prisma/adapter-libsql": "^7.4.2",
+    "@prisma/client": "^7.4.2",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
-  "optionalDependencies": {
-    "better-sqlite3": "^11.0.0"
-  },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "prisma": "^7.4.2",
     "typescript": "^5.5.0"
   }
 }

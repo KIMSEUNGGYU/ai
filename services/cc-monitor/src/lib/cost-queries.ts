@@ -1,7 +1,7 @@
 // ── 비용 추적 쿼리 ──
 // 기존 세션 토큰 데이터를 활용하여 비용을 산출한다.
 
-import { getDb, isDemoMode } from "./db";
+import { prisma, isDemoMode } from "./db";
 import { calculateSessionCost, getAllModelPricing, type CostBreakdown } from "./pricing";
 import {
   mockCostSummary,
@@ -32,8 +32,8 @@ interface SessionTokenRow {
 /**
  * 필터 조건에 맞는 토큰 데이터가 있는 세션 목록 조회
  */
-function getSessionsWithTokens(filters?: FilterParams, days?: number): SessionTokenRow[] {
-  const db = getDb()!;
+async function getSessionsWithTokens(filters?: FilterParams, days?: number): Promise<SessionTokenRow[]> {
+  const db = prisma!;
   const conditions: string[] = ["total_input_tokens IS NOT NULL"];
   const params: unknown[] = [];
 
@@ -50,25 +50,23 @@ function getSessionsWithTokens(filters?: FilterParams, days?: number): SessionTo
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  return db
-    .prepare(`
-      SELECT
-        session_id, model, total_input_tokens, total_output_tokens,
-        total_cache_create_tokens, total_cache_read_tokens,
-        num_turns, started_at, user_id
-      FROM sessions
-      ${where}
-      ORDER BY started_at DESC
-    `)
-    .all(...params) as SessionTokenRow[];
+  return await db.$queryRawUnsafe<SessionTokenRow[]>(`
+    SELECT
+      session_id, model, total_input_tokens, total_output_tokens,
+      total_cache_create_tokens, total_cache_read_tokens,
+      num_turns, started_at, user_id
+    FROM sessions
+    ${where}
+    ORDER BY started_at DESC
+  `, ...params);
 }
 
 /**
  * 전체 비용 요약 산출
  */
-export function getCostSummary(filters?: FilterParams, days?: number): CostSummary {
+export async function getCostSummary(filters?: FilterParams, days?: number): Promise<CostSummary> {
   if (isDemoMode()) return mockCostSummary;
-  const sessions = getSessionsWithTokens(filters, days);
+  const sessions = await getSessionsWithTokens(filters, days);
 
   let inputCost = 0;
   let outputCost = 0;
@@ -104,11 +102,10 @@ export function getCostSummary(filters?: FilterParams, days?: number): CostSumma
 /**
  * 모델별 비용 내역 산출
  */
-export function getCostByModel(filters?: FilterParams, days?: number): ModelCostBreakdown[] {
+export async function getCostByModel(filters?: FilterParams, days?: number): Promise<ModelCostBreakdown[]> {
   if (isDemoMode()) return mockCostByModel;
-  const sessions = getSessionsWithTokens(filters, days);
+  const sessions = await getSessionsWithTokens(filters, days);
 
-  // 모델별 그룹핑
   const modelMap = new Map<
     string,
     {
@@ -165,22 +162,20 @@ export function getCostByModel(filters?: FilterParams, days?: number): ModelCost
     });
   }
 
-  // 비용 높은 순으로 정렬
   return result.sort((a, b) => b.totalCost - a.totalCost);
 }
 
 /**
  * 일별 비용 추이
  */
-export function getDailyCosts(filters?: FilterParams, days: number = 30): DailyCost[] {
+export async function getDailyCosts(filters?: FilterParams, days: number = 30): Promise<DailyCost[]> {
   if (isDemoMode()) return mockDailyCosts;
-  const sessions = getSessionsWithTokens(filters, days);
+  const sessions = await getSessionsWithTokens(filters, days);
 
-  // 날짜별 그룹핑
   const dateMap = new Map<string, { totalCost: number; sessionCount: number }>();
 
   for (const session of sessions) {
-    const date = session.started_at.slice(0, 10); // YYYY-MM-DD
+    const date = session.started_at.slice(0, 10);
     const cost = calculateSessionCost(session);
 
     if (!dateMap.has(date)) {
@@ -192,7 +187,6 @@ export function getDailyCosts(filters?: FilterParams, days: number = 30): DailyC
     entry.sessionCount += 1;
   }
 
-  // 날짜 순으로 정렬
   return Array.from(dateMap.entries())
     .map(([date, entry]) => ({
       date,
@@ -205,12 +199,12 @@ export function getDailyCosts(filters?: FilterParams, days: number = 30): DailyC
 /**
  * 전체 비용 응답 데이터 생성
  */
-export function getCostResponse(filters?: FilterParams, days?: number): CostResponse {
+export async function getCostResponse(filters?: FilterParams, days?: number): Promise<CostResponse> {
   if (isDemoMode()) return mockCostResponse;
   return {
-    summary: getCostSummary(filters, days),
-    byModel: getCostByModel(filters, days),
-    daily: getDailyCosts(filters, days ?? 30),
+    summary: await getCostSummary(filters, days),
+    byModel: await getCostByModel(filters, days),
+    daily: await getDailyCosts(filters, days ?? 30),
     pricingTable: getAllModelPricing(),
   };
 }

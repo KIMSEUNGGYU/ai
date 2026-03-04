@@ -1,15 +1,4 @@
 // ── GET /api/adoption — 채택률 메트릭 조회 ──
-//
-// 쿼리 파라미터:
-//   view: "summary" | "active-users" | "session-frequency" | "feature-usage" |
-//         "engagement" | "retention" | "snapshots" | "snapshot-create"
-//   period: "day" | "week" | "month" (기본: "day")
-//   userId: 사용자 ID 필터
-//   since: 조회 시작일 (ISO 8601)
-//   until: 조회 종료일 (ISO 8601)
-//   limit: 결과 수 제한 (snapshots 뷰에서 사용)
-//   maxWeeks: 리텐션 최대 주 수 (retention 뷰, 기본: 8)
-
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { AdoptionPeriod, AdoptionFilterParams } from "@/lib/types";
 import {
@@ -23,7 +12,7 @@ import {
   createDailySnapshot,
 } from "@/lib/adoption-queries";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -44,44 +33,44 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
     switch (view) {
       case "summary": {
-        const summary = getAdoptionSummary(filters);
+        const summary = await getAdoptionSummary(filters);
         return res.status(200).json(summary);
       }
 
       case "active-users": {
-        const metrics = getActiveUsersMetrics(filters);
+        const metrics = await getActiveUsersMetrics(filters);
         return res.status(200).json({ metrics, period });
       }
 
       case "session-frequency": {
-        const metrics = getSessionFrequencyMetrics(filters);
+        const metrics = await getSessionFrequencyMetrics(filters);
         return res.status(200).json({ metrics });
       }
 
       case "feature-usage": {
-        const metrics = getFeatureUsageMetrics(filters);
+        const metrics = await getFeatureUsageMetrics(filters);
         return res.status(200).json({ metrics });
       }
 
       case "engagement": {
-        const metrics = getEngagementMetrics(filters);
+        const metrics = await getEngagementMetrics(filters);
         return res.status(200).json({ metrics });
       }
 
       case "retention": {
         const maxWeeks = Number(req.query.maxWeeks) || 8;
-        const metrics = getRetentionMetrics(filters, maxWeeks);
+        const metrics = await getRetentionMetrics(filters, maxWeeks);
         return res.status(200).json({ metrics });
       }
 
       case "snapshots": {
         const limit = Number(req.query.limit) || 30;
-        const snapshots = getAdoptionSnapshots(period, limit);
+        const snapshots = await getAdoptionSnapshots(period, limit);
         return res.status(200).json({ snapshots });
       }
 
       case "snapshot-create": {
-        const snapshot = createDailySnapshot();
+        const snapshot = await createDailySnapshot();
         return res.status(200).json({ snapshot });
       }
 

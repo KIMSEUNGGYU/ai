@@ -5,7 +5,7 @@ import { processEvent } from "@/lib/event-processor";
 import { insertEvent, upsertSession, calcToolDuration, getSessionTranscriptPath, updateSessionTokens } from "@/lib/queries";
 import { parseTranscriptUsage } from "@/lib/transcript-parser";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -23,15 +23,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       "unknown";
 
     const stored = processEvent(event, userId);
-    insertEvent(stored);
 
-    // PostToolUse: Pre→Post duration 계산
-    if (event.hook_event_name === "PostToolUse" && stored.tool_use_id) {
-      calcToolDuration(stored.tool_use_id, stored.timestamp);
-    }
-
+    // FK 제약: 세션이 먼저 존재해야 이벤트 삽입 가능
+    // SessionStart는 새 세션 생성, 그 외는 기존 세션 없으면 자동 생성
     if (event.hook_event_name === "SessionStart") {
-      upsertSession({
+      await upsertSession({
         session_id: event.session_id,
         user_id: userId,
         project_path: event.cwd,
@@ -40,19 +36,36 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         started_at: stored.timestamp,
         status: "active",
       });
-    } else if (event.hook_event_name === "Stop") {
+    } else {
+      // 다른 이벤트: 세션이 없으면 생성 (최소 정보로)
+      await upsertSession({
+        session_id: event.session_id,
+        user_id: userId,
+        project_path: event.cwd,
+        started_at: stored.timestamp,
+        status: "active",
+      });
+    }
+
+    await insertEvent(stored);
+
+    // PostToolUse: Pre→Post duration 계산
+    if (event.hook_event_name === "PostToolUse" && stored.tool_use_id) {
+      await calcToolDuration(stored.tool_use_id, stored.timestamp);
+    }
+
+    if (event.hook_event_name === "Stop") {
       const transcriptPath = "transcript_path" in event && typeof event.transcript_path === "string"
         ? event.transcript_path
         : null;
       if (transcriptPath) {
-        upsertSession({
+        await upsertSession({
           session_id: event.session_id,
           transcript_path: transcriptPath,
         });
-        // 비동기로 transcript 파싱 (응답 블로킹 안 함)
-        parseTranscriptUsage(transcriptPath).then((usage) => {
+        parseTranscriptUsage(transcriptPath).then(async (usage) => {
           if (usage) {
-            updateSessionTokens(event.session_id, {
+            await updateSessionTokens(event.session_id, {
               total_input_tokens: usage.input_tokens,
               total_output_tokens: usage.output_tokens,
               total_cache_create_tokens: usage.cache_create_tokens,
@@ -63,17 +76,16 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
         }).catch(() => {});
       }
     } else if (event.hook_event_name === "SessionEnd") {
-      upsertSession({
+      await upsertSession({
         session_id: event.session_id,
         ended_at: stored.timestamp,
         status: "ended",
       });
-      // SessionEnd에서도 transcript 파싱 시도 (Stop 이전에 종료될 수 있음)
-      const tp = getSessionTranscriptPath(event.session_id);
+      const tp = await getSessionTranscriptPath(event.session_id);
       if (tp) {
-        parseTranscriptUsage(tp).then((usage) => {
+        parseTranscriptUsage(tp).then(async (usage) => {
           if (usage) {
-            updateSessionTokens(event.session_id, {
+            await updateSessionTokens(event.session_id, {
               total_input_tokens: usage.input_tokens,
               total_output_tokens: usage.output_tokens,
               total_cache_create_tokens: usage.cache_create_tokens,

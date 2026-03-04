@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getRecentEvents, getEventsSince } from "@/lib/queries";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -13,7 +13,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const toolName = req.query.toolName as string | undefined;
   const filters = { userId, toolName };
 
-  const events = since ? getEventsSince(since, limit, filters) : getRecentEvents(limit, filters);
+  const events = since
+    ? await getEventsSince(since, limit, filters)
+    : await getRecentEvents(limit, filters);
 
   return res.status(200).json({ events });
 }

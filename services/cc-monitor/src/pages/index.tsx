@@ -33,18 +33,20 @@ export const getServerSideProps: GetServerSideProps<{
   initial: DashboardData;
   isDemo: boolean;
 }> = async () => {
+  const [sessions, events, tools, toolDurations, hourly, users, tokenUsage, adoption] = await Promise.all([
+    getSessions("active"),
+    getRecentEvents(30),
+    getToolUsageStats(24),
+    getToolDurationStats(24),
+    getHourlyActivity(24),
+    getUserSummaries(),
+    getTokenUsageSummary(),
+    getAdoptionSummary(),
+  ]);
+
   return {
     props: {
-      initial: {
-        sessions: getSessions("active"),
-        events: getRecentEvents(30),
-        tools: getToolUsageStats(24),
-        toolDurations: getToolDurationStats(24),
-        hourly: getHourlyActivity(24),
-        users: getUserSummaries(),
-        tokenUsage: getTokenUsageSummary(),
-        adoption: getAdoptionSummary(),
-      },
+      initial: { sessions, events, tools, toolDurations, hourly, users, tokenUsage, adoption },
       isDemo: isDemoMode(),
     },
   };

@@ -1,20 +1,4 @@
 // ── GET & POST /api/prompt-logs — 프롬프트 로그 조회 및 저장 API ──
-//
-// GET  사용법:
-//   GET /api/prompt-logs                              → 전체 목록 (기본 20건, 1페이지)
-//   GET /api/prompt-logs?userId=alice                  → 사용자 필터
-//   GET /api/prompt-logs?sessionId=abc-123             → 세션 필터
-//   GET /api/prompt-logs?dateFrom=2025-01-01&dateTo=2025-12-31  → 날짜 범위 필터
-//   GET /api/prompt-logs?search=refactor               → 프롬프트 텍스트 검색
-//   GET /api/prompt-logs?projectPath=/my/project       → 프로젝트 경로 필터
-//   GET /api/prompt-logs?page=2&limit=10               → 페이지네이션
-//   GET /api/prompt-logs?id=42                         → 단일 프롬프트 상세 조회
-//   GET /api/prompt-logs?meta=true                     → 필터 옵션 메타 데이터 (사용자 + 프로젝트 목록)
-//
-// POST 사용법:
-//   POST /api/prompt-logs  { session_id, prompt_text, ... }       → 단건 프롬프트 로그 저장
-//   POST /api/prompt-logs  { logs: [{ session_id, prompt_text, ... }, ...] } → 배치 저장
-//
 import type { NextApiRequest, NextApiResponse } from "next";
 import {
   getPromptLogs,
@@ -83,9 +67,6 @@ function parsePositiveInt(value: string | string[] | undefined): number | undefi
   return n;
 }
 
-/**
- * PromptLogInput 필수 필드 검증
- */
 function validatePromptLogInput(
   body: unknown,
 ): { valid: true; input: PromptLogInput } | { valid: false; error: string } {
@@ -103,7 +84,6 @@ function validatePromptLogInput(
     return { valid: false, error: "prompt_text is required and must be a non-empty string" };
   }
 
-  // timestamp 유효성 검증 (선택 필드)
   if (obj.timestamp !== undefined) {
     if (typeof obj.timestamp !== "string" || isNaN(Date.parse(obj.timestamp))) {
       return { valid: false, error: "timestamp must be a valid ISO 8601 date string" };
@@ -115,7 +95,6 @@ function validatePromptLogInput(
     prompt_text: obj.prompt_text as string,
   };
 
-  // 선택 필드
   if (typeof obj.user_id === "string" && obj.user_id.trim().length > 0) {
     input.user_id = obj.user_id.trim();
   }
@@ -138,16 +117,14 @@ function validatePromptLogInput(
   return { valid: true, input };
 }
 
-export default function handler(
+export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<ApiResponse>,
 ) {
-  // ── POST: 프롬프트 로그 저장 ──
   if (req.method === "POST") {
     return handlePost(req, res);
   }
 
-  // ── GET: 프롬프트 로그 조회 ──
   if (req.method === "GET") {
     return handleGet(req, res);
   }
@@ -157,11 +134,9 @@ export default function handler(
 
 // ── POST 핸들러 ──
 
-function handlePost(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
+async function handlePost(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
     const body = req.body;
-
-    // x-cc-user 헤더에서 사용자 ID 추출 (기존 이벤트 API와 동일 패턴)
     const headerUserId = req.headers["x-cc-user"] as string | undefined;
 
     // ── 배치 저장: { logs: [...] } ──
@@ -183,29 +158,27 @@ function handlePost(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
         if (!result.valid) {
           return res.status(400).json({ error: `logs[${i}]: ${result.error}` });
         }
-        // 헤더 user_id 가 있고 바디에 없으면 헤더 값 사용
         if (headerUserId && !result.input.user_id) {
           result.input.user_id = headerUserId;
         }
         validatedInputs.push(result.input);
       }
 
-      const results = insertPromptLogBatch(validatedInputs);
+      const results = await insertPromptLogBatch(validatedInputs);
       return res.status(201).json({ ok: true, results, count: results.length });
     }
 
-    // ── 단건 저장: { session_id, prompt_text, ... } ──
+    // ── 단건 저장 ──
     const validation = validatePromptLogInput(body);
     if (!validation.valid) {
       return res.status(400).json({ error: validation.error });
     }
 
-    // 헤더 user_id 가 있고 바디에 없으면 헤더 값 사용
     if (headerUserId && !validation.input.user_id) {
       validation.input.user_id = headerUserId;
     }
 
-    const result = insertPromptLog(validation.input);
+    const result = await insertPromptLog(validation.input);
     return res.status(201).json({ ok: true, result });
   } catch (error) {
     console.error("[prompt-logs] POST error:", error);
@@ -215,50 +188,40 @@ function handlePost(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
 
 // ── GET 핸들러 ──
 
-function handleGet(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
+async function handleGet(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
   try {
-    // ── 1) 필터 메타 데이터 조회 (사용자 목록 + 프로젝트 목록) ──
-    // GET /api/prompt-logs?meta=true
+    // ── 1) 필터 메타 데이터 조회 ──
     if (req.query.meta === "true" || req.query.options === "true") {
-      const users = getPromptLogUsers();
-      const projects = getPromptLogProjects();
+      const [users, projects] = await Promise.all([
+        getPromptLogUsers(),
+        getPromptLogProjects(),
+      ]);
       return res.status(200).json({ users, projects });
     }
 
     // ── 2) 단일 프롬프트 상세 조회 ──
-    // GET /api/prompt-logs?id=42
     if (req.query.id) {
       const id = parsePositiveInt(req.query.id);
       if (!id) {
         return res.status(400).json({ error: "Invalid id: must be a positive integer" });
       }
-      const log = getPromptLogDetail(id);
+      const log = await getPromptLogDetail(id);
       if (!log) {
         return res.status(404).json({ error: "Prompt log not found" });
       }
       return res.status(200).json({ log });
     }
 
-    // ── 3) 프롬프트 로그 목록 조회 (필터링 + 페이지네이션 + 검색) ──
+    // ── 3) 프롬프트 로그 목록 조회 ──
     const filters: PromptLogFilters = {};
 
-    // 사용자 필터
     filters.userId = parseString(req.query.userId);
-
-    // 세션 필터
     filters.sessionId = parseString(req.query.sessionId);
-
-    // 프로젝트 경로 필터 (부분 일치)
     filters.projectPath = parseString(req.query.projectPath);
-
-    // 텍스트 검색 (프롬프트 내용 부분 일치)
     filters.search = parseString(req.query.search);
-
-    // 날짜 범위 필터 (ISO 8601 형식)
     filters.dateFrom = parseString(req.query.dateFrom);
     filters.dateTo = parseString(req.query.dateTo);
 
-    // 날짜 유효성 검증
     if (filters.dateFrom && isNaN(Date.parse(filters.dateFrom))) {
       return res.status(400).json({ error: "Invalid dateFrom: must be a valid ISO 8601 date string" });
     }
@@ -266,11 +229,10 @@ function handleGet(req: NextApiRequest, res: NextApiResponse<ApiResponse>) {
       return res.status(400).json({ error: "Invalid dateTo: must be a valid ISO 8601 date string" });
     }
 
-    // 페이지네이션
     filters.page = parsePositiveInt(req.query.page);
     filters.limit = parsePositiveInt(req.query.limit);
 
-    const result = getPromptLogs(filters);
+    const result = await getPromptLogs(filters);
     return res.status(200).json(result);
   } catch (error) {
     console.error("[prompt-logs] GET error:", error);

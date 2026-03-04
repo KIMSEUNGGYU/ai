@@ -2,7 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getSessions } from "@/lib/queries";
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -10,7 +10,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   const status = (req.query.status as "active" | "ended" | "all") ?? "active";
   const userId = req.query.userId as string | undefined;
   const toolName = req.query.toolName as string | undefined;
-  const sessions = getSessions(status, { userId, toolName });
+  const sessions = await getSessions(status, { userId, toolName });
 
   return res.status(200).json({ sessions });
 }

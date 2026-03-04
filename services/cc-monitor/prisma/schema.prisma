@@ -1,0 +1,119 @@
+generator client {
+  provider        = "prisma-client-js"
+  // driverAdapters is GA in Prisma v7, no preview needed
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Event {
+  id               Int      @id @default(autoincrement())
+  session_id       String
+  event_type       String
+  user_id          String
+  project_path     String?
+  tool_name        String?
+  tool_input_summary String?
+  model            String?
+  prompt_text      String?
+  permission_mode  String?
+  tool_use_id      String?
+  tool_duration_ms Int?
+  timestamp        String
+  raw_data         String?
+  created_at       String   @default(dbgenerated("(datetime('now'))"))
+
+  session          Session  @relation(fields: [session_id], references: [session_id])
+
+  prompt_logs      PromptLog[]
+
+  @@index([session_id])
+  @@index([event_type])
+  @@index([user_id])
+  @@index([timestamp])
+  @@index([tool_name])
+  @@index([tool_use_id])
+
+  @@map("events")
+}
+
+model Session {
+  session_id              String   @id
+  user_id                 String
+  project_path            String?
+  model                   String?
+  permission_mode         String?
+  started_at              String
+  ended_at                String?
+  status                  String   @default("active")
+  transcript_path         String?
+  total_input_tokens      Int?
+  total_output_tokens     Int?
+  total_cache_create_tokens Int?
+  total_cache_read_tokens Int?
+  num_turns               Int?
+
+  events                  Event[]
+  prompt_logs             PromptLog[]
+
+  @@index([user_id])
+  @@index([status])
+  @@index([started_at])
+
+  @@map("sessions")
+}
+
+model AdoptionSnapshot {
+  id                       Int      @id @default(autoincrement())
+  snapshot_date            String
+  period                   String
+  active_users             Int      @default(0)
+  total_sessions           Int      @default(0)
+  total_users              Int      @default(0)
+  avg_session_duration_min Float    @default(0)
+  avg_sessions_per_user    Float    @default(0)
+  avg_turns_per_session    Float    @default(0)
+  top_tools_json           String?
+  created_at               String   @default(dbgenerated("(datetime('now'))"))
+
+  @@unique([snapshot_date, period])
+  @@index([snapshot_date])
+  @@index([period, snapshot_date])
+
+  @@map("adoption_snapshots")
+}
+
+model PromptLog {
+  id                  Int      @id @default(autoincrement())
+  session_id          String
+  event_id            Int?
+  user_id             String
+  project_path        String?
+  prompt_text         String
+  response_text       String?
+  model               String?
+  permission_mode     String?
+  timestamp           String
+  response_timestamp  String?
+  duration_ms         Int?
+  input_tokens        Int?
+  output_tokens       Int?
+  cache_create_tokens Int?
+  cache_read_tokens   Int?
+  turn_number         Int?
+  cost_usd            Float?
+  created_at          String   @default(dbgenerated("(datetime('now'))"))
+
+  session             Session  @relation(fields: [session_id], references: [session_id])
+  event               Event?   @relation(fields: [event_id], references: [id])
+
+  @@index([session_id])
+  @@index([user_id])
+  @@index([timestamp])
+  @@index([project_path])
+  @@index([model])
+  @@index([event_id])
+
+  @@map("prompt_logs")
+}

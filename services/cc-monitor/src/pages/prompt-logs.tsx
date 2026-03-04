@@ -15,12 +15,14 @@ interface PageData {
 }
 
 export const getServerSideProps: GetServerSideProps<PageData> = async () => {
+  const [initialLogs, users, projects] = await Promise.all([
+    getPromptLogs({ limit: 20 }),
+    getPromptLogUsers(),
+    getPromptLogProjects(),
+  ]);
+
   return {
-    props: {
-      initialLogs: getPromptLogs({ limit: 20 }),
-      users: getPromptLogUsers(),
-      projects: getPromptLogProjects(),
-    },
+    props: { initialLogs, users, projects },
   };
 };
 
