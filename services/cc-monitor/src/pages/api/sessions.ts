@@ -8,7 +8,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const status = (req.query.status as "active" | "ended" | "all") ?? "active";
-  const sessions = getSessions(status);
+  const userId = req.query.userId as string | undefined;
+  const toolName = req.query.toolName as string | undefined;
+  const sessions = getSessions(status, { userId, toolName });
 
   return res.status(200).json({ sessions });
 }

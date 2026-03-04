@@ -47,6 +47,7 @@ export interface StopEvent extends HookEventBase {
   hook_event_name: "Stop";
   stop_hook_active?: boolean;
   last_assistant_message?: string;
+  transcript_path?: string;
 }
 
 export type HookEvent =
@@ -87,6 +88,12 @@ export interface Session {
   event_count: number;
   tool_count: number;
   status: "active" | "ended";
+  transcript_path: string | null;
+  total_input_tokens: number | null;
+  total_output_tokens: number | null;
+  total_cache_create_tokens: number | null;
+  total_cache_read_tokens: number | null;
+  num_turns: number | null;
 }
 
 // ── 분석 타입 ──
@@ -114,4 +121,20 @@ export interface ToolDurationStat {
   avg_ms: number;
   max_ms: number;
   count: number;
+}
+
+export interface TokenUsageSummary {
+  input_tokens: number;
+  output_tokens: number;
+  cache_create_tokens: number;
+  cache_read_tokens: number;
+  turns: number;
+  session_count: number;
+}
+
+// ── 필터 ──
+
+export interface FilterParams {
+  userId?: string;
+  toolName?: string;
 }

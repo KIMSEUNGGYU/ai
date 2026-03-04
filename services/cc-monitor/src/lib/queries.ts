@@ -6,7 +6,34 @@ import type {
   HourlyActivity,
   UserSummary,
   ToolDurationStat,
+  TokenUsageSummary,
+  FilterParams,
 } from "./types";
+
+// ── 필터 헬퍼 ──
+
+function buildFilterClause(
+  filters?: FilterParams,
+  prefix: string = ""
+): { clause: string; params: unknown[] } {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+  const col = prefix ? `${prefix}.` : "";
+
+  if (filters?.userId) {
+    conditions.push(`${col}user_id = ?`);
+    params.push(filters.userId);
+  }
+  if (filters?.toolName) {
+    conditions.push(`${col}tool_name = ?`);
+    params.push(filters.toolName);
+  }
+
+  return {
+    clause: conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "",
+    params,
+  };
+}
 
 // ── 이벤트 ──
 
@@ -38,18 +65,20 @@ export function calcToolDuration(toolUseId: string, postTimestamp: string): numb
   return duration >= 0 ? duration : null;
 }
 
-export function getRecentEvents(limit: number = 50): StoredEvent[] {
+export function getRecentEvents(limit: number = 50, filters?: FilterParams): StoredEvent[] {
   const db = getDb();
+  const { clause, params } = buildFilterClause(filters);
   return db
-    .prepare("SELECT * FROM events ORDER BY timestamp DESC LIMIT ?")
-    .all(limit) as StoredEvent[];
+    .prepare(`SELECT * FROM events WHERE 1=1 ${clause} ORDER BY timestamp DESC LIMIT ?`)
+    .all(...params, limit) as StoredEvent[];
 }
 
-export function getEventsSince(since: string, limit: number = 100): StoredEvent[] {
+export function getEventsSince(since: string, limit: number = 100, filters?: FilterParams): StoredEvent[] {
   const db = getDb();
+  const { clause, params } = buildFilterClause(filters);
   return db
-    .prepare("SELECT * FROM events WHERE timestamp > ? ORDER BY timestamp DESC LIMIT ?")
-    .all(since, limit) as StoredEvent[];
+    .prepare(`SELECT * FROM events WHERE timestamp > ? ${clause} ORDER BY timestamp DESC LIMIT ?`)
+    .all(since, ...params, limit) as StoredEvent[];
 }
 
 // ── 세션 ──
@@ -60,6 +89,7 @@ export function upsertSession(session: {
   project_path?: string;
   model?: string | null;
   permission_mode?: string | null;
+  transcript_path?: string | null;
   started_at?: string;
   ended_at?: string;
   status?: "active" | "ended";
@@ -89,6 +119,10 @@ export function upsertSession(session: {
       updates.push("permission_mode = @permission_mode");
       values.permission_mode = session.permission_mode;
     }
+    if (session.transcript_path) {
+      updates.push("transcript_path = @transcript_path");
+      values.transcript_path = session.transcript_path;
+    }
 
     if (updates.length > 0) {
       db.prepare(
@@ -111,8 +145,14 @@ export function upsertSession(session: {
   }
 }
 
-export function getSessions(status: "active" | "ended" | "all" = "active"): Session[] {
+export function getSessions(status: "active" | "ended" | "all" = "active", filters?: FilterParams): Session[] {
   const db = getDb();
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  // toolName 필터 시 해당 도구를 사용한 세션만 표시
+  const toolFilter = filters?.toolName ? "WHERE tool_name = ?" : "";
+  const joinType = filters?.toolName ? "INNER JOIN" : "LEFT JOIN";
 
   const baseQuery = `
     SELECT
@@ -120,41 +160,54 @@ export function getSessions(status: "active" | "ended" | "all" = "active"): Sess
       COALESCE(e.event_count, 0) as event_count,
       COALESCE(e.tool_count, 0) as tool_count
     FROM sessions s
-    LEFT JOIN (
+    ${joinType} (
       SELECT
         session_id,
         COUNT(*) as event_count,
         COUNT(CASE WHEN tool_name IS NOT NULL THEN 1 END) as tool_count
       FROM events
+      ${toolFilter}
       GROUP BY session_id
     ) e ON s.session_id = e.session_id
   `;
 
-  if (status === "all") {
-    return db.prepare(`${baseQuery} ORDER BY s.started_at DESC`).all() as Session[];
+  if (filters?.toolName) {
+    params.push(filters.toolName);
   }
 
+  if (status !== "all") {
+    conditions.push("s.status = ?");
+    params.push(status);
+  }
+  if (filters?.userId) {
+    conditions.push("s.user_id = ?");
+    params.push(filters.userId);
+  }
+
+  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+
   return db
-    .prepare(`${baseQuery} WHERE s.status = ? ORDER BY s.started_at DESC`)
-    .all(status) as Session[];
+    .prepare(`${baseQuery} ${where} ORDER BY s.started_at DESC`)
+    .all(...params) as Session[];
 }
 
 // ── 분석 ──
 
-export function getToolUsageStats(hours: number = 24): ToolUsageStat[] {
+export function getToolUsageStats(hours: number = 24, filters?: FilterParams): ToolUsageStat[] {
   const db = getDb();
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const { clause, params } = buildFilterClause(filters);
 
   const rows = db
     .prepare(`
       SELECT tool_name, COUNT(*) as count
       FROM events
-      WHERE tool_name IS NOT NULL AND timestamp > ?
+      WHERE tool_name IS NOT NULL AND timestamp > ? ${clause}
       GROUP BY tool_name
       ORDER BY count DESC
       LIMIT 10
     `)
-    .all(since) as Array<{ tool_name: string; count: number }>;
+    .all(since, ...params) as Array<{ tool_name: string; count: number }>;
 
   const total = rows.reduce((sum, r) => sum + r.count, 0);
 
@@ -165,9 +218,10 @@ export function getToolUsageStats(hours: number = 24): ToolUsageStat[] {
   }));
 }
 
-export function getToolDurationStats(hours: number = 24): ToolDurationStat[] {
+export function getToolDurationStats(hours: number = 24, filters?: FilterParams): ToolDurationStat[] {
   const db = getDb();
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const { clause, params } = buildFilterClause(filters);
 
   return db
     .prepare(`
@@ -180,30 +234,33 @@ export function getToolDurationStats(hours: number = 24): ToolDurationStat[] {
       WHERE tool_name IS NOT NULL
         AND tool_duration_ms IS NOT NULL
         AND event_type = 'PostToolUse'
-        AND timestamp > ?
+        AND timestamp > ? ${clause}
       GROUP BY tool_name
       ORDER BY avg_ms DESC
     `)
-    .all(since) as ToolDurationStat[];
+    .all(since, ...params) as ToolDurationStat[];
 }
 
-export function getHourlyActivity(hours: number = 24): HourlyActivity[] {
+export function getHourlyActivity(hours: number = 24, filters?: FilterParams): HourlyActivity[] {
   const db = getDb();
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  const { clause, params } = buildFilterClause(filters);
 
   return db
     .prepare(`
       SELECT CAST(strftime('%H', timestamp) AS INTEGER) as hour, COUNT(*) as count
       FROM events
-      WHERE timestamp > ?
+      WHERE timestamp > ? ${clause}
       GROUP BY hour
       ORDER BY hour
     `)
-    .all(since) as HourlyActivity[];
+    .all(since, ...params) as HourlyActivity[];
 }
 
-export function getUserSummaries(): UserSummary[] {
+export function getUserSummaries(filters?: FilterParams): UserSummary[] {
   const db = getDb();
+  const { clause, params } = buildFilterClause(filters, "e");
+
   return db
     .prepare(`
       SELECT
@@ -213,8 +270,70 @@ export function getUserSummaries(): UserSummary[] {
         MAX(e.timestamp) as last_activity
       FROM events e
       LEFT JOIN sessions s ON e.session_id = s.session_id
+      WHERE 1=1 ${clause}
       GROUP BY e.user_id
       ORDER BY last_activity DESC
     `)
-    .all() as UserSummary[];
+    .all(...params) as UserSummary[];
+}
+
+// ── 토큰 ──
+
+export function updateSessionTokens(
+  sessionId: string,
+  tokens: {
+    total_input_tokens: number;
+    total_output_tokens: number;
+    total_cache_create_tokens: number;
+    total_cache_read_tokens: number;
+    num_turns: number;
+  }
+): void {
+  const db = getDb();
+  db.prepare(`
+    UPDATE sessions
+    SET total_input_tokens = @total_input_tokens,
+        total_output_tokens = @total_output_tokens,
+        total_cache_create_tokens = @total_cache_create_tokens,
+        total_cache_read_tokens = @total_cache_read_tokens,
+        num_turns = @num_turns
+    WHERE session_id = @session_id
+  `).run({ session_id: sessionId, ...tokens });
+}
+
+export function getSessionTranscriptPath(sessionId: string): string | null {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT transcript_path FROM sessions WHERE session_id = ?")
+    .get(sessionId) as { transcript_path: string | null } | undefined;
+  return row?.transcript_path ?? null;
+}
+
+export function getTokenUsageSummary(filters?: FilterParams): TokenUsageSummary {
+  const db = getDb();
+  const conditions: string[] = ["total_input_tokens IS NOT NULL"];
+  const params: unknown[] = [];
+
+  if (filters?.userId) {
+    conditions.push("user_id = ?");
+    params.push(filters.userId);
+  }
+
+  const where = `WHERE ${conditions.join(" AND ")}`;
+
+  const row = db
+    .prepare(`
+      SELECT
+        COALESCE(SUM(total_input_tokens), 0) as input_tokens,
+        COALESCE(SUM(total_output_tokens), 0) as output_tokens,
+        COALESCE(SUM(total_cache_create_tokens), 0) as cache_create_tokens,
+        COALESCE(SUM(total_cache_read_tokens), 0) as cache_read_tokens,
+        COALESCE(SUM(num_turns), 0) as turns,
+        COUNT(*) as session_count
+      FROM sessions
+      ${where}
+    `)
+    .get(...params) as TokenUsageSummary;
+
+  return row;
 }

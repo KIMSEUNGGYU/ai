@@ -73,7 +73,14 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#8b949e",
     marginBottom: 12,
   },
-  list: { display: "flex", flexDirection: "column", gap: 6 },
+  list: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+    maxHeight: 600,
+    overflowY: "auto",
+    overflowX: "auto",
+  },
   empty: { color: "#484f58", fontStyle: "italic", fontSize: 13 },
   row: {
     display: "flex",
@@ -93,8 +100,6 @@ const styles: Record<string, React.CSSProperties> = {
   eventType: {
     flex: 1,
     color: "#c9d1d9",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
     whiteSpace: "nowrap",
   },
   duration: {

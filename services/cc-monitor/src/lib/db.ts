@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import path from "node:path";
 
-const SCHEMA = `
+const TABLES = `
   CREATE TABLE IF NOT EXISTS events (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_id TEXT NOT NULL,
@@ -28,9 +28,17 @@ const SCHEMA = `
     permission_mode TEXT,
     started_at TEXT NOT NULL,
     ended_at TEXT,
-    status TEXT NOT NULL DEFAULT 'active'
+    status TEXT NOT NULL DEFAULT 'active',
+    transcript_path TEXT,
+    total_input_tokens INTEGER,
+    total_output_tokens INTEGER,
+    total_cache_create_tokens INTEGER,
+    total_cache_read_tokens INTEGER,
+    num_turns INTEGER
   );
+`;
 
+const INDEXES = `
   CREATE INDEX IF NOT EXISTS idx_events_session ON events(session_id);
   CREATE INDEX IF NOT EXISTS idx_events_type ON events(event_type);
   CREATE INDEX IF NOT EXISTS idx_events_user ON events(user_id);
@@ -61,6 +69,14 @@ function migrate(db: Database.Database) {
   if (!sessionColNames.has("permission_mode")) {
     db.exec("ALTER TABLE sessions ADD COLUMN permission_mode TEXT");
   }
+
+  const tokenCols = ["transcript_path", "total_input_tokens", "total_output_tokens", "total_cache_create_tokens", "total_cache_read_tokens", "num_turns"];
+  for (const col of tokenCols) {
+    if (!sessionColNames.has(col)) {
+      const type = col === "transcript_path" ? "TEXT" : "INTEGER";
+      db.exec(`ALTER TABLE sessions ADD COLUMN ${col} ${type}`);
+    }
+  }
 }
 
 let db: Database.Database | null = null;
@@ -71,8 +87,9 @@ export function getDb(): Database.Database {
     db = new Database(dbPath);
     db.pragma("journal_mode = WAL");
     db.pragma("foreign_keys = ON");
-    db.exec(SCHEMA);
+    db.exec(TABLES);
     migrate(db);
+    db.exec(INDEXES);
   }
   return db;
 }

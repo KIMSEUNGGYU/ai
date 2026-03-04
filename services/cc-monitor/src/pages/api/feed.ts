@@ -9,8 +9,11 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
 
   const limit = Number(req.query.limit) || 50;
   const since = req.query.since as string | undefined;
+  const userId = req.query.userId as string | undefined;
+  const toolName = req.query.toolName as string | undefined;
+  const filters = { userId, toolName };
 
-  const events = since ? getEventsSince(since, limit) : getRecentEvents(limit);
+  const events = since ? getEventsSince(since, limit, filters) : getRecentEvents(limit, filters);
 
   return res.status(200).json({ events });
 }

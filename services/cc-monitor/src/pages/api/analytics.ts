@@ -5,6 +5,7 @@ import {
   getToolDurationStats,
   getHourlyActivity,
   getUserSummaries,
+  getTokenUsageSummary,
 } from "@/lib/queries";
 
 export default function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -13,11 +14,15 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   }
 
   const hours = Number(req.query.hours) || 24;
+  const userId = req.query.userId as string | undefined;
+  const toolName = req.query.toolName as string | undefined;
+  const filters = { userId, toolName };
 
-  const tools = getToolUsageStats(hours);
-  const toolDurations = getToolDurationStats(hours);
-  const hourly = getHourlyActivity(hours);
-  const users = getUserSummaries();
+  const tools = getToolUsageStats(hours, filters);
+  const toolDurations = getToolDurationStats(hours, filters);
+  const hourly = getHourlyActivity(hours, filters);
+  const users = getUserSummaries(filters);
+  const tokenUsage = getTokenUsageSummary(filters);
 
-  return res.status(200).json({ tools, toolDurations, hourly, users });
+  return res.status(200).json({ tools, toolDurations, hourly, users, tokenUsage });
 }
