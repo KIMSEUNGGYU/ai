@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 4000",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "deploy": "npx vercel --prod --scope kimseunggyus-projects"
   },
   "dependencies": {
     "next": "^15.0.0",

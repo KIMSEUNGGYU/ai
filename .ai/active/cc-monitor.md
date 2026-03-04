@@ -1,7 +1,7 @@
 # cc-monitor: Claude Code 팀 모니터링 서비스
 
 > 시작일: 2026-03-04
-> 상태: Phase 1 완료
+> 상태: Vercel 배포 완료 (Demo Mode)
 
 ## 진행 체크리스트
 
@@ -18,11 +18,34 @@
 - [x] 빌드 검증 (next build 성공)
 - [x] 동작 검증 (send-event.ts + API + DB + 대시보드 전체 파이프라인 확인)
 
+### Phase 1.5 — Vercel 배포 (Demo Mode)
+- [x] mock-data.ts 생성 (전체 쿼리 함수 대응)
+- [x] db.ts 수정 — better-sqlite3 동적 로드, isDemoMode() export
+- [x] queries.ts — 모든 함수에 demo mode 가드
+- [x] adoption-queries.ts — demo mode 가드
+- [x] cost-queries.ts — demo mode 가드
+- [x] package.json — better-sqlite3 → optionalDependencies
+- [x] next.config.ts — serverExternalPackages 조건부
+- [x] index.tsx — Demo Mode 배지 표시
+- [x] VERCEL=1 pnpm build 로컬 검증
+- [x] Vercel 배포 완료
+
 ### Phase 2 — 개선 (미정)
+- [ ] MySQL + Prisma 전환 (Vercel에서 실제 데이터 사용)
 - [ ] 실시간 업데이트 (SSE/WebSocket)
 - [ ] 차트 라이브러리 적용
-- [ ] PostgreSQL 마이그레이션
 - [ ] 세션 상세 페이지
+
+## 현재 컨텍스트
+- 배포 URL: https://cc-monitor.vercel.app
+- Vercel scope: kimseunggyus-projects
+- Demo Mode로 동작 중 (mock 데이터 표시)
+- 로컬에서는 기존 SQLite 그대로 동작
+
+## 결정사항
+- Demo Mode 패턴 채택 — Vercel serverless에서 better-sqlite3 네이티브 바이너리 불가, mock 데이터로 UI 우선 배포
+- better-sqlite3를 optionalDependencies로 이동 — Vercel에서 설치 실패해도 빌드 진행
+- isDemoMode() = process.env.VERCEL || getDb() === null — 두 조건 모두 체크
 
 ## 학습 메모
 
@@ -46,4 +69,8 @@
 - 유니온 타입에서 switch/case로 narrowing할 때 optional 필드가 `{} | null`로 추론되는 이슈
 - `"model" in event && typeof event.model === "string"` 같은 타입 가드로 해결
 
-<!-- last-active: 2026-03-04 20:56 -->
+### Vercel 배포 관련
+- better-sqlite3 타입: `import("better-sqlite3").Database`로 타입만 참조, 런타임은 require로 동적 로드
+- Vercel에서 `serverExternalPackages` 설정하면 해당 모듈을 찾으려 해서 에러 → 조건부로 제거
+
+<!-- last-active: 2026-03-04 21:35 -->
