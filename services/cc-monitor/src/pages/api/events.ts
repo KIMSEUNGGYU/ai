@@ -64,42 +64,49 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await calcToolDuration(stored.tool_use_id, stored.timestamp);
     }
 
-    if (event.hook_event_name === "Stop" || event.hook_event_name === "SessionEnd") {
+    if (event.hook_event_name === "Stop") {
       const transcriptPath = "transcript_path" in event && typeof event.transcript_path === "string"
         ? event.transcript_path
         : null;
       const toolSummary = "tool_summary" in event ? event.tool_summary : null;
+      if (transcriptPath || toolSummary) {
+        await upsertSession({
+          session_id: event.session_id,
+          ...(transcriptPath ? { transcript_path: transcriptPath } : {}),
+          ...(toolSummary ? { tool_summary: JSON.stringify(toolSummary) } : {}),
+        });
+      }
       const usage = "transcript_usage" in event && event.transcript_usage
         ? event.transcript_usage as { input_tokens: number; output_tokens: number; cache_create_tokens: number; cache_read_tokens: number; num_turns: number }
         : null;
-
-      const sessionUpdate: Record<string, unknown> = {
-        session_id: event.session_id,
-      };
-      if (event.hook_event_name === "SessionEnd") {
-        sessionUpdate.ended_at = stored.timestamp;
-        sessionUpdate.status = "ended";
-      }
-      if (transcriptPath) sessionUpdate.transcript_path = transcriptPath;
-      if (toolSummary) sessionUpdate.tool_summary = JSON.stringify(toolSummary);
-
-      await upsertSession(sessionUpdate as Parameters<typeof upsertSession>[0]);
-
       if (usage) {
-        try {
-          await updateSessionTokens(event.session_id, {
-            total_input_tokens: usage.input_tokens,
-            total_output_tokens: usage.output_tokens,
-            total_cache_create_tokens: usage.cache_create_tokens,
-            total_cache_read_tokens: usage.cache_read_tokens,
-            num_turns: usage.num_turns,
-          });
-          console.log(`[cc-monitor] Token update OK: session=${event.session_id}, input=${usage.input_tokens}, output=${usage.output_tokens}`);
-        } catch (tokenError) {
-          console.error(`[cc-monitor] Token update FAILED: session=${event.session_id}`, tokenError);
-        }
-      } else {
-        console.warn(`[cc-monitor] No transcript_usage in ${event.hook_event_name}: session=${event.session_id}`);
+        await updateSessionTokens(event.session_id, {
+          total_input_tokens: usage.input_tokens,
+          total_output_tokens: usage.output_tokens,
+          total_cache_create_tokens: usage.cache_create_tokens,
+          total_cache_read_tokens: usage.cache_read_tokens,
+          num_turns: usage.num_turns,
+        });
+      }
+    } else if (event.hook_event_name === "SessionEnd") {
+      const toolSummary = "tool_summary" in event ? event.tool_summary : null;
+      await upsertSession({
+        session_id: event.session_id,
+        ended_at: stored.timestamp,
+        status: "ended",
+        ...(toolSummary ? { tool_summary: JSON.stringify(toolSummary) } : {}),
+      });
+      const usage = "transcript_usage" in event && event.transcript_usage
+        ? event.transcript_usage as { input_tokens: number; output_tokens: number; cache_create_tokens: number; cache_read_tokens: number; num_turns: number }
+        : null;
+      if (usage) {
+        await updateSessionTokens(event.session_id, {
+          total_input_tokens: usage.input_tokens,
+          total_output_tokens: usage.output_tokens,
+          total_cache_create_tokens: usage.cache_create_tokens,
+          total_cache_read_tokens: usage.cache_read_tokens,
+          num_turns: usage.num_turns,
+        });
       }
     }
 

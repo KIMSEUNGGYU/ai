@@ -32,151 +32,11 @@ function formatTime(ts: string): string {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
-function formatDate(ts: string): string {
-  const d = new Date(ts);
-  const now = new Date();
-  const isToday = d.toDateString() === now.toDateString();
-  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-  if (isToday) return `오늘 ${time}`;
-  return `${d.getMonth() + 1}/${d.getDate()} ${time}`;
-}
-
 function eventTypeColor(type: string): "default" | "secondary" | "destructive" | "outline" {
   if (type === "UserPromptSubmit") return "default";
   if (type === "Stop" || type === "SessionEnd") return "destructive";
   if (type.startsWith("Post")) return "secondary";
   return "outline";
-}
-
-// 모델별 컨텍스트 윈도우 크기 (토큰)
-function getContextWindow(model: string | null): number {
-  if (!model) return 200_000;
-  if (model.includes("opus")) return 200_000;
-  if (model.includes("sonnet")) return 200_000;
-  if (model.includes("haiku")) return 200_000;
-  return 200_000;
-}
-
-// 컨텍스트 사용률 추정 (마지막 턴의 input ≈ 누적 input / turns * 가중치)
-function estimateContextUsage(session: Session): number | null {
-  const input = session.total_input_tokens;
-  const turns = session.num_turns;
-  if (input == null || !turns || turns === 0) return null;
-  // 마지막 턴의 input tokens ≈ total / turns * 1.5 (컨텍스트 누적 효과)
-  // 더 정확하게: 마지막 턴은 전체 컨텍스트를 포함하므로 total_input / turns 의 약 2배
-  const estimatedLastTurnInput = (input / turns) * Math.min(turns, 3);
-  const contextWindow = getContextWindow(session.model);
-  return Math.min(Math.round((estimatedLastTurnInput / contextWindow) * 100), 100);
-}
-
-// 캐시 히트율
-function getCacheHitRate(session: Session): number | null {
-  const input = session.total_input_tokens;
-  const cacheRead = session.total_cache_read_tokens;
-  if (input == null || cacheRead == null || input === 0) return null;
-  return Math.round((cacheRead / (input + cacheRead)) * 100);
-}
-
-function ProgressBar({ value, color = "bg-primary" }: { value: number; color?: string }) {
-  return (
-    <div className="h-1.5 w-full rounded-full bg-muted/40">
-      <div
-        className={`h-full rounded-full transition-all ${color}`}
-        style={{ width: `${Math.min(value, 100)}%` }}
-      />
-    </div>
-  );
-}
-
-function contextBarColor(pct: number): string {
-  if (pct >= 85) return "bg-red-500";
-  if (pct >= 60) return "bg-amber-500";
-  return "bg-emerald-500";
-}
-
-function cacheBarColor(pct: number): string {
-  if (pct >= 70) return "bg-emerald-500";
-  if (pct >= 40) return "bg-amber-500";
-  return "bg-red-500";
-}
-
-function SessionEfficiency({ session }: { session: Session }) {
-  const contextPct = estimateContextUsage(session);
-  const cacheHit = getCacheHitRate(session);
-  const turns = session.num_turns;
-  const totalTokens = (session.total_input_tokens ?? 0) + (session.total_output_tokens ?? 0);
-  const tokensPerTurn = turns && turns > 0 ? Math.round(totalTokens / turns) : null;
-  const toolCount = session.tool_count ?? 0;
-  const toolsPerTurn = turns && turns > 0 ? Math.round((toolCount / turns) * 10) / 10 : null;
-
-  // 세션 지속 시간
-  const durationMin = session.ended_at
-    ? Math.round((new Date(session.ended_at).getTime() - new Date(session.started_at).getTime()) / 60_000)
-    : null;
-
-  const hasData = contextPct != null || cacheHit != null || tokensPerTurn != null;
-  if (!hasData) return null;
-
-  return (
-    <>
-      <Separator />
-      <div>
-        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">세션 효율</h4>
-        <div className="space-y-3">
-          {/* 컨텍스트 사용률 */}
-          {contextPct != null && (
-            <div>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">컨텍스트 사용률 (추정)</span>
-                <span className={`font-mono font-bold ${contextPct >= 85 ? "text-red-400" : contextPct >= 60 ? "text-amber-400" : "text-emerald-400"}`}>
-                  {contextPct}%
-                </span>
-              </div>
-              <ProgressBar value={contextPct} color={contextBarColor(contextPct)} />
-              {contextPct >= 85 && (
-                <p className="mt-1 text-[10px] text-red-400/80">컨텍스트 윈도우 포화 근접 — compact 발생 가능</p>
-              )}
-            </div>
-          )}
-
-          {/* 캐시 효율 */}
-          {cacheHit != null && (
-            <div>
-              <div className="mb-1 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">캐시 히트율</span>
-                <span className={`font-mono font-bold ${cacheHit >= 70 ? "text-emerald-400" : cacheHit >= 40 ? "text-amber-400" : "text-red-400"}`}>
-                  {cacheHit}%
-                </span>
-              </div>
-              <ProgressBar value={cacheHit} color={cacheBarColor(cacheHit)} />
-            </div>
-          )}
-
-          {/* 효율 지표 그리드 */}
-          <div className="grid grid-cols-3 gap-3">
-            {tokensPerTurn != null && (
-              <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-                <div className="text-[10px] uppercase text-muted-foreground">토큰/턴</div>
-                <div className="font-mono text-sm font-bold">{formatTokens(tokensPerTurn)}</div>
-              </div>
-            )}
-            {toolsPerTurn != null && (
-              <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-                <div className="text-[10px] uppercase text-muted-foreground">도구/턴</div>
-                <div className="font-mono text-sm font-bold">{toolsPerTurn}</div>
-              </div>
-            )}
-            {durationMin != null && (
-              <div className="rounded-md border border-border/60 bg-muted/20 px-3 py-2">
-                <div className="text-[10px] uppercase text-muted-foreground">소요 시간</div>
-                <div className="font-mono text-sm font-bold">{durationMin >= 60 ? `${Math.floor(durationMin / 60)}h ${durationMin % 60}m` : `${durationMin}m`}</div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </>
-  );
 }
 
 function SessionDrawer({ session, events, isLoading, onClose }: {
@@ -185,15 +45,7 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
   isLoading: boolean;
   onClose: () => void;
 }) {
-  // tool_summary(경량 카운터) + events(개별 이벤트)에서 도구 카운트 합산
-  const lightToolCounts = parseToolSummary(session.tool_summary);
-  const eventToolCounts: Record<string, number> = {};
-  for (const ev of events) {
-    if (ev.tool_name && ev.event_type === "PostToolUse") {
-      eventToolCounts[ev.tool_name] = (eventToolCounts[ev.tool_name] ?? 0) + 1;
-    }
-  }
-  const toolSummary = { ...eventToolCounts, ...lightToolCounts };
+  const toolSummary = parseToolSummary((session as unknown as Record<string, unknown>).tool_summary as string | null);
   const prompts = events.filter((e) => e.event_type === "UserPromptSubmit");
 
   return (
@@ -259,9 +111,6 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
                 ))}
               </div>
             </div>
-
-            {/* 세션 효율 */}
-            <SessionEfficiency session={session} />
 
             {/* 도구 요약 */}
             {Object.keys(toolSummary).length > 0 && (
@@ -342,31 +191,6 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
   );
 }
 
-// 세션 목록의 토큰 컬럼에 미니 프로그레스바 표시
-function TokenCell({ session, maxTokens }: { session: Session; maxTokens: number }) {
-  const total = (session.total_input_tokens ?? 0) + (session.total_output_tokens ?? 0);
-  const pct = maxTokens > 0 ? (total / maxTokens) * 100 : 0;
-  const cacheHit = getCacheHitRate(session);
-
-  return (
-    <td className="px-4 py-3 text-right">
-      <div className="flex flex-col items-end gap-1">
-        <span className="font-mono">{formatTokens(total)}</span>
-        <div className="flex items-center gap-1.5">
-          {cacheHit != null && (
-            <span className={`text-[9px] ${cacheHit >= 70 ? "text-emerald-400" : cacheHit >= 40 ? "text-amber-400" : "text-muted-foreground/50"}`}>
-              캐시 {cacheHit}%
-            </span>
-          )}
-          <div className="h-1 w-12 rounded-full bg-muted/30">
-            <div className="h-full rounded-full bg-primary/60" style={{ width: `${Math.min(pct, 100)}%` }} />
-          </div>
-        </div>
-      </div>
-    </td>
-  );
-}
-
 export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTabProps) {
   const [selectedId, setSelectedId] = useState<string | null>(initialExpandedId ?? null);
   const [sessionEvents, setSessionEvents] = useState<Record<string, StoredEvent[]>>({});
@@ -419,16 +243,10 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
     }
   }, [selectedId]);
 
-  // active 먼저, 최신 활동(ended_at or started_at) 기준 내림차순
   const sorted = [...sessions].sort((a, b) => {
     if (a.status !== b.status) return a.status === "active" ? -1 : 1;
-    const aTime = new Date(a.last_event_at ?? a.ended_at ?? a.started_at).getTime();
-    const bTime = new Date(b.last_event_at ?? b.ended_at ?? b.started_at).getTime();
-    return bTime - aTime;
+    return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
   });
-
-  // 토큰 바 상대 비교용 최대값
-  const maxTokens = Math.max(...sessions.map((s) => (s.total_input_tokens ?? 0) + (s.total_output_tokens ?? 0)), 1);
 
   const selectedSession = selectedId ? sessions.find((s) => s.session_id === selectedId) : null;
 
@@ -441,10 +259,10 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
               <thead>
                 <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3">상태</th>
+                  <th className="px-4 py-3">사용자</th>
                   <th className="px-4 py-3">프로젝트</th>
                   <th className="px-4 py-3">모델</th>
                   <th className="px-4 py-3">시작</th>
-                  <th className="px-4 py-3">최신 활동</th>
                   <th className="px-4 py-3 text-right">이벤트</th>
                   <th className="px-4 py-3 text-right">토큰</th>
                 </tr>
@@ -463,16 +281,16 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
                         {s.status === "active" ? "Active" : "Ended"}
                       </Badge>
                     </td>
+                    <td className="px-4 py-3 font-mono text-xs">{s.user_id}</td>
                     <td className="px-4 py-3 text-muted-foreground">{shortPath(s.project_path)}</td>
                     <td className="px-4 py-3 text-muted-foreground">{s.model ?? "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {formatDate(s.started_at)}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {formatDate(s.last_event_at ?? s.ended_at ?? s.started_at)}
+                      {new Date(s.started_at).toLocaleTimeString()}
                     </td>
                     <td className="px-4 py-3 text-right">{s.event_count}</td>
-                    <TokenCell session={s} maxTokens={maxTokens} />
+                    <td className="px-4 py-3 text-right font-mono">
+                      {formatTokens((s.total_input_tokens ?? 0) + (s.total_output_tokens ?? 0))}
+                    </td>
                   </tr>
                 ))}
               </tbody>

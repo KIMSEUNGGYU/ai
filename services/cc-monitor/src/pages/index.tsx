@@ -5,6 +5,7 @@ import { getRecentEvents } from "@/lib/queries";
 import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries, getTokenUsageSummary } from "@/lib/queries";
 import { isDemoMode } from "@/lib/db";
 import { usePolling } from "@/hooks/usePolling";
+import { ActiveSessions } from "@/components/ActiveSessions";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { SessionsTab } from "@/components/SessionsTab";
 import { ToolUsageChart } from "@/components/ToolUsageChart";
@@ -30,6 +31,7 @@ interface DashboardData {
 
 const TABS = [
   { id: "overview", label: "Overview" },
+  { id: "cost", label: "Cost" },
   { id: "sessions", label: "Sessions" },
   { id: "config", label: "Config" },
 ];
@@ -39,7 +41,7 @@ export const getServerSideProps: GetServerSideProps<{
   isDemo: boolean;
 }> = async () => {
   const [sessions, events, tools, toolDurations, hourly, users, tokenUsage] = await Promise.all([
-    getSessions("all"),
+    getSessions("active"),
     getRecentEvents(30),
     getToolUsageStats(24),
     getToolDurationStats(24),
@@ -61,6 +63,7 @@ export default function Dashboard({
   isDemo,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [focusedSessionId, setFocusedSessionId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedToolName, setSelectedToolName] = useState("");
   const [allTools, setAllTools] = useState(initial.tools);
@@ -75,7 +78,7 @@ export default function Dashboard({
 
   const fetchSessions = useCallback(() => {
     const q = buildFilterQuery();
-    return fetch(`/api/sessions?status=all${q ? `&${q}` : ""}`).then((r) => r.json()).then((d) => d.sessions as Session[]);
+    return fetch(`/api/sessions${q ? `?${q}` : ""}`).then((r) => r.json()).then((d) => d.sessions as Session[]);
   }, [buildFilterQuery]);
 
   const fetchFeed = useCallback(() => {
@@ -114,7 +117,7 @@ export default function Dashboard({
   const tok = analytics?.tokenUsage ?? initial.tokenUsage;
 
   return (
-    <div className="px-4 py-6 md:px-8">
+    <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-8">
       <header className="mb-8 flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-end md:justify-between">
         <div className="flex flex-wrap items-baseline gap-3 md:gap-4">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">cc-monitor</h1>
@@ -178,11 +181,17 @@ export default function Dashboard({
         </CardContent>
       </Card>
 
-      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={(tab) => {
+        setActiveTab(tab);
+        if (tab !== "sessions") setFocusedSessionId(null);
+      }} />
 
       {activeTab === "overview" && (
         <div className="flex flex-col gap-8">
-          <CostTracking userId={selectedUserId || undefined} />
+          <ActiveSessions sessions={s} onSessionClick={(id) => {
+            setFocusedSessionId(id);
+            setActiveTab("sessions");
+          }} />
           <div className="grid gap-6 lg:grid-cols-2">
             <ToolUsageChart tools={t} durations={td} />
             <HourlyActivity hourly={h} />
@@ -191,7 +200,9 @@ export default function Dashboard({
         </div>
       )}
 
-      {activeTab === "sessions" && <SessionsTab sessions={s} events={e} />}
+      {activeTab === "cost" && <CostTracking userId={selectedUserId || undefined} />}
+
+      {activeTab === "sessions" && <SessionsTab sessions={s} events={e} initialExpandedId={focusedSessionId} />}
 
       {activeTab === "config" && <ConfigOverview />}
     </div>

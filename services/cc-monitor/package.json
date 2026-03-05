@@ -3,8 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "prisma generate && next dev -p 4000",
-    "postinstall": "prisma generate",
+    "dev": "next dev -p 4000",
     "build": "prisma generate && next build",
     "db:push": "prisma db push",
     "start": "next start",

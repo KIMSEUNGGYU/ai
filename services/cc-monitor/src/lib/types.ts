@@ -94,9 +94,6 @@ export interface Session {
   total_cache_create_tokens: number | null;
   total_cache_read_tokens: number | null;
   num_turns: number | null;
-  config: string | null;
-  tool_summary: string | null;
-  last_event_at: string | null;
 }
 
 // ── 분석 타입 ──

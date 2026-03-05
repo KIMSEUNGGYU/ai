@@ -218,22 +218,19 @@ export async function getSessions(status: "active" | "ended" | "all" = "active",
     SELECT
       s.*,
       COALESCE(e.event_count, 0) as event_count,
-      COALESCE(e.tool_count, 0) as tool_count,
-      e.last_event_at
+      COALESCE(e.tool_count, 0) as tool_count
     FROM sessions s
     ${joinType} (
       SELECT
         session_id,
         COUNT(*) as event_count,
-        COUNT(CASE WHEN tool_name IS NOT NULL THEN 1 END) as tool_count,
-        MAX(timestamp) as last_event_at
+        COUNT(CASE WHEN tool_name IS NOT NULL THEN 1 END) as tool_count
       FROM events
       ${toolFilter}
       GROUP BY session_id
     ) e ON s.session_id = e.session_id
     ${where}
-    ORDER BY CASE WHEN s.status = 'active' THEN 0 ELSE 1 END,
-             COALESCE(e.last_event_at, s.ended_at, s.started_at) DESC
+    ORDER BY s.started_at DESC
   `, ...params);
 
   return rows;
@@ -266,7 +263,7 @@ export async function getToolUsageStats(hours: number = 24, filters?: FilterPara
     ${where}
     GROUP BY tool_name
     ORDER BY count DESC
-    LIMIT 30
+    LIMIT 10
   `, ...params);
 
   const total = rows.reduce((sum, r) => sum + Number(r.count), 0);
