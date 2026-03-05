@@ -222,7 +222,8 @@ export async function getSessions(status: "active" | "ended" | "all" = "active",
       GROUP BY session_id
     ) e ON s.session_id = e.session_id
     ${where}
-    ORDER BY s.started_at DESC
+    ORDER BY CASE WHEN s.status = 'active' THEN 0 ELSE 1 END,
+             COALESCE(s.ended_at, s.started_at) DESC
   `, ...params);
 
   return rows;

@@ -251,9 +251,12 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
     }
   }, [selectedId]);
 
+  // active 먼저, 최신 활동(ended_at or started_at) 기준 내림차순
   const sorted = [...sessions].sort((a, b) => {
     if (a.status !== b.status) return a.status === "active" ? -1 : 1;
-    return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
+    const aTime = new Date(a.ended_at ?? a.started_at).getTime();
+    const bTime = new Date(b.ended_at ?? b.started_at).getTime();
+    return bTime - aTime;
   });
 
   const selectedSession = selectedId ? sessions.find((s) => s.session_id === selectedId) : null;
