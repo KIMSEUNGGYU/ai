@@ -11,6 +11,13 @@
  *   CC_MONITOR_USER — 사용자 식별자 (기본: hostname:username)
  */
 import { hostname, userInfo } from "node:os";
+import {
+  isLightTool,
+  incrementCounter,
+  readAndClearCounters,
+} from "./tool-counter.ts";
+import { parseTranscriptUsage } from "./transcript-reader.ts";
+import { collectConfig } from "./config-reader.ts";
 
 const API_URL = process.env.CC_MONITOR_URL ?? "https://cc-monitor.vercel.app";
 const USER_ID =
@@ -30,6 +37,49 @@ async function main() {
     event = JSON.parse(raw);
   } catch {
     process.exit(0);
+  }
+
+  const hookEvent = event.hook_event_name as string | undefined;
+  const toolName = event.tool_name as string | undefined;
+  const sessionId = event.session_id as string | undefined;
+
+  // 경량 도구: 서버 전송 대신 로컬 파일 카운터로 집계
+  if (
+    (hookEvent === "PreToolUse" || hookEvent === "PostToolUse") &&
+    toolName &&
+    isLightTool(toolName)
+  ) {
+    if (hookEvent === "PostToolUse" && sessionId) {
+      incrementCounter(sessionId, toolName);
+    }
+    process.exit(0);
+  }
+
+  // SessionStart 시 로컬 설정 스냅샷 첨부
+  if (hookEvent === "SessionStart") {
+    const cwd = event.cwd as string | undefined;
+    if (cwd) {
+      event.config_snapshot = collectConfig(cwd);
+    }
+  }
+
+  // Stop/SessionEnd 시 카운터 요약 첨부
+  if (
+    (hookEvent === "Stop" || hookEvent === "SessionEnd") &&
+    sessionId
+  ) {
+    const summary = readAndClearCounters(sessionId);
+    if (summary) {
+      event.tool_summary = summary;
+    }
+
+    const transcriptPath = event.transcript_path as string | undefined;
+    if (transcriptPath) {
+      const usage = await parseTranscriptUsage(transcriptPath);
+      if (usage) {
+        event.transcript_usage = usage;
+      }
+    }
   }
 
   try {

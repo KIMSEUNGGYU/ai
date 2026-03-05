@@ -2,8 +2,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { HookEvent } from "@/lib/types";
 import { processEvent } from "@/lib/event-processor";
-import { insertEvent, upsertSession, calcToolDuration, getSessionTranscriptPath, updateSessionTokens } from "@/lib/queries";
-import { parseTranscriptUsage } from "@/lib/transcript-parser";
+import { insertEvent, upsertSession, calcToolDuration, updateSessionTokens } from "@/lib/queries";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -63,17 +62,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           session_id: event.session_id,
           transcript_path: transcriptPath,
         });
-        parseTranscriptUsage(transcriptPath).then(async (usage) => {
-          if (usage) {
-            await updateSessionTokens(event.session_id, {
-              total_input_tokens: usage.input_tokens,
-              total_output_tokens: usage.output_tokens,
-              total_cache_create_tokens: usage.cache_create_tokens,
-              total_cache_read_tokens: usage.cache_read_tokens,
-              num_turns: usage.num_turns,
-            });
-          }
-        }).catch(() => {});
+      }
+      const usage = "transcript_usage" in event && event.transcript_usage
+        ? event.transcript_usage as { input_tokens: number; output_tokens: number; cache_create_tokens: number; cache_read_tokens: number; num_turns: number }
+        : null;
+      if (usage) {
+        await updateSessionTokens(event.session_id, {
+          total_input_tokens: usage.input_tokens,
+          total_output_tokens: usage.output_tokens,
+          total_cache_create_tokens: usage.cache_create_tokens,
+          total_cache_read_tokens: usage.cache_read_tokens,
+          num_turns: usage.num_turns,
+        });
       }
     } else if (event.hook_event_name === "SessionEnd") {
       await upsertSession({
@@ -81,19 +81,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ended_at: stored.timestamp,
         status: "ended",
       });
-      const tp = await getSessionTranscriptPath(event.session_id);
-      if (tp) {
-        parseTranscriptUsage(tp).then(async (usage) => {
-          if (usage) {
-            await updateSessionTokens(event.session_id, {
-              total_input_tokens: usage.input_tokens,
-              total_output_tokens: usage.output_tokens,
-              total_cache_create_tokens: usage.cache_create_tokens,
-              total_cache_read_tokens: usage.cache_read_tokens,
-              num_turns: usage.num_turns,
-            });
-          }
-        }).catch(() => {});
+      const usage = "transcript_usage" in event && event.transcript_usage
+        ? event.transcript_usage as { input_tokens: number; output_tokens: number; cache_create_tokens: number; cache_read_tokens: number; num_turns: number }
+        : null;
+      if (usage) {
+        await updateSessionTokens(event.session_id, {
+          total_input_tokens: usage.input_tokens,
+          total_output_tokens: usage.output_tokens,
+          total_cache_create_tokens: usage.cache_create_tokens,
+          total_cache_read_tokens: usage.cache_read_tokens,
+          num_turns: usage.num_turns,
+        });
       }
     }
 
