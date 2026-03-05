@@ -1,0 +1,7 @@
+{
+  "name": "@agents/eval",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "dependencies": {}
+}

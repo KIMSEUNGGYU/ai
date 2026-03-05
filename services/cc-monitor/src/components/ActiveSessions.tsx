@@ -2,9 +2,10 @@ import type { Session } from "@/lib/types";
 
 interface ActiveSessionsProps {
   sessions: Session[];
+  onSessionClick?: (sessionId: string) => void;
 }
 
-export function ActiveSessions({ sessions }: ActiveSessionsProps) {
+export function ActiveSessions({ sessions, onSessionClick }: ActiveSessionsProps) {
   return (
     <section>
       <h2 style={styles.title}>
@@ -16,7 +17,11 @@ export function ActiveSessions({ sessions }: ActiveSessionsProps) {
           <p style={styles.empty}>활성 세션 없음</p>
         )}
         {sessions.map((s) => (
-          <div key={s.session_id} style={styles.card}>
+          <div
+            key={s.session_id}
+            style={{ ...styles.card, ...(onSessionClick ? styles.clickable : {}) }}
+            onClick={() => onSessionClick?.(s.session_id)}
+          >
             <div style={styles.cardHeader}>
               <span style={styles.statusDot} />
               <strong>{s.user_id}</strong>
@@ -83,6 +88,7 @@ const styles: Record<string, React.CSSProperties> = {
   projectPath: { fontFamily: "monospace", marginBottom: 4 },
   stats: { marginBottom: 2 },
   duration: { color: "#484f58" },
+  clickable: { cursor: "pointer", transition: "border-color 0.15s" },
   modeBadge: {
     marginLeft: 8,
     padding: "1px 6px",

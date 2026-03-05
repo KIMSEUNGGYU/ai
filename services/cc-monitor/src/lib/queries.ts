@@ -88,6 +88,14 @@ export async function getRecentEvents(limit: number = 50, filters?: FilterParams
   }) as StoredEvent[];
 }
 
+export async function getSessionEvents(sessionId: string): Promise<StoredEvent[]> {
+  if (isDemoMode()) return mockEvents.filter((e) => e.session_id === sessionId);
+  return await prisma!.event.findMany({
+    where: { session_id: sessionId },
+    orderBy: { timestamp: "asc" },
+  }) as StoredEvent[];
+}
+
 export async function getEventsSince(since: string, limit: number = 100, filters?: FilterParams): Promise<StoredEvent[]> {
   if (isDemoMode()) return mockEvents.slice(0, limit);
   return await prisma!.event.findMany({
