@@ -30,7 +30,6 @@ interface DashboardData {
 
 const TABS = [
   { id: "overview", label: "Overview" },
-  { id: "cost", label: "Cost" },
   { id: "sessions", label: "Sessions" },
   { id: "config", label: "Config" },
 ];
@@ -183,6 +182,7 @@ export default function Dashboard({
 
       {activeTab === "overview" && (
         <div className="flex flex-col gap-8">
+          <CostTracking userId={selectedUserId || undefined} />
           <div className="grid gap-6 lg:grid-cols-2">
             <ToolUsageChart tools={t} durations={td} />
             <HourlyActivity hourly={h} />
@@ -190,8 +190,6 @@ export default function Dashboard({
           <TokenUsage usage={tok} />
         </div>
       )}
-
-      {activeTab === "cost" && <CostTracking userId={selectedUserId || undefined} />}
 
       {activeTab === "sessions" && <SessionsTab sessions={s} events={e} />}
 
