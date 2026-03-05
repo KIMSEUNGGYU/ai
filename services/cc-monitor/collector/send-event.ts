@@ -12,7 +12,7 @@
  */
 import { hostname, userInfo } from "node:os";
 
-const API_URL = process.env.CC_MONITOR_URL ?? "http://localhost:4000";
+const API_URL = process.env.CC_MONITOR_URL ?? "https://cc-monitor.vercel.app";
 const USER_ID =
   process.env.CC_MONITOR_USER ?? `${hostname()}:${userInfo().username}`;
 
