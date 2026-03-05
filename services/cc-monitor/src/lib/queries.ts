@@ -113,6 +113,15 @@ export async function upsertSession(session: {
   started_at?: string;
   ended_at?: string;
   status?: "active" | "ended";
+  config_claude_md_count?: number | null;
+  config_rules_count?: number | null;
+  config_mcp_count?: number | null;
+  config_hooks_count?: number | null;
+  config_mcp_names?: string | null;
+  config_rules_names?: string | null;
+  config_claude_md_paths?: string | null;
+  config_hooks_events?: string | null;
+  tool_summary?: string | null;
 }): Promise<void> {
   if (isDemoMode()) return;
   const db = prisma!;
@@ -128,6 +137,15 @@ export async function upsertSession(session: {
     if (session.model) data.model = session.model;
     if (session.permission_mode) data.permission_mode = session.permission_mode;
     if (session.transcript_path) data.transcript_path = session.transcript_path;
+    if (session.tool_summary) data.tool_summary = session.tool_summary;
+    if (session.config_claude_md_count !== undefined) data.config_claude_md_count = session.config_claude_md_count;
+    if (session.config_rules_count !== undefined) data.config_rules_count = session.config_rules_count;
+    if (session.config_mcp_count !== undefined) data.config_mcp_count = session.config_mcp_count;
+    if (session.config_hooks_count !== undefined) data.config_hooks_count = session.config_hooks_count;
+    if (session.config_mcp_names !== undefined) data.config_mcp_names = session.config_mcp_names;
+    if (session.config_rules_names !== undefined) data.config_rules_names = session.config_rules_names;
+    if (session.config_claude_md_paths !== undefined) data.config_claude_md_paths = session.config_claude_md_paths;
+    if (session.config_hooks_events !== undefined) data.config_hooks_events = session.config_hooks_events;
 
     if (Object.keys(data).length > 0) {
       await db.session.update({
@@ -145,6 +163,15 @@ export async function upsertSession(session: {
         permission_mode: session.permission_mode ?? null,
         started_at: session.started_at ?? new Date().toISOString(),
         status: session.status ?? "active",
+        config_claude_md_count: session.config_claude_md_count ?? null,
+        config_rules_count: session.config_rules_count ?? null,
+        config_mcp_count: session.config_mcp_count ?? null,
+        config_hooks_count: session.config_hooks_count ?? null,
+        config_mcp_names: session.config_mcp_names ?? null,
+        config_rules_names: session.config_rules_names ?? null,
+        config_claude_md_paths: session.config_claude_md_paths ?? null,
+        config_hooks_events: session.config_hooks_events ?? null,
+        tool_summary: session.tool_summary ?? null,
       },
     });
   }

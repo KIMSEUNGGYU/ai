@@ -53,6 +53,17 @@ model Session {
   total_cache_create_tokens Int?
   total_cache_read_tokens Int?
   num_turns               Int?
+  // v2: config snapshot (SessionStart에서 수집)
+  config_claude_md_count    Int?
+  config_rules_count        Int?
+  config_mcp_count          Int?
+  config_hooks_count        Int?
+  config_mcp_names          String?   // JSON array: ["serena", "linear"]
+  config_rules_names        String?   // JSON array: ["git-workflow.md", "security.md"]
+  config_claude_md_paths    String?   // JSON array: ["~/.claude/CLAUDE.md"]
+  config_hooks_events       String?   // JSON array: ["PreToolUse", "PostToolUse"]
+  // v2: tool summary (Stop/SessionEnd에서 수집)
+  tool_summary              String?   // JSON: {"Read": 42, "Edit": 8}
 
   events                  Event[]
   prompt_logs             PromptLog[]

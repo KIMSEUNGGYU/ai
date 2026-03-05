@@ -26,6 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // FK 제약: 세션이 먼저 존재해야 이벤트 삽입 가능
     // SessionStart는 새 세션 생성, 그 외는 기존 세션 없으면 자동 생성
     if (event.hook_event_name === "SessionStart") {
+      const config = "config_snapshot" in event ? event.config_snapshot as Record<string, unknown> | null : null;
       await upsertSession({
         session_id: event.session_id,
         user_id: userId,
@@ -34,6 +35,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         permission_mode: event.permission_mode ?? null,
         started_at: stored.timestamp,
         status: "active",
+        ...(config ? {
+          config_claude_md_count: config.claude_md_count as number,
+          config_rules_count: config.rules_count as number,
+          config_mcp_count: config.mcp_count as number,
+          config_hooks_count: config.hooks_count as number,
+          config_mcp_names: JSON.stringify(config.mcp_names),
+          config_rules_names: JSON.stringify(config.rules_names),
+          config_claude_md_paths: JSON.stringify(config.claude_md_paths),
+          config_hooks_events: JSON.stringify(config.hooks_events),
+        } : {}),
       });
     } else {
       // 다른 이벤트: 세션이 없으면 생성 (최소 정보로)
@@ -57,10 +68,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const transcriptPath = "transcript_path" in event && typeof event.transcript_path === "string"
         ? event.transcript_path
         : null;
-      if (transcriptPath) {
+      const toolSummary = "tool_summary" in event ? event.tool_summary : null;
+      if (transcriptPath || toolSummary) {
         await upsertSession({
           session_id: event.session_id,
-          transcript_path: transcriptPath,
+          ...(transcriptPath ? { transcript_path: transcriptPath } : {}),
+          ...(toolSummary ? { tool_summary: JSON.stringify(toolSummary) } : {}),
         });
       }
       const usage = "transcript_usage" in event && event.transcript_usage
@@ -76,10 +89,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         });
       }
     } else if (event.hook_event_name === "SessionEnd") {
+      const toolSummary = "tool_summary" in event ? event.tool_summary : null;
       await upsertSession({
         session_id: event.session_id,
         ended_at: stored.timestamp,
         status: "ended",
+        ...(toolSummary ? { tool_summary: JSON.stringify(toolSummary) } : {}),
       });
       const usage = "transcript_usage" in event && event.transcript_usage
         ? event.transcript_usage as { input_tokens: number; output_tokens: number; cache_create_tokens: number; cache_read_tokens: number; num_turns: number }
