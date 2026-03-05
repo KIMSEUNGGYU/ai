@@ -255,7 +255,7 @@ export async function getToolUsageStats(hours: number = 24, filters?: FilterPara
     ${where}
     GROUP BY tool_name
     ORDER BY count DESC
-    LIMIT 10
+    LIMIT 30
   `, ...params);
 
   const total = rows.reduce((sum, r) => sum + Number(r.count), 0);

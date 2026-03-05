@@ -63,6 +63,7 @@ export default function Dashboard({
   isDemo,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [activeTab, setActiveTab] = useState("overview");
+  const [focusedSessionId, setFocusedSessionId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedToolName, setSelectedToolName] = useState("");
   const [allTools, setAllTools] = useState(initial.tools);
@@ -180,11 +181,17 @@ export default function Dashboard({
         </CardContent>
       </Card>
 
-      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={(tab) => {
+        setActiveTab(tab);
+        if (tab !== "sessions") setFocusedSessionId(null);
+      }} />
 
       {activeTab === "overview" && (
         <div className="flex flex-col gap-8">
-          <ActiveSessions sessions={s} />
+          <ActiveSessions sessions={s} onSessionClick={(id) => {
+            setFocusedSessionId(id);
+            setActiveTab("sessions");
+          }} />
           <div className="grid gap-6 lg:grid-cols-2">
             <ToolUsageChart tools={t} durations={td} />
             <HourlyActivity hourly={h} />
@@ -195,7 +202,7 @@ export default function Dashboard({
 
       {activeTab === "cost" && <CostTracking userId={selectedUserId || undefined} />}
 
-      {activeTab === "sessions" && <SessionsTab sessions={s} events={e} />}
+      {activeTab === "sessions" && <SessionsTab sessions={s} events={e} initialExpandedId={focusedSessionId} />}
 
       {activeTab === "config" && <ConfigOverview />}
     </div>
