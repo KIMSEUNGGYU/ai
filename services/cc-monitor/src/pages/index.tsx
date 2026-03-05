@@ -16,6 +16,9 @@ import { CostTracking } from "@/components/CostTracking";
 import { AdoptionSummaryCards } from "@/components/AdoptionSummaryCards";
 import { AdoptionTrendChart } from "@/components/AdoptionTrendChart";
 import { ToolAdoptionChart } from "@/components/ToolAdoptionChart";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Session, StoredEvent, ToolUsageStat, ToolDurationStat, HourlyActivity as HourlyActivityType, UserSummary as UserSummaryType, TokenUsageSummary, AdoptionSummary } from "@/lib/types";
 
 interface DashboardData {
@@ -119,29 +122,32 @@ export default function Dashboard({
   const adopt = adoptionData ?? initial.adoption;
 
   return (
-    <div style={styles.container}>
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <h1 style={styles.headerTitle}>cc-monitor</h1>
-          <span style={styles.headerSub}>Claude Code 모니터링 대시보드</span>
+    <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-8">
+      <header className="mb-8 flex flex-col gap-4 border-b border-border pb-4 md:flex-row md:items-end md:justify-between">
+        <div className="flex flex-wrap items-baseline gap-3 md:gap-4">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">cc-monitor</h1>
+          <span className="text-sm text-muted-foreground">Claude Code 모니터링 대시보드</span>
           {isDemo && (
-            <span style={styles.demoBadge}>Demo Mode</span>
+            <Badge variant="secondary" className="border border-amber-500/40 bg-amber-500/10 text-amber-300">
+              Demo Mode
+            </Badge>
           )}
         </div>
-        <nav style={styles.nav}>
-          <Link href="/prompt-logs" style={styles.navLink}>
-            프롬프트 로그
-          </Link>
+        <nav className="flex items-center gap-3">
+          <Button asChild variant="outline" size="sm">
+            <Link href="/prompt-logs">프롬프트 로그</Link>
+          </Button>
         </nav>
       </header>
 
-      <div style={styles.filterBar}>
-        <label style={styles.filterLabel}>
+      <Card className="mb-6 border-border/80 bg-card/80">
+        <CardContent className="flex flex-wrap items-center gap-4 !p-4">
+          <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           User
           <select
             value={selectedUserId}
             onChange={(e) => setSelectedUserId(e.target.value)}
-            style={styles.filterSelect}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground outline-none ring-offset-background focus-visible:ring-1 focus-visible:ring-ring"
           >
             <option value="">전체</option>
             {allUsers.map((user) => (
@@ -150,14 +156,14 @@ export default function Dashboard({
               </option>
             ))}
           </select>
-        </label>
+          </label>
 
-        <label style={styles.filterLabel}>
+          <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Tool
           <select
             value={selectedToolName}
             onChange={(e) => setSelectedToolName(e.target.value)}
-            style={styles.filterSelect}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground outline-none ring-offset-background focus-visible:ring-1 focus-visible:ring-ring"
           >
             <option value="">전체</option>
             {allTools.map((tool) => (
@@ -166,25 +172,29 @@ export default function Dashboard({
               </option>
             ))}
           </select>
-        </label>
+          </label>
 
-        {(selectedUserId || selectedToolName) && (
-          <button
-            onClick={() => {
-              setSelectedUserId("");
-              setSelectedToolName("");
-            }}
-            style={styles.filterReset}
-          >
-            초기화
-          </button>
-        )}
-      </div>
+          {(selectedUserId || selectedToolName) && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={() => {
+                setSelectedUserId("");
+                setSelectedToolName("");
+              }}
+            >
+              초기화
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
-      <div style={styles.layout}>
-        <div style={styles.left}>
+      <div className="grid gap-8 xl:grid-cols-2">
+        <div className="flex flex-col gap-8">
           <ActiveSessions sessions={s} />
-          <div style={styles.analyticsGrid}>
+          <div className="grid gap-6 lg:grid-cols-2">
             <ToolUsageChart tools={t} durations={td} />
             <HourlyActivity hourly={h} />
           </div>
@@ -192,9 +202,9 @@ export default function Dashboard({
           <CostTracking userId={selectedUserId || undefined} />
           <UserSummary users={u} />
         </div>
-        <div style={styles.right}>
+        <div className="flex flex-col gap-8">
           <ActivityFeed events={e} />
-          <div style={styles.adoptionSection}>
+          <div className="flex flex-col gap-6 border-t border-border pt-2">
             <AdoptionSummaryCards summary={adopt} />
             <AdoptionTrendChart trend={adopt.trend} />
             <ToolAdoptionChart tools={adopt.top_tools} />
@@ -204,122 +214,3 @@ export default function Dashboard({
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    maxWidth: 1200,
-    margin: "0 auto",
-    padding: "24px 32px",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 16,
-    marginBottom: 32,
-    borderBottom: "1px solid #21262d",
-    paddingBottom: 16,
-  },
-  headerLeft: {
-    display: "flex",
-    alignItems: "baseline",
-    gap: 16,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: "#f0f6fc",
-  },
-  headerSub: {
-    fontSize: 13,
-    color: "#484f58",
-  },
-  demoBadge: {
-    fontSize: 11,
-    color: "#f0883e",
-    background: "rgba(240, 136, 62, 0.15)",
-    border: "1px solid rgba(240, 136, 62, 0.4)",
-    borderRadius: 4,
-    padding: "2px 8px",
-    fontWeight: 600,
-    letterSpacing: "0.02em",
-  },
-  nav: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-  },
-  navLink: {
-    fontSize: 13,
-    color: "#58a6ff",
-    textDecoration: "none",
-    padding: "6px 14px",
-    border: "1px solid #30363d",
-    borderRadius: 6,
-    background: "#161b22",
-    fontWeight: 500,
-    transition: "border-color 0.15s",
-  },
-  layout: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 32,
-  },
-  left: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 32,
-  },
-  right: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 32,
-  },
-  filterBar: {
-    display: "flex",
-    alignItems: "center",
-    gap: 16,
-    marginBottom: 24,
-    padding: "12px 16px",
-    background: "#161b22",
-    border: "1px solid #30363d",
-    borderRadius: 8,
-  },
-  filterLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    fontSize: 12,
-    color: "#8b949e",
-    fontWeight: 600,
-  },
-  filterSelect: {
-    background: "#0d1117",
-    border: "1px solid #30363d",
-    borderRadius: 4,
-    color: "#c9d1d9",
-    padding: "4px 8px",
-    fontSize: 12,
-  },
-  filterReset: {
-    background: "transparent",
-    border: "1px solid #30363d",
-    borderRadius: 4,
-    color: "#f85149",
-    padding: "4px 12px",
-    fontSize: 11,
-    cursor: "pointer",
-  },
-  analyticsGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: 24,
-  },
-  adoptionSection: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 24,
-    paddingTop: 8,
-    borderTop: "1px solid #21262d",
-  },
-};

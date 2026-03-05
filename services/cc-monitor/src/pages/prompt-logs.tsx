@@ -6,6 +6,8 @@ import { PromptLogTable } from "@/components/PromptLogTable";
 import { PromptLogDetailPanel } from "@/components/PromptLogDetail";
 import { PromptLogFilters, type PromptLogFilterValues } from "@/components/PromptLogFilters";
 import { Pagination } from "@/components/Pagination";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { PromptLog, PromptLogDetail, PromptLogListResponse } from "@/lib/types";
 
 interface PageData {
@@ -108,15 +110,15 @@ export default function PromptLogsPage({
   }, []);
 
   return (
-    <div style={styles.container}>
+    <div className="mx-auto max-w-[1400px] px-4 py-6 md:px-8">
       {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerLeft}>
-          <Link href="/" style={styles.backLink}>
-            &larr; 대시보드
-          </Link>
-          <h1 style={styles.headerTitle}>프롬프트 로그</h1>
-          <span style={styles.headerSub}>
+      <header className="mb-5 flex items-end justify-between border-b border-border pb-4">
+        <div className="flex flex-wrap items-baseline gap-3 md:gap-4">
+          <Button asChild variant="ghost" size="sm" className="px-2">
+            <Link href="/">&larr; 대시보드</Link>
+          </Button>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">프롬프트 로그</h1>
+          <span className="text-sm text-muted-foreground">
             총 {logsData.total}건의 프롬프트
           </span>
         </div>
@@ -130,12 +132,19 @@ export default function PromptLogsPage({
       />
 
       {/* Main content: table + detail */}
-      <div style={styles.content}>
-        <div style={selectedLog ? styles.tableAreaWithDetail : styles.tableArea}>
+      <div className="mt-4 flex flex-col gap-6 xl:flex-row xl:items-start">
+        <div
+          className={cn(
+            "relative flex-1",
+            selectedLog && "xl:max-w-[calc(100%-420px)]"
+          )}
+        >
           {/* Loading overlay */}
           {loading && (
-            <div style={styles.loadingOverlay}>
-              <span style={styles.loadingText}>로딩 중...</span>
+            <div className="absolute inset-0 z-10 flex items-center justify-center rounded-lg bg-background/80">
+              <span className="rounded-md border border-input bg-card px-4 py-2 text-sm text-muted-foreground">
+                로딩 중...
+              </span>
             </div>
           )}
 
@@ -158,7 +167,7 @@ export default function PromptLogsPage({
 
         {/* Detail panel */}
         {selectedLog && (
-          <div style={styles.detailArea}>
+          <div className="w-full shrink-0 xl:sticky xl:top-6 xl:w-[400px]">
             <PromptLogDetailPanel
               detail={logDetail}
               loading={detailLoading}
@@ -170,83 +179,3 @@ export default function PromptLogsPage({
     </div>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    maxWidth: 1400,
-    margin: "0 auto",
-    padding: "24px 32px",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-    borderBottom: "1px solid #21262d",
-    paddingBottom: 16,
-  },
-  headerLeft: {
-    display: "flex",
-    alignItems: "baseline",
-    gap: 16,
-  },
-  backLink: {
-    fontSize: 13,
-    color: "#58a6ff",
-    textDecoration: "none",
-    display: "flex",
-    alignItems: "center",
-    gap: 4,
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 700,
-    color: "#f0f6fc",
-  },
-  headerSub: {
-    fontSize: 13,
-    color: "#484f58",
-  },
-  content: {
-    display: "flex",
-    gap: 24,
-    marginTop: 16,
-    alignItems: "flex-start",
-  },
-  tableArea: {
-    flex: 1,
-    position: "relative",
-  },
-  tableAreaWithDetail: {
-    flex: 1,
-    position: "relative",
-    maxWidth: "calc(100% - 420px)",
-  },
-  detailArea: {
-    width: 400,
-    flexShrink: 0,
-    position: "sticky",
-    top: 24,
-  },
-  loadingOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: "rgba(13, 17, 23, 0.7)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 10,
-    borderRadius: 8,
-  },
-  loadingText: {
-    color: "#8b949e",
-    fontSize: 14,
-    background: "#161b22",
-    padding: "8px 16px",
-    borderRadius: 6,
-    border: "1px solid #30363d",
-  },
-};
