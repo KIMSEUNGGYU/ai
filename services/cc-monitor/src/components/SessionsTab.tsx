@@ -32,6 +32,15 @@ function formatTime(ts: string): string {
   return new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
+function formatDate(ts: string): string {
+  const d = new Date(ts);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const time = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  if (isToday) return `오늘 ${time}`;
+  return `${d.getMonth() + 1}/${d.getDate()} ${time}`;
+}
+
 function eventTypeColor(type: string): "default" | "secondary" | "destructive" | "outline" {
   if (type === "UserPromptSubmit") return "default";
   if (type === "Stop" || type === "SessionEnd") return "destructive";
@@ -270,10 +279,10 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
               <thead>
                 <tr className="border-b border-border text-left text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   <th className="px-4 py-3">상태</th>
-                  <th className="px-4 py-3">사용자</th>
                   <th className="px-4 py-3">프로젝트</th>
                   <th className="px-4 py-3">모델</th>
                   <th className="px-4 py-3">시작</th>
+                  <th className="px-4 py-3">최신 활동</th>
                   <th className="px-4 py-3 text-right">이벤트</th>
                   <th className="px-4 py-3 text-right">토큰</th>
                 </tr>
@@ -292,11 +301,13 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
                         {s.status === "active" ? "Active" : "Ended"}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 font-mono text-xs">{s.user_id}</td>
                     <td className="px-4 py-3 text-muted-foreground">{shortPath(s.project_path)}</td>
                     <td className="px-4 py-3 text-muted-foreground">{s.model ?? "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {new Date(s.started_at).toLocaleTimeString()}
+                      {formatDate(s.started_at)}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {formatDate(s.ended_at ?? s.started_at)}
                     </td>
                     <td className="px-4 py-3 text-right">{s.event_count}</td>
                     <td className="px-4 py-3 text-right font-mono">

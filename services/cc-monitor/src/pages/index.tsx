@@ -40,7 +40,7 @@ export const getServerSideProps: GetServerSideProps<{
   isDemo: boolean;
 }> = async () => {
   const [sessions, events, tools, toolDurations, hourly, users, tokenUsage] = await Promise.all([
-    getSessions("active"),
+    getSessions("all"),
     getRecentEvents(30),
     getToolUsageStats(24),
     getToolDurationStats(24),
@@ -76,7 +76,7 @@ export default function Dashboard({
 
   const fetchSessions = useCallback(() => {
     const q = buildFilterQuery();
-    return fetch(`/api/sessions${q ? `?${q}` : ""}`).then((r) => r.json()).then((d) => d.sessions as Session[]);
+    return fetch(`/api/sessions?status=all${q ? `&${q}` : ""}`).then((r) => r.json()).then((d) => d.sessions as Session[]);
   }, [buildFilterQuery]);
 
   const fetchFeed = useCallback(() => {
