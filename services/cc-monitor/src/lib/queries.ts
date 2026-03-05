@@ -1094,6 +1094,84 @@ export async function saveAdoptionSnapshot(
   );
 }
 
+export async function getSessionConfigs(): Promise<Array<{
+  user_id: string;
+  session_id: string;
+  started_at: string;
+  config_claude_md_count: number | null;
+  config_rules_count: number | null;
+  config_mcp_count: number | null;
+  config_hooks_count: number | null;
+  config_mcp_names: string | null;
+  config_rules_names: string | null;
+  config_claude_md_paths: string | null;
+  config_hooks_events: string | null;
+}>> {
+  if (isDemoMode()) {
+    return [
+      {
+        user_id: "demo-user-1",
+        session_id: "demo-session-1",
+        started_at: new Date().toISOString(),
+        config_claude_md_count: 2,
+        config_rules_count: 5,
+        config_mcp_count: 3,
+        config_hooks_count: 6,
+        config_mcp_names: JSON.stringify(["serena", "linear", "slack"]),
+        config_rules_names: JSON.stringify(["git-workflow.md", "security.md", "performance.md", "agents.md", "pc-map.md"]),
+        config_claude_md_paths: JSON.stringify(["~/.claude/CLAUDE.md", "~/dev/agents/CLAUDE.md"]),
+        config_hooks_events: JSON.stringify(["SessionStart", "SessionEnd", "PreToolUse", "PostToolUse", "UserPromptSubmit", "Stop"]),
+      },
+      {
+        user_id: "demo-user-2",
+        session_id: "demo-session-2",
+        started_at: new Date(Date.now() - 3600000).toISOString(),
+        config_claude_md_count: 1,
+        config_rules_count: 2,
+        config_mcp_count: 1,
+        config_hooks_count: 3,
+        config_mcp_names: JSON.stringify(["serena"]),
+        config_rules_names: JSON.stringify(["git-workflow.md", "security.md"]),
+        config_claude_md_paths: JSON.stringify(["~/.claude/CLAUDE.md"]),
+        config_hooks_events: JSON.stringify(["SessionStart", "SessionEnd", "Stop"]),
+      },
+    ];
+  }
+
+  // 각 user_id의 가장 최근 세션에서 config 정보 가져오기
+  // Prisma에서 group by + max를 직접 하기 어려우므로 rawQuery 대신
+  // 모든 config 있는 세션을 가져와서 JS에서 최신만 필터
+  const sessions = await prisma!.session.findMany({
+    where: {
+      config_claude_md_count: { not: null },
+    },
+    select: {
+      user_id: true,
+      session_id: true,
+      started_at: true,
+      config_claude_md_count: true,
+      config_rules_count: true,
+      config_mcp_count: true,
+      config_hooks_count: true,
+      config_mcp_names: true,
+      config_rules_names: true,
+      config_claude_md_paths: true,
+      config_hooks_events: true,
+    },
+    orderBy: { started_at: "desc" },
+  });
+
+  // 각 user의 최신 세션만
+  const latestByUser = new Map<string, typeof sessions[0]>();
+  for (const s of sessions) {
+    if (!latestByUser.has(s.user_id)) {
+      latestByUser.set(s.user_id, s);
+    }
+  }
+
+  return Array.from(latestByUser.values());
+}
+
 export async function getAdoptionSnapshots(
   period: AdoptionPeriod = "day",
   limit: number = 30

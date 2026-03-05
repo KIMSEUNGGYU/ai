@@ -1,25 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
-import Link from "next/link";
 import { getSessions } from "@/lib/queries";
 import { getRecentEvents } from "@/lib/queries";
-import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries, getTokenUsageSummary, getAdoptionSummary } from "@/lib/queries";
+import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries, getTokenUsageSummary } from "@/lib/queries";
 import { isDemoMode } from "@/lib/db";
 import { usePolling } from "@/hooks/usePolling";
 import { ActiveSessions } from "@/components/ActiveSessions";
 import { ActivityFeed } from "@/components/ActivityFeed";
+import { SessionsTab } from "@/components/SessionsTab";
 import { ToolUsageChart } from "@/components/ToolUsageChart";
 import { HourlyActivity } from "@/components/HourlyActivity";
-import { UserSummary } from "@/components/UserSummary";
 import { TokenUsage } from "@/components/TokenUsage";
 import { CostTracking } from "@/components/CostTracking";
-import { AdoptionSummaryCards } from "@/components/AdoptionSummaryCards";
-import { AdoptionTrendChart } from "@/components/AdoptionTrendChart";
-import { ToolAdoptionChart } from "@/components/ToolAdoptionChart";
+import { ConfigOverview } from "@/components/ConfigOverview";
+import { TabNav } from "@/components/TabNav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import type { Session, StoredEvent, ToolUsageStat, ToolDurationStat, HourlyActivity as HourlyActivityType, UserSummary as UserSummaryType, TokenUsageSummary, AdoptionSummary } from "@/lib/types";
+import type { Session, StoredEvent, ToolUsageStat, ToolDurationStat, HourlyActivity as HourlyActivityType, UserSummary as UserSummaryType, TokenUsageSummary } from "@/lib/types";
 
 interface DashboardData {
   sessions: Session[];
@@ -29,14 +27,20 @@ interface DashboardData {
   hourly: HourlyActivityType[];
   users: UserSummaryType[];
   tokenUsage: TokenUsageSummary;
-  adoption: AdoptionSummary;
 }
+
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "cost", label: "Cost" },
+  { id: "sessions", label: "Sessions" },
+  { id: "config", label: "Config" },
+];
 
 export const getServerSideProps: GetServerSideProps<{
   initial: DashboardData;
   isDemo: boolean;
 }> = async () => {
-  const [sessions, events, tools, toolDurations, hourly, users, tokenUsage, adoption] = await Promise.all([
+  const [sessions, events, tools, toolDurations, hourly, users, tokenUsage] = await Promise.all([
     getSessions("active"),
     getRecentEvents(30),
     getToolUsageStats(24),
@@ -44,12 +48,11 @@ export const getServerSideProps: GetServerSideProps<{
     getHourlyActivity(24),
     getUserSummaries(),
     getTokenUsageSummary(),
-    getAdoptionSummary(),
   ]);
 
   return {
     props: {
-      initial: { sessions, events, tools, toolDurations, hourly, users, tokenUsage, adoption },
+      initial: { sessions, events, tools, toolDurations, hourly, users, tokenUsage },
       isDemo: isDemoMode(),
     },
   };
@@ -59,6 +62,7 @@ export default function Dashboard({
   initial,
   isDemo,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const [activeTab, setActiveTab] = useState("overview");
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedToolName, setSelectedToolName] = useState("");
   const [allTools, setAllTools] = useState(initial.tools);
@@ -92,17 +96,9 @@ export default function Dashboard({
     }>;
   }, [buildFilterQuery]);
 
-  const fetchAdoption = useCallback(() => {
-    const params = new URLSearchParams();
-    if (selectedUserId) params.set("userId", selectedUserId);
-    const q = params.toString();
-    return fetch(`/api/adoption${q ? `?${q}` : ""}`).then((r) => r.json()) as Promise<AdoptionSummary>;
-  }, [selectedUserId]);
-
   const { data: sessions } = usePolling(fetchSessions, 10_000);
   const { data: events } = usePolling(fetchFeed, 10_000);
   const { data: analytics } = usePolling(fetchAnalytics, 30_000);
-  const { data: adoptionData } = usePolling(fetchAdoption, 60_000);
 
   // 필터 없을 때만 드롭다운 옵션 갱신
   useEffect(function syncDropdownOptions() {
@@ -117,9 +113,7 @@ export default function Dashboard({
   const t = analytics?.tools ?? initial.tools;
   const td = analytics?.toolDurations ?? initial.toolDurations;
   const h = analytics?.hourly ?? initial.hourly;
-  const u = analytics?.users ?? initial.users;
   const tok = analytics?.tokenUsage ?? initial.tokenUsage;
-  const adopt = adoptionData ?? initial.adoption;
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 py-6 md:px-8">
@@ -133,11 +127,6 @@ export default function Dashboard({
             </Badge>
           )}
         </div>
-        <nav className="flex items-center gap-3">
-          <Button asChild variant="outline" size="sm">
-            <Link href="/prompt-logs">프롬프트 로그</Link>
-          </Button>
-        </nav>
       </header>
 
       <Card className="mb-6 border-border/80 bg-card/80">
@@ -191,7 +180,9 @@ export default function Dashboard({
         </CardContent>
       </Card>
 
-      <div className="grid gap-8 xl:grid-cols-2">
+      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+
+      {activeTab === "overview" && (
         <div className="flex flex-col gap-8">
           <ActiveSessions sessions={s} />
           <div className="grid gap-6 lg:grid-cols-2">
@@ -199,18 +190,14 @@ export default function Dashboard({
             <HourlyActivity hourly={h} />
           </div>
           <TokenUsage usage={tok} />
-          <CostTracking userId={selectedUserId || undefined} />
-          <UserSummary users={u} />
         </div>
-        <div className="flex flex-col gap-8">
-          <ActivityFeed events={e} />
-          <div className="flex flex-col gap-6 border-t border-border pt-2">
-            <AdoptionSummaryCards summary={adopt} />
-            <AdoptionTrendChart trend={adopt.trend} />
-            <ToolAdoptionChart tools={adopt.top_tools} />
-          </div>
-        </div>
-      </div>
+      )}
+
+      {activeTab === "cost" && <CostTracking userId={selectedUserId || undefined} />}
+
+      {activeTab === "sessions" && <SessionsTab sessions={s} events={e} />}
+
+      {activeTab === "config" && <ConfigOverview />}
     </div>
   );
 }
