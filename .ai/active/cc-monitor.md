@@ -73,4 +73,4 @@
 - better-sqlite3 타입: `import("better-sqlite3").Database`로 타입만 참조, 런타임은 require로 동적 로드
 - Vercel에서 `serverExternalPackages` 설정하면 해당 모듈을 찾으려 해서 에러 → 조건부로 제거
 
-<!-- last-active: 2026-03-05 06:33 -->
+<!-- last-active: 2026-03-05 06:47 -->
