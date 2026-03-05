@@ -18,6 +18,8 @@ importers:
         specifier: ^5.5.0
         version: 5.9.3
 
+  packages/eval: {}
+
   packages/shared: {}
 
   services/cc-monitor:
@@ -83,6 +85,9 @@ importers:
 
   services/fe-auto:
     dependencies:
+      '@agents/eval':
+        specifier: workspace:*
+        version: link:../../packages/eval
       '@anthropic-ai/claude-agent-sdk':
         specifier: ^0.1.1
         version: 0.1.77(zod@4.3.6)
