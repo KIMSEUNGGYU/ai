@@ -2,7 +2,7 @@ import { writeFile, mkdir } from "node:fs/promises";
 import type { EvalReport } from "./types.js";
 
 /** 콘솔에 테이블 형식으로 출력 */
-export function printReport(report: EvalReport): void {
+export function printReport<TInput = string, TExpected = unknown>(report: EvalReport<TInput, TExpected>): void {
   const { summary, results } = report;
 
   console.log("\n" + "═".repeat(70));
@@ -58,8 +58,8 @@ export function printReport(report: EvalReport): void {
 }
 
 /** JSON 파일로 저장 */
-export async function saveReport(
-  report: EvalReport,
+export async function saveReport<TInput = string, TExpected = unknown>(
+  report: EvalReport<TInput, TExpected>,
   dir: string
 ): Promise<string> {
   await mkdir(dir, { recursive: true });
