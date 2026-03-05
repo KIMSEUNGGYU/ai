@@ -1,7 +1,7 @@
 # cc-monitor: Claude Code 팀 모니터링 서비스
 
 > 시작일: 2026-03-04
-> 상태: v2 구현 완료 (로컬 테스트 + 배포 필요)
+> 상태: Phase 3 진행 중 (worktree: feat/cc-monitor-phase3)
 
 ## 진행 체크리스트
 
@@ -14,55 +14,47 @@
 
 ### Phase 2 — v2 (수집 개선 + 대시보드 재구성)
 - [x] send-event.ts enrichment 수집기
-  - [x] 경량 도구 카운터 (Read/Edit/Glob/Grep/Write → 로컬 파일 캐시)
-  - [x] transcript 파싱을 collector로 이동 (서버 로컬 의존 제거)
-  - [x] SessionStart config 수집 (CLAUDE.md, rules, MCP, hooks)
 - [x] Session 스키마 v2 (config + tool_summary 컬럼 추가)
 - [x] events.ts enriched 이벤트 저장
 - [x] 4탭 대시보드 (Overview / Cost / Sessions / Config)
-  - [x] TabNav 컴포넌트
-  - [x] Overview: ActiveSessions + ToolUsage + HourlyActivity + TokenUsage
-  - [x] Cost: CostTracking
-  - [x] Sessions: 세션 테이블 + inline 상세 (토큰, tool_summary)
-  - [x] Config: 사용자별 설정 카드 + MCP 채택률
-- [x] 미사용 컴포넌트 정리 (Adoption 3개, PromptLog 4개, transcript-parser 삭제)
+- [x] 미사용 컴포넌트 정리
 
-### Phase 3 — 남은 작업
-- [ ] **세션 클릭 → 작업 로그 상세** (Overview의 ActiveSessions 카드 클릭 시 이벤트 타임라인 + 토큰 + tool_summary + 프롬프트 표시)
-- [ ] **Skills 수집** (현재 Skill 도구 사용이 수집되지 않는 문제 — send-event.ts에서 Skill을 경량 도구에서 제외했는지 확인, event-processor의 summarizeToolInput에서 Skill 처리 확인)
-- [ ] Prisma db push (Turso에 새 컬럼 반영)
-- [ ] Vercel 재배포
-- [ ] 실제 데이터로 전체 파이프라인 E2E 테스트
+### Phase 3 — 진행 중
+- [x] **세션 상세 Drawer** (오른쪽 55% 슬라이드, Esc 닫기, 토큰+도구+프롬프트+이벤트 타임라인)
+- [x] **Turso DB v2 컬럼 추가** (ALTER TABLE로 9개 컬럼 직접 추가)
+- [x] **토큰/Cost 수집 수정** (events.ts Stop/SessionEnd 로직 통합 + 로깅)
+- [x] **기존 세션 토큰 backfill** (16개 세션 transcript 파싱 → DB 업데이트)
+- [x] **Tool LIMIT 10→30** (Skill 등 필터 드롭다운 노출)
+- [x] **Skills 수집 확인** (이미 정상 수집, Drawer 도구 요약에 events 기반 집계 합산)
+- [x] **Overview ActiveSessions 제거** (Sessions 탭과 중복)
+- [x] **세션 정렬** (active 먼저 + 최신 활동일 기준 내림차순)
+- [x] **Sessions 탭: 전체 세션 표시** (active만 → all)
+- [x] **날짜 컬럼 추가** + 사용자 컬럼 제거
+- [x] **max-w-[1200px] 제거** (전체 너비)
+- [x] **postinstall에 prisma generate 추가**
+- [x] **main에 v2 코드 push** → Vercel 자동 배포
 - [ ] mock-data에 config/tool_summary 필드 추가 (Demo Mode 대응)
 - [ ] 차트 라이브러리 적용 (비용 추이, 활동 차트)
 - [ ] 실시간 업데이트 (SSE)
 
 ## 현재 컨텍스트
-- v2 구현 완료 (5개 커밋, main 브랜치)
-- 배포 URL: https://cc-monitor.vercel.app (아직 v1)
-- 핵심 변경: send-event.ts가 로컬에서 enrichment 후 원격 전송
-- collector/: tool-counter.ts, transcript-reader.ts, config-reader.ts 신규
-- 설계 문서: docs/plans/2026-03-06-cc-monitor-v2-design.md
+- **worktree**: `.worktrees/cc-monitor-fixes` (브랜치: feat/cc-monitor-phase3, main 기반)
+- **main에 push 완료**: 세션 Drawer + 토큰 저장 수정 + Tool LIMIT (커밋 2e2f3ff)
+- **worktree 커밋 6개**: Skill 합산, ActiveSessions 제거, 정렬, 전체 세션, 날짜 컬럼 등
+- **worktree → main 머지 필요** (feat/cc-monitor-phase3 → main)
+- Vercel 배포 URL: https://cc-monitor.vercel.app
+- .env 복사 필요: worktree에는 .env가 gitignore라 수동 복사
 
 ## 결정사항
-- send-event.ts enrichment 패턴 — 로컬 hook이 데이터를 가공하여 원격 서버는 저장만
-- 경량 도구(Read/Edit/Glob/Grep/Write) 카운트만 수집 — 개별 이벤트 저장은 노이즈
-- transcript 파싱을 collector로 이동 — Vercel에서 로컬 파일 접근 불가 문제 해결
-- 4탭 대시보드 — Overview/Cost/Sessions/Config (기존 단일 페이지에서 분리)
-- Adoption 컴포넌트 제거 — Overview KPI로 축소, 과도한 메트릭 정리
-- claude-hud 참고 — config-reader.ts는 HUD의 config-reader 로직 기반
+- Overview ActiveSessions 제거 — Sessions 탭 Drawer로 통합 (중복 제거)
+- Drawer UI 채택 — inline 확장 대신 오른쪽 55% 슬라이드 패널
+- 도구 요약 합산 — tool_summary(경량 카운터) + events PostToolUse 집계
+- 세션 정렬: active → ended, 최신 활동일(ended_at ?? started_at) DESC
+- postinstall에 prisma generate — worktree에서도 바로 실행 가능
+- backfill 스크립트 — 1회성 /tmp/backfill-tokens.js, 커밋 불필요
 
-## 학습 메모
+## 메모
+- Vercel 재배포 후 새 세션부터 토큰 자동 수집됨
+- 기존 세션 중 transcript 파일 없는 7개는 backfill 불가 (삭제된 transcript)
 
-### claude-hud 데이터 소스
-- Usage %: OAuth API (api.anthropic.com/api/oauth/usage) — 구독 사용률
-- Tool 사용: transcript JSONL 파싱
-- Config 카운트: 파일시스템 읽기 (settings.json, .mcp.json 등)
-- 토큰 수: transcript의 message.usage
-
-### 경량 도구 카운터 패턴
-- send-event.ts는 매번 새 프로세스 → 파일 기반 캐시 (/tmp/cc-monitor-{session_id}.json)
-- PostToolUse만 카운트 (Pre는 무시 — 중복 방지)
-- Stop/SessionEnd 시 캐시 읽고 삭제
-
-<!-- last-active: 2026-03-05 18:56 -->
+<!-- last-active: 2026-03-06 04:30 -->
