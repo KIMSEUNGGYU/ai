@@ -45,7 +45,15 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
   isLoading: boolean;
   onClose: () => void;
 }) {
-  const toolSummary = parseToolSummary((session as unknown as Record<string, unknown>).tool_summary as string | null);
+  // tool_summary(경량 카운터) + events(개별 이벤트)에서 도구 카운트 합산
+  const lightToolCounts = parseToolSummary((session as unknown as Record<string, unknown>).tool_summary as string | null);
+  const eventToolCounts: Record<string, number> = {};
+  for (const ev of events) {
+    if (ev.tool_name && ev.event_type === "PostToolUse") {
+      eventToolCounts[ev.tool_name] = (eventToolCounts[ev.tool_name] ?? 0) + 1;
+    }
+  }
+  const toolSummary = { ...eventToolCounts, ...lightToolCounts };
   const prompts = events.filter((e) => e.event_type === "UserPromptSubmit");
 
   return (
