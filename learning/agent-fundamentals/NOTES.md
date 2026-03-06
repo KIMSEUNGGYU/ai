@@ -24,18 +24,26 @@
 ### 파일 구조와 역할
 
 ```
-services/fe-auto/
-├── main.ts              ← 오케스트레이터: 누가 언제 뭘 할지 결정
-├── agents/
-│   ├── spec-agent.ts    ← 기획문서 → 구현 스펙 변환
-│   ├── code-agent.ts    ← 스펙 → 코드 생성
-│   └── review-agent.ts  ← 생성된 코드 리뷰
-├── evaluators/
-│   ├── spec-eval.ts     ← 스펙 품질 검증 (6개 섹션 존재?)
-│   ├── code-eval.ts     ← 코드 품질 검증 (빌드 에러?)
-│   └── review-eval.ts   ← 리뷰 결과 검증 (CRITICAL 이슈?)
-├── types.ts             ← 공통 타입
-└── conventions.ts       ← 플러그인 경로, 파일 로더
+agent-fundamentals/
+├── main.ts                    ← 오케스트레이터: 누가 언제 뭘 할지 결정
+├── agents/                    ← 서브에이전트 (실행 주체)
+│   ├── spec-agent.ts          ← 기획문서 → 구현 스펙 변환
+│   ├── code-agent.ts          ← 스펙 → 코드 생성
+│   ├── review-agent.ts        ← 코드 리뷰 (Claude SDK)
+│   └── review-agent-openai.ts ← 코드 리뷰 (Codex SDK)
+├── evaluators/                ← 하네스: 채점표 (어떻게 평가?)
+│   ├── spec-eval.ts           ← 스펙 품질 검증 (6개 섹션 존재?)
+│   ├── code-eval.ts           ← 코드 품질 검증 (빌드 에러?)
+│   └── review-eval.ts         ← 리뷰 결과 검증 + 점수 산출
+├── evals/                     ← 하네스: 시험 문제 (뭘로 평가?)
+│   ├── spec-date-utils.md     ← 테스트 스펙 (날짜 유틸)
+│   ├── spec-api-params.md     ← 테스트 스펙 (API 파라미터)
+│   ├── spec-status-badge.md   ← 테스트 스펙 (React 컴포넌트)
+│   └── output/                ← 에이전트 출력 (.gitignore)
+├── test/                      ← 단위 테스트 (evaluator 자체 검증)
+│   └── review-eval.test.ts
+├── types.ts                   ← 공통 타입
+└── conventions.ts             ← 플러그인 경로, 파일 로더
 ```
 
 ### 전체 파이프라인
@@ -196,10 +204,9 @@ async function main() {
     );
     totalCost += reviewResult.cost;
 
-    // ────── Step 3: 점수 추출 ──────
-    // Review Agent 출력에서 "75/100" 같은 패턴을 찾아 숫자로 변환
-    const scoreMatch = reviewResult.output.match(/(\d+)\s*[/\/]\s*100/);
-    const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+    // ────── Step 3: 점수 산출 ──────
+    // CRITICAL/HIGH/MEDIUM 카운트에서 결정적(deterministic) 점수 산출
+    const score = computeScoreFromReview(reviewResult.output);
     scoreHistory.push(score);
     console.log(`[점수] ${score}/100 (히스토리: ${scoreHistory.join(" → ")})`);
 
@@ -509,8 +516,29 @@ export async function runReviewAgent(...): Promise<AgentResult> {
 
 ## 4. 하네스 (Eval) — 에이전트 출력 검증
 
-하네스는 **"이 출력이 최소 기준을 충족하는가?"**를 코드로 판단하는 함수다.
+하네스는 **"이 출력이 최소 기준을 충족하는가?"**를 코드로 판단하는 시스템이다.
 에이전트의 출력(문자열)을 받아서 `{ pass, feedback }`을 반환한다.
+
+### evaluators vs evals — 헷갈리기 쉬운 두 폴더
+
+```
+하네스 (Harness) = 에이전트 품질 자동 검증 시스템 전체
+├── evaluators/  ← 채점표 (어떻게 평가할 것인가?)
+│   "CRITICAL 0개, HIGH 0개면 통과"
+│   "빌드 에러 없으면 통과"
+│
+└── evals/       ← 시험 문제 (뭘로 평가할 것인가?)
+    "formatRelativeDate 유틸 함수 만들어봐"
+    "StatusBadge 컴포넌트 만들어봐"
+```
+
+**비유**:
+- **하네스** = 시험 시스템 전체
+- **evaluators** = 채점표 (정답 기준, 배점 규칙)
+- **evals** = 시험지 (문제 모음)
+
+evaluators는 **코드**(`.ts`)이고, evals는 **데이터**(`.md` 스펙 파일)이다.
+evaluators는 거의 안 바뀌지만, evals는 새로운 테스트 케이스를 추가하면 계속 늘어난다.
 
 ### 공통 타입
 
@@ -728,13 +756,28 @@ Ralph:
 #### 요소 1: 점수 추적 — "나 지금 나아지고 있어?"
 
 ```typescript
-// main.ts:120-124
-const scoreMatch = reviewResult.output.match(/(\d+)\s*[/\/]\s*100/);
-const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+// evaluators/review-eval.ts — 점수 산출
+export function computeScoreFromReview(output: string): number {
+  const critical = (output.match(/CRITICAL/gi) || []).length;
+  const high = (output.match(/HIGH/gi) || []).length;
+  const medium = (output.match(/MEDIUM/gi) || []).length;
+
+  return Math.max(0, 100 - critical * 30 - high * 15 - medium * 5);
+}
+// CRITICAL 1개 = -30점, HIGH 1개 = -15점, MEDIUM 1개 = -5점
+// 예: CRITICAL 0, HIGH 1, MEDIUM 1 → 100 - 15 - 5 = 80점
+
+// main.ts — 점수 추적
+const score = computeScoreFromReview(reviewResult.output);
 scoreHistory.push(score);
-// scoreHistory = [60, 72, 74, 91]
+// scoreHistory = [80, 100]
 // → 매 사이클의 점수를 배열로 기록해서 추이를 본다
 ```
+
+**왜 LLM 출력 파싱이 아닌 카운트 기반인가?**
+- LLM에 "XX/100 형식으로 점수 내줘"라고 하면 형식이 일관적이지 않음
+- CRITICAL/HIGH/MEDIUM은 리뷰 프롬프트에서 **출력 형식으로 강제**하므로 신뢰할 수 있음
+- 채점 기준이 코드에 명시적 → evaluator 자체를 단위 테스트로 검증 가능
 
 #### 요소 2: 정체 감지 — "같은 삽질 반복 중인가?"
 
@@ -1138,3 +1181,16 @@ Cycle 2: Code Agent (두 관점의 피드백 반영) → [Claude + OpenAI] → .
 ```
 
 각 에이전트에 가장 적합한 모델을 매칭하는 것 — 이게 멀티 모델 오케스트레이션의 본질이다.
+
+---
+
+## 부록: 실행 결과 예시
+
+실제 파이프라인 실행 로그와 해석은 별도 파일에 정리:
+
+→ [evals/results/RUN-EXAMPLES.md](./evals/results/RUN-EXAMPLES.md)
+
+포함 내용:
+- 1사이클 통과 예시 (유틸 함수, `--reviewer both`)
+- 2사이클 Ralph 전략 전환 예시 (React 컴포넌트)
+- 정체 감지 + 점수 산출 개선 전후 비교

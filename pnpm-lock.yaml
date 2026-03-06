@@ -99,12 +99,6 @@ importers:
         specifier: ^5.5.0
         version: 5.9.3
 
-  services/fe-auto:
-    dependencies:
-      '@anthropic-ai/claude-agent-sdk':
-        specifier: ^0.1.1
-        version: 0.1.77(zod@4.3.6)
-
   services/morning-brief:
     dependencies:
       '@anthropic-ai/claude-agent-sdk':

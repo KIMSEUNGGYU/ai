@@ -3,6 +3,7 @@ import { runReviewAgent } from "./agents/review-agent.js";
 import { runReviewAgentOpenAI } from "./agents/review-agent-openai.js";
 import { runSpecAgent } from "./agents/spec-agent.js";
 import { loadSpec } from "./conventions.js";
+import { computeScoreFromReview } from "./evaluators/review-eval.js";
 import type { AgentResult, FeAutoInput, PipelineState } from "./types.js";
 
 type ReviewerType = "claude" | "openai" | "both";
@@ -125,9 +126,8 @@ async function main() {
     );
     totalCost += reviewResult.cost;
 
-    // 점수 추출 (리뷰 결과에서 숫자 점수 파싱)
-    const scoreMatch = reviewResult.output.match(/(\d+)\s*[/\/]\s*100/);
-    const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+    // 점수 산출 (CRITICAL/HIGH/MEDIUM 카운트 기반 — LLM 출력 형식에 의존하지 않음)
+    const score = computeScoreFromReview(reviewResult.output);
     scoreHistory.push(score);
     console.log(`[점수] ${score}/100 (히스토리: ${scoreHistory.join(" → ")})`);
 
