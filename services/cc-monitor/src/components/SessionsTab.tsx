@@ -350,17 +350,18 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
               {/* 필터 배지 */}
               {events.length > 0 && (
                 <div className="mb-2 flex flex-wrap items-center gap-1">
-                  {isFiltering && (
-                    <>
-                      <button
-                        onClick={resetFilter}
-                        className="rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-accent"
-                      >
-                        Reset
-                      </button>
-                      <span className="mx-1 h-3 w-px bg-border" />
-                    </>
-                  )}
+                  <button
+                    onClick={resetFilter}
+                    disabled={!isFiltering}
+                    className={`rounded px-1.5 py-0.5 text-[10px] ${
+                      isFiltering
+                        ? "text-muted-foreground hover:bg-accent cursor-pointer"
+                        : "text-muted-foreground/40 cursor-default"
+                    }`}
+                  >
+                    Reset
+                  </button>
+                  <span className="mx-1 h-3 w-px bg-border" />
                   {ALL_CATEGORIES.map((cat) => {
                     const isActive = selectedCategories.has(cat);
                     const count = categoryCounts[cat];
@@ -369,9 +370,9 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
                       <button
                         key={cat}
                         onClick={() => toggleCategory(cat)}
-                        className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-opacity ${
-                          isActive ? CATEGORY_COLORS[cat] : "border-border/50 text-muted-foreground/50 bg-transparent"
-                        } ${isActive ? "opacity-100" : "opacity-60"}`}
+                        className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-all ${
+                          isActive ? CATEGORY_COLORS[cat] : "border-border text-muted-foreground bg-muted/30"
+                        }`}
                       >
                         {cat} ({count})
                       </button>
