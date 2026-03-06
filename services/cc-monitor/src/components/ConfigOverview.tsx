@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { configQueryOptions } from "@/lib/query-options";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -22,11 +23,8 @@ function parseJsonArray(json: string | null): string[] {
 }
 
 export function ConfigOverview() {
-  const [configs, setConfigs] = useState<ConfigData[]>([]);
-
-  useEffect(function fetchConfigs() {
-    fetch("/api/config").then((r) => r.json()).then((d) => setConfigs(d.configs ?? []));
-  }, []);
+  const { data = [] } = useQuery(configQueryOptions());
+  const configs = data as unknown as ConfigData[];
 
   if (configs.length === 0) {
     return (

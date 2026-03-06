@@ -112,12 +112,8 @@ export async function fetchSessionEvents(sessionId: string): Promise<StoredEvent
 
 // ── GET /api/config — config ──
 
-export interface ConfigData {
-  [key: string]: unknown;
-}
-
-export async function fetchConfig(): Promise<ConfigData[]> {
-  const data = await apiClient.get("config").json<{ configs: ConfigData[] }>();
+export async function fetchConfig(): Promise<Record<string, unknown>[]> {
+  const data = await apiClient.get("config").json<{ configs: Record<string, unknown>[] }>();
   return data.configs ?? [];
 }
 
