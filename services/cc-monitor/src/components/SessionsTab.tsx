@@ -199,10 +199,8 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
   const toolSummary = { ...eventToolCounts, ...lightToolCounts };
   const prompts = events.filter((e) => e.event_type === "UserPromptSubmit");
 
-  // 필터링 상태
-  const [selectedCategories, setSelectedCategories] = useState<Set<ToolCategory>>(
-    new Set(ALL_CATEGORIES)
-  );
+  // 필터링 상태: 빈 Set = 전체 표시, 선택하면 해당 카테고리만 표시
+  const [selectedCategories, setSelectedCategories] = useState<Set<ToolCategory>>(new Set());
 
   const toggleCategory = (cat: ToolCategory) => {
     setSelectedCategories((prev) => {
@@ -213,8 +211,8 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
     });
   };
 
-  const selectAll = () => setSelectedCategories(new Set(ALL_CATEGORIES));
-  const clearAll = () => setSelectedCategories(new Set());
+  const resetFilter = () => setSelectedCategories(new Set());
+  const isFiltering = selectedCategories.size > 0;
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -226,8 +224,10 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
   }, [events]);
 
   const filteredEvents = useMemo(
-    () => events.filter((ev) => selectedCategories.has(getToolCategory(ev.tool_name, ev.event_type))),
-    [events, selectedCategories]
+    () => isFiltering
+      ? events.filter((ev) => selectedCategories.has(getToolCategory(ev.tool_name, ev.event_type)))
+      : events,
+    [events, selectedCategories, isFiltering]
   );
 
   return (
@@ -350,30 +350,33 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
               {/* 필터 배지 */}
               {events.length > 0 && (
                 <div className="mb-2 flex flex-wrap items-center gap-1">
-                  <button
-                    onClick={selectAll}
-                    className="rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-accent"
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={clearAll}
-                    className="rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-accent"
-                  >
-                    Clear
-                  </button>
-                  <span className="mx-1 h-3 w-px bg-border" />
-                  {ALL_CATEGORIES.map((cat) => (
-                    <button
-                      key={cat}
-                      onClick={() => toggleCategory(cat)}
-                      className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-opacity ${
-                        CATEGORY_COLORS[cat]
-                      } ${selectedCategories.has(cat) ? "opacity-100" : "opacity-30"}`}
-                    >
-                      {cat}{categoryCounts[cat] ? ` (${categoryCounts[cat]})` : ""}
-                    </button>
-                  ))}
+                  {isFiltering && (
+                    <>
+                      <button
+                        onClick={resetFilter}
+                        className="rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-accent"
+                      >
+                        Reset
+                      </button>
+                      <span className="mx-1 h-3 w-px bg-border" />
+                    </>
+                  )}
+                  {ALL_CATEGORIES.map((cat) => {
+                    const isActive = selectedCategories.has(cat);
+                    const count = categoryCounts[cat];
+                    if (!count) return null;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => toggleCategory(cat)}
+                        className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-opacity ${
+                          CATEGORY_COLORS[cat]
+                        } ${!isFiltering || isActive ? "opacity-100" : "opacity-30"}`}
+                      >
+                        {cat} ({count})
+                      </button>
+                    );
+                  })}
                 </div>
               )}
 
