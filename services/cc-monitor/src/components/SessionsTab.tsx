@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { getToolCategory, CATEGORY_COLORS, ALL_CATEGORIES, type ToolCategory } from "@/lib/tool-categories";
+import { getToolDescription } from "@/lib/tool-descriptions";
 import type { Session, StoredEvent } from "@/lib/types";
 
 interface SessionsTabProps {
@@ -196,6 +199,37 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
   const toolSummary = { ...eventToolCounts, ...lightToolCounts };
   const prompts = events.filter((e) => e.event_type === "UserPromptSubmit");
 
+  // 필터링 상태
+  const [selectedCategories, setSelectedCategories] = useState<Set<ToolCategory>>(
+    new Set(ALL_CATEGORIES)
+  );
+
+  const toggleCategory = (cat: ToolCategory) => {
+    setSelectedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(cat)) next.delete(cat);
+      else next.add(cat);
+      return next;
+    });
+  };
+
+  const selectAll = () => setSelectedCategories(new Set(ALL_CATEGORIES));
+  const clearAll = () => setSelectedCategories(new Set());
+
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const ev of events) {
+      const cat = getToolCategory(ev.tool_name, ev.event_type);
+      counts[cat] = (counts[cat] ?? 0) + 1;
+    }
+    return counts;
+  }, [events]);
+
+  const filteredEvents = useMemo(
+    () => events.filter((ev) => selectedCategories.has(getToolCategory(ev.tool_name, ev.event_type))),
+    [events, selectedCategories]
+  );
+
   return (
     <>
       {/* backdrop */}
@@ -310,20 +344,64 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
               <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 이벤트 타임라인{" "}
                 {isLoading && <span className="animate-pulse">불러오는 중…</span>}
-                {!isLoading && events.length > 0 && `(${events.length})`}
+                {!isLoading && events.length > 0 && `(${filteredEvents.length}/${events.length})`}
               </h4>
+
+              {/* 필터 배지 */}
+              {events.length > 0 && (
+                <div className="mb-2 flex flex-wrap items-center gap-1">
+                  <button
+                    onClick={selectAll}
+                    className="rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-accent"
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={clearAll}
+                    className="rounded px-1.5 py-0.5 text-[10px] text-muted-foreground hover:bg-accent"
+                  >
+                    Clear
+                  </button>
+                  <span className="mx-1 h-3 w-px bg-border" />
+                  {ALL_CATEGORIES.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => toggleCategory(cat)}
+                      className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-opacity ${
+                        CATEGORY_COLORS[cat]
+                      } ${selectedCategories.has(cat) ? "opacity-100" : "opacity-30"}`}
+                    >
+                      {cat}{categoryCounts[cat] ? ` (${categoryCounts[cat]})` : ""}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               {events.length === 0 && !isLoading && (
                 <p className="text-xs text-muted-foreground/60">이벤트 없음</p>
               )}
-              {events.length > 0 && (
+              {filteredEvents.length > 0 && (
                 <div className="space-y-0.5 rounded border border-border/50 bg-background/50 p-2">
-                  {events.map((ev) => (
+                  {filteredEvents.map((ev) => (
                     <div key={ev.id} className="flex items-center gap-2 text-xs">
                       <span className="w-16 shrink-0 text-muted-foreground/60">{formatTime(ev.timestamp)}</span>
-                      <Badge variant={eventTypeColor(ev.event_type)} className="text-[10px]">
-                        {ev.event_type}
-                      </Badge>
-                      {ev.tool_name && <span className="font-mono text-foreground/80">{ev.tool_name}</span>}
+                      <span className={`inline-flex shrink-0 rounded border px-1 py-0.5 text-[10px] font-medium ${
+                        CATEGORY_COLORS[getToolCategory(ev.tool_name, ev.event_type)]
+                      }`}>
+                        {ev.tool_name ?? ev.event_type}
+                      </span>
+                      {ev.tool_name && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-help font-mono text-foreground/80 underline decoration-dotted underline-offset-2">
+                              {ev.tool_name}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-xs text-xs">
+                            {getToolDescription(ev.tool_name)}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
                       {ev.tool_duration_ms != null && (
                         <span className="text-muted-foreground/50">{ev.tool_duration_ms}ms</span>
                       )}
