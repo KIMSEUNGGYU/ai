@@ -327,7 +327,7 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
                   <div className="space-y-2">
                     {prompts.map((ev) => (
                       <div key={ev.id} className="rounded-md border border-border/40 bg-muted/10 px-3 py-2">
-                        <div className="mb-1 text-[10px] text-muted-foreground/60">{formatTime(ev.timestamp)}</div>
+                        <div className="mb-1 text-[10px] text-muted-foreground/80">{formatTime(ev.timestamp)}</div>
                         <div className="whitespace-pre-wrap font-mono text-xs text-foreground/90 leading-relaxed">
                           {ev.prompt_text ?? ev.tool_input_summary ?? "-"}
                         </div>
@@ -378,13 +378,13 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
               )}
 
               {events.length === 0 && !isLoading && (
-                <p className="text-xs text-muted-foreground/60">이벤트 없음</p>
+                <p className="text-xs text-muted-foreground/80">이벤트 없음</p>
               )}
               {filteredEvents.length > 0 && (
                 <div className="space-y-0.5 rounded border border-border/50 bg-background/50 p-2">
                   {filteredEvents.map((ev) => (
                     <div key={ev.id} className="flex items-center gap-2 text-xs">
-                      <span className="w-16 shrink-0 text-muted-foreground/60">{formatTime(ev.timestamp)}</span>
+                      <span className="w-16 shrink-0 text-muted-foreground/80">{formatTime(ev.timestamp)}</span>
                       <span className={`inline-flex shrink-0 rounded border px-1 py-0.5 text-[10px] font-medium ${
                         CATEGORY_COLORS[getToolCategory(ev.tool_name, ev.event_type)]
                       }`}>
@@ -393,7 +393,7 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
                       {ev.tool_name && (
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <span className="cursor-help font-mono text-foreground/80 underline decoration-dotted underline-offset-2">
+                            <span className="cursor-help font-mono text-foreground/90 underline decoration-dotted underline-offset-2">
                               {ev.tool_name}
                             </span>
                           </TooltipTrigger>
@@ -403,10 +403,10 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
                         </Tooltip>
                       )}
                       {ev.tool_duration_ms != null && (
-                        <span className="text-muted-foreground/50">{ev.tool_duration_ms}ms</span>
+                        <span className="text-muted-foreground/70">{ev.tool_duration_ms}ms</span>
                       )}
                       {ev.tool_input_summary && (
-                        <span className="truncate text-muted-foreground/50">{ev.tool_input_summary}</span>
+                        <span className="truncate text-muted-foreground/70">{ev.tool_input_summary}</span>
                       )}
                     </div>
                   ))}
@@ -432,7 +432,7 @@ function TokenCell({ session, maxTokens }: { session: Session; maxTokens: number
         <span className="font-mono">{formatTokens(total)}</span>
         <div className="flex items-center gap-1.5">
           {cacheHit != null && (
-            <span className={`text-[9px] ${cacheHit >= 70 ? "text-emerald-400" : cacheHit >= 40 ? "text-amber-400" : "text-muted-foreground/50"}`}>
+            <span className={`text-[9px] ${cacheHit >= 70 ? "text-emerald-400" : cacheHit >= 40 ? "text-amber-400" : "text-muted-foreground/70"}`}>
               캐시 {cacheHit}%
             </span>
           )}

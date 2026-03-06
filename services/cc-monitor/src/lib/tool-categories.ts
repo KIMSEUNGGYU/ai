@@ -53,15 +53,15 @@ export function getToolCategory(
 }
 
 export const CATEGORY_COLORS: Record<ToolCategory, string> = {
-  Skill: "bg-violet-100 text-violet-800 border-violet-200",
-  Agent: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Bash: "bg-orange-100 text-orange-800 border-orange-200",
-  File: "bg-blue-100 text-blue-800 border-blue-200",
-  Search: "bg-yellow-100 text-yellow-800 border-yellow-200",
-  MCP: "bg-teal-100 text-teal-800 border-teal-200",
-  Prompt: "bg-slate-100 text-slate-800 border-slate-200",
-  Session: "bg-red-100 text-red-800 border-red-200",
-  Question: "bg-pink-100 text-pink-800 border-pink-200",
+  Skill: "bg-violet-500/20 text-violet-300 border-violet-500/30",
+  Agent: "bg-emerald-500/20 text-emerald-300 border-emerald-500/30",
+  Bash: "bg-orange-500/20 text-orange-300 border-orange-500/30",
+  File: "bg-blue-500/20 text-blue-300 border-blue-500/30",
+  Search: "bg-yellow-500/20 text-yellow-300 border-yellow-500/30",
+  MCP: "bg-teal-500/20 text-teal-300 border-teal-500/30",
+  Prompt: "bg-slate-500/20 text-slate-300 border-slate-500/30",
+  Session: "bg-red-500/20 text-red-300 border-red-500/30",
+  Question: "bg-pink-500/20 text-pink-300 border-pink-500/30",
 };
 
 export const ALL_CATEGORIES: ToolCategory[] = [
