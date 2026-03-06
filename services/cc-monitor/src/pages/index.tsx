@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
+import { useQuery } from "@tanstack/react-query";
 import { getSessions } from "@/lib/queries";
 import { getRecentEvents } from "@/lib/queries";
 import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries, getTokenUsageSummary } from "@/lib/queries";
 import { isDemoMode } from "@/lib/db";
-import { usePolling } from "@/hooks/usePolling";
+import { sessionsQueryOptions, feedQueryOptions, analyticsQueryOptions } from "@/lib/query-options";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { SessionsTab } from "@/components/SessionsTab";
 import { ToolUsageChart } from "@/components/ToolUsageChart";
@@ -66,52 +67,38 @@ export default function Dashboard({
   const [allTools, setAllTools] = useState(initial.tools);
   const [allUsers, setAllUsers] = useState(initial.users);
 
-  const buildFilterQuery = useCallback(() => {
-    const params = new URLSearchParams();
-    if (selectedUserId) params.set("userId", selectedUserId);
-    if (selectedToolName) params.set("toolName", selectedToolName);
-    return params.toString();
-  }, [selectedUserId, selectedToolName]);
+  const filterParams = {
+    userId: selectedUserId || undefined,
+    toolName: selectedToolName || undefined,
+  };
 
-  const fetchSessions = useCallback(() => {
-    const q = buildFilterQuery();
-    return fetch(`/api/sessions?status=all${q ? `&${q}` : ""}`).then((r) => r.json()).then((d) => d.sessions as Session[]);
-  }, [buildFilterQuery]);
+  const { data: sessions } = useQuery({
+    ...sessionsQueryOptions(filterParams),
+    initialData: initial.sessions,
+  });
 
-  const fetchFeed = useCallback(() => {
-    const q = buildFilterQuery();
-    return fetch(`/api/feed?limit=30${q ? `&${q}` : ""}`).then((r) => r.json()).then((d) => d.events as StoredEvent[]);
-  }, [buildFilterQuery]);
+  const { data: events } = useQuery({
+    ...feedQueryOptions(filterParams),
+    initialData: initial.events,
+  });
 
-  const fetchAnalytics = useCallback(() => {
-    const q = buildFilterQuery();
-    return fetch(`/api/analytics${q ? `?${q}` : ""}`).then((r) => r.json()) as Promise<{
-      tools: ToolUsageStat[];
-      toolDurations: ToolDurationStat[];
-      hourly: HourlyActivityType[];
-      users: UserSummaryType[];
-      tokenUsage: TokenUsageSummary;
-    }>;
-  }, [buildFilterQuery]);
+  const { data: analytics } = useQuery({
+    ...analyticsQueryOptions(filterParams),
+    initialData: {
+      tools: initial.tools,
+      toolDurations: initial.toolDurations,
+      hourly: initial.hourly,
+      users: initial.users,
+      tokenUsage: initial.tokenUsage,
+    },
+  });
 
-  const { data: sessions } = usePolling(fetchSessions, 10_000);
-  const { data: events } = usePolling(fetchFeed, 10_000);
-  const { data: analytics } = usePolling(fetchAnalytics, 30_000);
-
-  // 필터 없을 때만 드롭다운 옵션 갱신
   useEffect(function syncDropdownOptions() {
     if (!selectedUserId && !selectedToolName && analytics) {
       setAllTools(analytics.tools);
       setAllUsers(analytics.users);
     }
   }, [analytics, selectedUserId, selectedToolName]);
-
-  const s = sessions ?? initial.sessions;
-  const e = events ?? initial.events;
-  const t = analytics?.tools ?? initial.tools;
-  const td = analytics?.toolDurations ?? initial.toolDurations;
-  const h = analytics?.hourly ?? initial.hourly;
-  const tok = analytics?.tokenUsage ?? initial.tokenUsage;
 
   return (
     <div className="px-4 py-6 md:px-8">
@@ -184,14 +171,14 @@ export default function Dashboard({
         <div className="flex flex-col gap-8">
           <CostTracking userId={selectedUserId || undefined} />
           <div className="grid gap-6 lg:grid-cols-2">
-            <ToolUsageChart tools={t} durations={td} />
-            <HourlyActivity hourly={h} />
+            <ToolUsageChart tools={analytics.tools} durations={analytics.toolDurations} />
+            <HourlyActivity hourly={analytics.hourly} />
           </div>
-          <TokenUsage usage={tok} />
+          <TokenUsage usage={analytics.tokenUsage} />
         </div>
       )}
 
-      {activeTab === "sessions" && <SessionsTab sessions={s} events={e} />}
+      {activeTab === "sessions" && <SessionsTab sessions={sessions} events={events} />}
 
       {activeTab === "config" && <ConfigOverview />}
     </div>

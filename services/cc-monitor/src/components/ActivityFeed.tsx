@@ -4,37 +4,47 @@ interface ActivityFeedProps {
   events: StoredEvent[];
 }
 
-const EVENT_COLORS: Record<string, string> = {
-  SessionStart: "#3fb950",
-  SessionEnd: "#f85149",
-  PreToolUse: "#58a6ff",
-  PostToolUse: "#58a6ff",
-  UserPromptSubmit: "#d2a8ff",
-  Stop: "#f85149",
+const EVENT_DOT_COLORS: Record<string, string> = {
+  SessionStart: "bg-green-400",
+  SessionEnd: "bg-red-400",
+  PreToolUse: "bg-blue-400",
+  PostToolUse: "bg-blue-400",
+  UserPromptSubmit: "bg-purple-300",
+  Stop: "bg-red-400",
 };
 
 export function ActivityFeed({ events }: ActivityFeedProps) {
   return (
     <section>
-      <h2 style={styles.title}>ACTIVITY FEED</h2>
-      <div style={styles.list}>
+      <h2 className="text-[13px] font-semibold tracking-wide text-muted-foreground mb-3">
+        ACTIVITY FEED
+      </h2>
+      <div className="flex flex-col gap-1.5 max-h-[600px] overflow-auto">
         {events.length === 0 && (
-          <p style={styles.empty}>이벤트 없음</p>
+          <p className="text-muted-foreground/60 italic text-[13px]">
+            이벤트 없음
+          </p>
         )}
         {events.map((e) => (
-          <div key={e.id} style={styles.row}>
+          <div
+            key={e.id}
+            className="flex items-center gap-2.5 text-xs py-1 border-b border-border"
+          >
             <span
-              style={{
-                ...styles.dot,
-                background: EVENT_COLORS[e.event_type] ?? "#484f58",
-              }}
+              className={`w-1.5 h-1.5 rounded-full shrink-0 ${EVENT_DOT_COLORS[e.event_type] ?? "bg-muted-foreground/60"}`}
             />
-            <span style={styles.user}>{e.user_id}</span>
-            <span style={styles.eventType}>{formatEventType(e)}</span>
+            <span className="text-blue-400 min-w-[100px] font-medium">
+              {e.user_id}
+            </span>
+            <span className="flex-1 text-foreground whitespace-nowrap">
+              {formatEventType(e)}
+            </span>
             {e.tool_duration_ms != null && (
-              <span style={styles.duration}>{formatMs(e.tool_duration_ms)}</span>
+              <span className="text-yellow-500 text-[10px] shrink-0 px-1 py-px bg-yellow-900/30 rounded-sm">
+                {formatMs(e.tool_duration_ms)}
+              </span>
             )}
-            <span style={styles.time}>
+            <span className="text-muted-foreground/60 text-[11px] shrink-0">
               {new Date(e.timestamp).toLocaleTimeString("ko-KR", {
                 hour: "2-digit",
                 minute: "2-digit",
@@ -64,51 +74,3 @@ function formatMs(ms: number): string {
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(1)}s`;
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  title: {
-    fontSize: 13,
-    fontWeight: 600,
-    letterSpacing: "0.05em",
-    color: "#8b949e",
-    marginBottom: 12,
-  },
-  list: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6,
-    maxHeight: 600,
-    overflowY: "auto",
-    overflowX: "auto",
-  },
-  empty: { color: "#484f58", fontStyle: "italic", fontSize: 13 },
-  row: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    fontSize: 12,
-    padding: "4px 0",
-    borderBottom: "1px solid #21262d",
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: "50%",
-    flexShrink: 0,
-  },
-  user: { color: "#58a6ff", minWidth: 100, fontWeight: 500 },
-  eventType: {
-    flex: 1,
-    color: "#c9d1d9",
-    whiteSpace: "nowrap",
-  },
-  duration: {
-    color: "#d29922",
-    fontSize: 10,
-    flexShrink: 0,
-    padding: "1px 4px",
-    background: "#2d2006",
-    borderRadius: 3,
-  },
-  time: { color: "#484f58", fontSize: 11, flexShrink: 0 },
-};
