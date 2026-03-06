@@ -8,7 +8,7 @@
 ## 목차
 
 1. [프로젝트 전체 흐름](#1-프로젝트-전체-흐름)
-2. [오케스트레이터 — main.ts 전체 해부](#2-오케스트레이터--maints-전체-해부)
+2. [오케스트레이터 — src/main.ts 전체 해부](#2-오케스트레이터--srcmaints-전체-해부)
 3. [서브에이전트 — 공통 패턴과 개별 역할](#3-서브에이전트--공통-패턴과-개별-역할)
 4. [하네스 (Eval) — 에이전트 출력 검증](#4-하네스-eval--에이전트-출력-검증)
 5. [Ralph 패턴 — 자기참조 진화 루프](#5-ralph-패턴--자기참조-진화-루프)
@@ -25,25 +25,26 @@
 
 ```
 agent-fundamentals/
-├── main.ts                    ← 오케스트레이터: 누가 언제 뭘 할지 결정
-├── agents/                    ← 서브에이전트 (실행 주체)
-│   ├── spec-agent.ts          ← 기획문서 → 구현 스펙 변환
-│   ├── code-agent.ts          ← 스펙 → 코드 생성
-│   ├── review-agent.ts        ← 코드 리뷰 (Claude SDK)
-│   └── review-agent-openai.ts ← 코드 리뷰 (Codex SDK)
-├── evaluators/                ← 하네스: 채점표 (어떻게 평가?)
-│   ├── spec-eval.ts           ← 스펙 품질 검증 (6개 섹션 존재?)
-│   ├── code-eval.ts           ← 코드 품질 검증 (빌드 에러?)
-│   └── review-eval.ts         ← 리뷰 결과 검증 + 점수 산출
-├── evals/                     ← 하네스: 시험 문제 (뭘로 평가?)
+├── src/                       ← 소스 코드
+│   ├── main.ts                ← 오케스트레이터: 누가 언제 뭘 할지 결정
+│   ├── agents/                ← 서브에이전트 (실행 주체)
+│   │   ├── spec-agent.ts      ← 기획문서 → 구현 스펙 변환
+│   │   ├── code-agent.ts      ← 스펙 → 코드 생성
+│   │   ├── review-agent.ts    ← 코드 리뷰 (Claude SDK)
+│   │   └── review-agent-openai.ts ← 코드 리뷰 (Codex SDK)
+│   ├── evaluators/            ← 하네스 (에이전트 출력 자동 검증)
+│   │   ├── spec-eval.ts       ← 스펙 품질 검증 (6개 섹션 존재?)
+│   │   ├── code-eval.ts       ← 코드 품질 검증 (빌드 에러?)
+│   │   └── review-eval.ts     ← 리뷰 결과 검증 + 점수 산출
+│   ├── types.ts               ← 공통 타입
+│   └── conventions.ts         ← 플러그인 경로, 파일 로더
+├── specs/                     ← 테스트용 스펙 문서 (에이전트 입력 데이터)
 │   ├── spec-date-utils.md     ← 테스트 스펙 (날짜 유틸)
 │   ├── spec-api-params.md     ← 테스트 스펙 (API 파라미터)
 │   ├── spec-status-badge.md   ← 테스트 스펙 (React 컴포넌트)
 │   └── output/                ← 에이전트 출력 (.gitignore)
 ├── test/                      ← 단위 테스트 (evaluator 자체 검증)
 │   └── review-eval.test.ts
-├── types.ts                   ← 공통 타입
-└── conventions.ts             ← 플러그인 경로, 파일 로더
 ```
 
 ### 전체 파이프라인
@@ -73,7 +74,7 @@ agent-fundamentals/
 
 ---
 
-## 2. 오케스트레이터 — main.ts 전체 해부
+## 2. 오케스트레이터 — src/main.ts 전체 해부
 
 오케스트레이터는 직접 코드를 생성하거나 리뷰하지 않는다.
 **누가 언제 뭘 할지 결정**하고, **이전 결과를 다음에 연결**하는 게 전부다.
@@ -81,7 +82,7 @@ agent-fundamentals/
 ### Case 1: 입력 파싱 — "어떤 모드로 실행할지"
 
 ```typescript
-// main.ts:13-51
+// src/main.ts:13-51
 function parseArgs(): FeAutoInput {
   const args = process.argv.slice(2);
   const specPath = args[0];
@@ -127,10 +128,10 @@ function parseArgs(): FeAutoInput {
 ### Case 2: 스펙 준비 — "Spec Agent 거칠지 말지"
 
 ```typescript
-// main.ts:57-86
+// src/main.ts:57-86
 async function main() {
   const input = parseArgs();
-  const rawDoc = loadSpec(input.specPath);  // 파일 읽기 (conventions.ts)
+  const rawDoc = loadSpec(input.specPath);  // 파일 읽기 (src/conventions.ts)
 
   let spec: string;      // ← 이 변수가 이후 전체 파이프라인의 "기준"
   let totalCost = 0;     // ← 모든 에이전트 비용 누적
@@ -170,7 +171,7 @@ async function main() {
 ### Case 3: Code ↔ Review 루프 (Ralph 패턴)
 
 ```typescript
-  // main.ts:90-175
+  // src/main.ts:90-175
   // ── Code ↔ Review 루프 (Ralph 패턴: 자기참조 + 전략 진화) ──
   console.log("\n[Pipeline] Code → Review 루프 (Ralph)");
 
@@ -275,7 +276,7 @@ async function main() {
 ### Case 4: 결과 요약
 
 ```typescript
-  // main.ts:177-190
+  // src/main.ts:177-190
   console.log("\n" + "═".repeat(50));
   console.log("결과 요약");
   console.log("═".repeat(50));
@@ -298,7 +299,7 @@ main().catch((err) => {
 ### 3개 서브에이전트 모두 동일한 골격을 따른다
 
 ```typescript
-// 모든 서브에이전트의 공통 구조 (spec-agent.ts, code-agent.ts, review-agent.ts)
+// 모든 서브에이전트의 공통 구조 (src/agents/spec-agent.ts, code-agent.ts, review-agent.ts)
 export async function runXxxAgent(input): Promise<AgentResult> {
   let sessionId: string | undefined;   // SDK 세션 ID — 재시도 시 대화 컨텍스트 유지
   let lastResult = "";                  // 마지막 응답 — 재시도 시 피드백으로 사용
@@ -367,10 +368,10 @@ export async function runXxxAgent(input): Promise<AgentResult> {
 
 ### 개별 에이전트 차이점
 
-#### Spec Agent (`agents/spec-agent.ts`)
+#### Spec Agent (`src/agents/spec-agent.ts`)
 
 ```typescript
-// spec-agent.ts — 핵심 부분만
+// src/agents/spec-agent.ts — 핵심 부분만
 
 const SPEC_SYSTEM_PROMPT = `당신은 기획문서를 FE 구현 스펙으로 변환하는 전문가입니다.
 
@@ -408,10 +409,10 @@ export async function runSpecAgent(input: SpecInput): Promise<AgentResult> {
 
 **역할**: 기획문서의 노이즈(배경, 목적, 일정)를 걸러내고 **구현에 필요한 것만** 구조화.
 
-#### Code Agent (`agents/code-agent.ts`)
+#### Code Agent (`src/agents/code-agent.ts`)
 
 ```typescript
-// code-agent.ts — 핵심 부분만
+// src/agents/code-agent.ts — 핵심 부분만
 
 function buildCodePrompt(input: FeAutoInput, spec: string, reviewFeedback?: string): string {
   let prompt = `아래 스펙에 따라 ${input.projectPath}에 FE 코드를 생성하세요.
@@ -455,10 +456,10 @@ export async function runCodeAgent(...): Promise<AgentResult> {
 
 **역할**: 스펙을 보고 실제 파일을 생성. fe-workflow 플러그인이 FE 컨벤션을 시스템에 주입한다.
 
-#### Review Agent (`agents/review-agent.ts`)
+#### Review Agent (`src/agents/review-agent.ts`)
 
 ```typescript
-// review-agent.ts — 핵심 부분만
+// src/agents/review-agent.ts — 핵심 부분만
 
 function buildReviewPrompt(projectPath: string, spec: string, codeOutput: string): string {
   return `${projectPath}에 생성된 코드를 리뷰하세요.
@@ -504,7 +505,7 @@ export async function runReviewAgent(...): Promise<AgentResult> {
 
 | | Spec Agent | Code Agent | Review Agent |
 |---|---|---|---|
-| **파일** | `spec-agent.ts` | `code-agent.ts` | `review-agent.ts` |
+| **파일** | `src/agents/spec-agent.ts` | `src/agents/code-agent.ts` | `src/agents/review-agent.ts` |
 | **모델** | sonnet | sonnet | haiku |
 | **입력** | 기획문서 + 티켓ID | 스펙 + 리뷰피드백 | 프로젝트경로 + 스펙 + 코드 |
 | **출력** | 구조화된 스펙 | 생성된 코드 정보 | 이슈 목록 (심각도별) |
@@ -519,31 +520,31 @@ export async function runReviewAgent(...): Promise<AgentResult> {
 하네스는 **"이 출력이 최소 기준을 충족하는가?"**를 코드로 판단하는 시스템이다.
 에이전트의 출력(문자열)을 받아서 `{ pass, feedback }`을 반환한다.
 
-### evaluators vs evals — 헷갈리기 쉬운 두 폴더
+### evaluators/ vs specs/ — 역할이 다른 두 폴더
 
 ```
-하네스 (Harness) = 에이전트 품질 자동 검증 시스템 전체
-├── evaluators/  ← 채점표 (어떻게 평가할 것인가?)
-│   "CRITICAL 0개, HIGH 0개면 통과"
-│   "빌드 에러 없으면 통과"
-│
-└── evals/       ← 시험 문제 (뭘로 평가할 것인가?)
-    "formatRelativeDate 유틸 함수 만들어봐"
-    "StatusBadge 컴포넌트 만들어봐"
+하네스 (Harness) = src/evaluators/ 의 채점 코드
+├── spec-eval.ts    ← 스펙 품질 검증
+├── code-eval.ts    ← 코드 품질 검증
+└── review-eval.ts  ← 리뷰 결과 검증 + 점수 산출
+
+specs/ = 테스트용 스펙 문서 (하네스 아님, 에이전트 입력 데이터)
+├── spec-date-utils.md
+├── spec-api-params.md
+└── spec-status-badge.md
 ```
 
 **비유**:
-- **하네스** = 시험 시스템 전체
-- **evaluators** = 채점표 (정답 기준, 배점 규칙)
-- **evals** = 시험지 (문제 모음)
+- **하네스** = 채점 시스템 (`src/evaluators/`의 코드)
+- **specs/** = 시험 문제지 (에이전트에 넣을 입력 데이터이지, 하네스에 포함되지 않음)
 
-evaluators는 **코드**(`.ts`)이고, evals는 **데이터**(`.md` 스펙 파일)이다.
-evaluators는 거의 안 바뀌지만, evals는 새로운 테스트 케이스를 추가하면 계속 늘어난다.
+evaluators는 **코드**(`.ts`)이고, specs는 **데이터**(`.md` 스펙 파일)이다.
+evaluators는 거의 안 바뀌지만, specs는 새로운 테스트 케이스를 추가하면 계속 늘어난다.
 
 ### 공통 타입
 
 ```typescript
-// types.ts
+// src/types.ts
 interface EvalResult {
   pass: boolean;                      // 통과 여부
   feedback: string;                   // 실패 시 피드백 (재시도 프롬프트로 사용)
@@ -554,7 +555,7 @@ interface EvalResult {
 ### spec-eval.ts — "스펙 문서가 완성됐는가?"
 
 ```typescript
-// evaluators/spec-eval.ts — 전체 코드
+// src/evaluators/spec-eval.ts — 전체 코드
 export function evaluateSpec(spec: string): EvalResult {
   const checks = {
     // ── 필수 섹션 6개가 존재하는지 정규식으로 확인 ──
@@ -624,7 +625,7 @@ export function evaluateSpec(spec: string): EvalResult {
 ### code-eval.ts — "코드에 에러가 없는가?"
 
 ```typescript
-// evaluators/code-eval.ts — 전체 코드
+// src/evaluators/code-eval.ts — 전체 코드
 export function evaluateCode(agentOutput: string): EvalResult {
   const checks = {
     // 에이전트 출력 텍스트에서 에러 패턴을 정규식으로 탐지
@@ -663,7 +664,7 @@ export function evaluateCode(agentOutput: string): EvalResult {
 ### review-eval.ts — "심각한 이슈가 없는가?"
 
 ```typescript
-// evaluators/review-eval.ts — 전체 코드
+// src/evaluators/review-eval.ts — 전체 코드
 export function evaluateReview(reviewOutput: string): EvalResult {
   // Review Agent의 출력에서 심각도별 이슈 개수를 카운트
   const criticalCount = (reviewOutput.match(/CRITICAL/gi) || []).length;
@@ -713,7 +714,7 @@ export function evaluateReview(reviewOutput: string): EvalResult {
 
 레벨 2: 오케스트레이터 (파이프라인 레벨)
 ┌──────────────────────────────┐
-│  main.ts                     │
+│  src/main.ts                 │
 │    Code Agent 결과 받음       │
 │    Review Agent 결과 받음     │
 │    → 통과/미통과 + Ralph 판단 │
@@ -756,7 +757,7 @@ Ralph:
 #### 요소 1: 점수 추적 — "나 지금 나아지고 있어?"
 
 ```typescript
-// evaluators/review-eval.ts — 점수 산출
+// src/evaluators/review-eval.ts — 점수 산출
 export function computeScoreFromReview(output: string): number {
   const critical = (output.match(/CRITICAL/gi) || []).length;
   const high = (output.match(/HIGH/gi) || []).length;
@@ -767,7 +768,7 @@ export function computeScoreFromReview(output: string): number {
 // CRITICAL 1개 = -30점, HIGH 1개 = -15점, MEDIUM 1개 = -5점
 // 예: CRITICAL 0, HIGH 1, MEDIUM 1 → 100 - 15 - 5 = 80점
 
-// main.ts — 점수 추적
+// src/main.ts — 점수 추적
 const score = computeScoreFromReview(reviewResult.output);
 scoreHistory.push(score);
 // scoreHistory = [80, 100]
@@ -782,7 +783,7 @@ scoreHistory.push(score);
 #### 요소 2: 정체 감지 — "같은 삽질 반복 중인가?"
 
 ```typescript
-// main.ts:137-145
+// src/main.ts:137-145
 if (scoreHistory.length >= STAGNATION_THRESHOLD) {  // 2회 이상 기록 있을 때
   const recent = scoreHistory.slice(-STAGNATION_THRESHOLD);  // 최근 2개
   const isStagnant = recent.every((s) => Math.abs(s - recent[0]) <= 5);
@@ -797,7 +798,7 @@ if (scoreHistory.length >= STAGNATION_THRESHOLD) {  // 2회 이상 기록 있을
 #### 요소 3: 메타 분석 — "왜 실패했고, 다음엔 어떻게?"
 
 ```typescript
-// main.ts:147-165
+// src/main.ts:147-165
 // 개선 여부 판단
 const scoreImproving = scoreHistory.length >= 2 &&
   score > scoreHistory[scoreHistory.length - 2];
@@ -841,27 +842,27 @@ Ralph: 점수 추적 + 정체 감지 + 전략 지시를 자동 생성
 
 ```
 spec (고정)
-  생성: main.ts — Spec Agent 출력 or 원본 파일
+  생성: src/main.ts — Spec Agent 출력 or 원본 파일
   사용: Code Agent 입력, Review Agent 입력
   변화: 없음 (한 번 결정되면 끝)
 
 reviewFeedback (매 사이클 갱신)
-  생성: main.ts — Ralph 메타 분석
+  생성: src/main.ts — Ralph 메타 분석
   사용: Code Agent 입력 (다음 사이클)
   변화: 매 사이클마다 새로 작성
 
 scoreHistory (누적)
-  생성: main.ts — 빈 배열로 시작
+  생성: src/main.ts — 빈 배열로 시작
   사용: 정체 감지, 개선 여부 판단
   변화: 매 사이클마다 push
 
 previousStrategy (매 사이클 갱신)
-  생성: main.ts — "스펙 기반 초기 구현"
+  생성: src/main.ts — "스펙 기반 초기 구현"
   사용: 메타 분석 문서에 포함
   변화: 개선 중이면 심화, 정체면 전환
 
 totalCost (누적)
-  생성: main.ts — 0에서 시작
+  생성: src/main.ts — 0에서 시작
   사용: 결과 요약
   변화: 매 에이전트 호출마다 += cost
 
@@ -906,11 +907,11 @@ Cycle 3:
 
 | 에이전트 개념 | 팀 역할 | 하는 일 |
 |---|---|---|
-| 오케스트레이터 (`main.ts`) | PM | 업무 분배, 결과물 연결, 일정 관리 |
+| 오케스트레이터 (`src/main.ts`) | PM | 업무 분배, 결과물 연결, 일정 관리 |
 | Spec Agent | 기획자 | 요구사항 → 구현 스펙 |
 | Code Agent | 개발자 | 스펙 보고 코드 구현 |
 | Review Agent | 시니어 개발자 | 코드 리뷰, 점수 |
-| 하네스 (`evaluators/`) | QA | 체크리스트 기반 품질 검증 |
+| 하네스 (`src/evaluators/`) | QA | 체크리스트 기반 품질 검증 |
 | Ralph (메타 분석) | PM의 스프린트 회고 | "왜 안 됐지? 다음엔 방향 바꾸자" |
 
 ### GPS 비유
@@ -958,10 +959,10 @@ Cycle 3:
 
 ---
 
-## 부록: 타입 정의 (`types.ts`)
+## 부록: 타입 정의 (`src/types.ts`)
 
 ```typescript
-/** 평가 결과 — 모든 하네스의 반환 타입 */
+/** 평가 결과 — evaluator 함수의 반환 타입 */
 export interface EvalResult {
   pass: boolean;
   feedback: string;
@@ -1064,7 +1065,7 @@ async function executeReview(reviewer, ...): Promise<AgentResult> {
 #### Claude 리뷰 에이전트의 동작 방식
 
 ```typescript
-// agents/review-agent.ts — Claude Agent SDK
+// src/agents/review-agent.ts — Claude Agent SDK
 for await (const message of query({
   prompt: buildReviewPrompt(...),
   options: {
@@ -1086,7 +1087,7 @@ for await (const message of query({
 #### Codex 리뷰 에이전트의 동작 방식
 
 ```typescript
-// agents/review-agent-openai.ts — OpenAI Codex SDK
+// src/agents/review-agent-openai.ts — OpenAI Codex SDK
 const codex = new Codex();                 // ChatGPT 구독 인증 자동 사용
 const conventions = loadConventions();     // ← 컨벤션을 직접 파일에서 읽어야 함
 
@@ -1134,7 +1135,7 @@ const retryThread = codex.resumeThread(thread.id!, ...);
 ### both 모드: 병렬 실행과 다관점 리뷰
 
 ```typescript
-// main.ts — both 모드
+// src/main.ts — both 모드
 const [claudeResult, openaiResult] = await Promise.all([
   runReviewAgent(projectPath, spec, codeOutput),        // Claude 리뷰
   runReviewAgentOpenAI(projectPath, spec, codeOutput),  // OpenAI 리뷰 (동시 실행)
@@ -1188,7 +1189,7 @@ Cycle 2: Code Agent (두 관점의 피드백 반영) → [Claude + OpenAI] → .
 
 실제 파이프라인 실행 로그와 해석은 별도 파일에 정리:
 
-→ [evals/results/RUN-EXAMPLES.md](./evals/results/RUN-EXAMPLES.md)
+→ [specs/results/RUN-EXAMPLES.md](./specs/results/RUN-EXAMPLES.md)
 
 포함 내용:
 - 1사이클 통과 예시 (유틸 함수, `--reviewer both`)
