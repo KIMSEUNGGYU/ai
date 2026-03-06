@@ -33,6 +33,8 @@ export interface FeAutoInput {
   ticketId?: string;
   /** 기획문서 → 스펙 변환 모드 (true면 Spec Agent 경유) */
   convertSpec?: boolean;
+  /** 리뷰어 선택: claude(기본) | openai | both */
+  reviewer?: "claude" | "openai" | "both";
 }
 
 /** 파이프라인 상태 */

@@ -1,5 +1,14 @@
 import type { EvalResult } from "../types.js";
 
+/** 리뷰 점수 산출 — CRITICAL/HIGH/MEDIUM 카운트 기반 (100점 만점) */
+export function computeScoreFromReview(output: string): number {
+  const critical = (output.match(/CRITICAL/gi) || []).length;
+  const high = (output.match(/HIGH/gi) || []).length;
+  const medium = (output.match(/MEDIUM/gi) || []).length;
+
+  return Math.max(0, 100 - critical * 30 - high * 15 - medium * 5);
+}
+
 /** 리뷰 결과 평가 — CRITICAL/HIGH 이슈 기반 */
 export function evaluateReview(reviewOutput: string): EvalResult {
   const criticalCount = (reviewOutput.match(/CRITICAL/gi) || []).length;
