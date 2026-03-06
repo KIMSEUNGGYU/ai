@@ -1,76 +1,50 @@
 # cc-monitor: Claude Code 팀 모니터링 서비스
 
 > 시작일: 2026-03-04
-> 상태: Vercel 배포 완료 (Demo Mode)
+> 상태: Phase 2 구현 완료 (UI 피드백 반영 중)
 
 ## 진행 체크리스트
 
-### Phase 1 — MVP
-- [x] 프로젝트 스캐폴딩 (package.json, tsconfig, next.config)
-- [x] 타입 정의 (types.ts)
-- [x] DB 레이어 (SQLite 연결 + 스키마 + 쿼리)
-- [x] API Routes (events, sessions, analytics, feed)
-- [x] 수집 스크립트 (collector/send-event.ts)
-- [x] Hook 설정 예시 (hooks-config.example.json)
-- [x] 대시보드 UI (Pages Router)
-- [x] Hook 설치 스크립트
-- [x] 루트 package.json 스크립트 추가
-- [x] 빌드 검증 (next build 성공)
-- [x] 동작 검증 (send-event.ts + API + DB + 대시보드 전체 파이프라인 확인)
+### Phase 1 — MVP (완료)
+- [x] 프로젝트 스캐폴딩 + 타입 + DB + API + 수집 + 대시보드
 
-### Phase 1.5 — Vercel 배포 (Demo Mode)
-- [x] mock-data.ts 생성 (전체 쿼리 함수 대응)
-- [x] db.ts 수정 — better-sqlite3 동적 로드, isDemoMode() export
-- [x] queries.ts — 모든 함수에 demo mode 가드
-- [x] adoption-queries.ts — demo mode 가드
-- [x] cost-queries.ts — demo mode 가드
-- [x] package.json — better-sqlite3 → optionalDependencies
-- [x] next.config.ts — serverExternalPackages 조건부
-- [x] index.tsx — Demo Mode 배지 표시
-- [x] VERCEL=1 pnpm build 로컬 검증
-- [x] Vercel 배포 완료
+### Phase 1.5 — Vercel 배포 (완료)
+- [x] Demo Mode (mock-data) + Vercel 배포
 
-### Phase 2 — 개선 (미정)
-- [ ] MySQL + Prisma 전환 (Vercel에서 실제 데이터 사용)
+### Phase 1.7 — DB 전환 (완료)
+- [x] better-sqlite3 → Prisma + Turso (libsql) 전환
+
+### Phase 2 — 이벤트 타임라인 강화 (완료)
+- [x] 도구 타입별 멀티 필터링 (토글 배지 UI)
+- [x] 도구명 툴팁 (호버 시 설명 표시)
+- [x] AskUserQuestion 수집 확대 (질문 텍스트 요약)
+- [x] mock-data에 새 카테고리 반영
+- [x] 다크 테마 가시성 개선
+- [x] 필터 UX 개선 (미선택=전체, 선택=해당만)
+
+### 미래 — 추가 개선
 - [ ] 실시간 업데이트 (SSE/WebSocket)
 - [ ] 차트 라이브러리 적용
-- [ ] 세션 상세 페이지
+- [ ] Vercel 재배포 (Phase 2 반영)
 
 ## 현재 컨텍스트
+- 브랜치: `feat/cc-monitor-timeline-filter` (8커밋, main 미머지)
 - 배포 URL: https://cc-monitor.vercel.app
-- Vercel scope: kimseunggyus-projects
-- Demo Mode로 동작 중 (mock 데이터 표시)
-- 로컬에서는 기존 SQLite 그대로 동작
+- DB: Prisma + Turso (libsql), TURSO_DATABASE_URL 없으면 Demo Mode
+- 스펙: `.ai/specs/cc-monitor-phase2.md`
+- 구현 계획: `docs/plans/2026-03-06-cc-monitor-phase2-timeline-filter.md`
 
 ## 결정사항
-- Demo Mode 패턴 채택 — Vercel serverless에서 better-sqlite3 네이티브 바이너리 불가, mock 데이터로 UI 우선 배포
-- better-sqlite3를 optionalDependencies로 이동 — Vercel에서 설치 실패해도 빌드 진행
-- isDemoMode() = process.env.VERCEL || getDb() === null — 두 조건 모두 체크
+- 필터링은 프론트엔드에서 처리 (이벤트 전체 로드 후 클라이언트 필터)
+- 필터 UX: 빈 Set=전체 표시, 선택하면 해당만 (include 모델)
+- 9개 카테고리: Skill/Agent/Bash/File/Search/MCP/Prompt/Session/Question
+- AskUserQuestion은 tool_input_summary에 질문 텍스트 저장 (스키마 변경 없음)
+- mock-data는 데모/포트폴리오용으로 유지
+- 다크 테마 전용 (라이트 모드 미지원)
 
-## 학습 메모
+## 신규 파일
+- `src/lib/tool-categories.ts` — 도구→카테고리 매핑 + 색상
+- `src/lib/tool-descriptions.ts` — 도구 설명 정적 데이터
+- `src/components/ui/tooltip.tsx` — shadcn Tooltip
 
-### Claude Code Hooks
-- `command` 타입만 지원 (HTTP hook 없음)
-- stdin으로 JSON 이벤트 전달
-- 이벤트: SessionStart, SessionEnd, PreToolUse, PostToolUse, UserPromptSubmit, Stop
-- timeout 초과 시 non-blocking error (Claude Code 동작에 영향 없음)
-
-### 기술 선택
-- Next.js Pages Router — App Router보다 익숙, API Routes 간단
-- better-sqlite3 — 동기 API, WAL 모드로 동시 읽기, 배포 단순
-- Hono 대신 Next.js — FE+BE 한 프로젝트, FE 개발자로서 익숙
-
-### pnpm 빌드 관련
-- better-sqlite3는 네이티브 모듈이라 `pnpm approve-builds`가 필요
-- `.npmrc`에 `onlyBuiltDependencies[]=better-sqlite3` 설정
-- Next.js에서 네이티브 모듈 사용 시 `serverExternalPackages` 설정 필요
-
-### 타입 이슈
-- 유니온 타입에서 switch/case로 narrowing할 때 optional 필드가 `{} | null`로 추론되는 이슈
-- `"model" in event && typeof event.model === "string"` 같은 타입 가드로 해결
-
-### Vercel 배포 관련
-- better-sqlite3 타입: `import("better-sqlite3").Database`로 타입만 참조, 런타임은 require로 동적 로드
-- Vercel에서 `serverExternalPackages` 설정하면 해당 모듈을 찾으려 해서 에러 → 조건부로 제거
-
-<!-- last-active: 2026-03-05 06:33 -->
+<!-- last-active: 2026-03-06 -->
