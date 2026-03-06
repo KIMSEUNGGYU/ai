@@ -63,6 +63,15 @@ function summarizeToolInput(
       return String(input.query ?? "");
     case "Skill":
       return `skill: ${input.skill ?? "unknown"}`;
+    case "AskUserQuestion": {
+      const questions = input.questions;
+      if (Array.isArray(questions) && questions.length > 0) {
+        const first = questions[0] as { question?: string };
+        const q = first?.question ?? "";
+        return `Q: ${truncate(q, 100)}`;
+      }
+      return "AskUserQuestion";
+    }
     case "Task":
     case "Agent":
       return `[${input.subagent_type ?? "agent"}] ${truncate(String(input.description ?? ""), 100)}`;
