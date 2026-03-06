@@ -4,7 +4,8 @@ import { runSpecAgent } from "./agents/spec-agent.js";
 import { loadSpec } from "./conventions.js";
 import type { FeAutoInput, PipelineState } from "./types.js";
 
-const MAX_CODE_REVIEW_CYCLES = 2;
+const MAX_CODE_REVIEW_CYCLES = 5;
+const STAGNATION_THRESHOLD = 2; // 연속 점수 정체 시 탈출
 
 // ──────────────────────────────────────────────
 // CLI 입력 파싱
@@ -86,17 +87,20 @@ async function main() {
 
   const state: PipelineState = { input, spec };
 
-  // ── Code ↔ Review 루프 ──
-  console.log("\n[Pipeline] Code → Review 루프");
+  // ── Code ↔ Review 루프 (Ralph 패턴: 자기참조 + 전략 진화) ──
+  console.log("\n[Pipeline] Code → Review 루프 (Ralph)");
 
   let reviewPassed = false;
   let codeOutput = "";
   let reviewFeedback = "";
+  let previousStrategy = "스펙 기반 초기 구현";
+  const scoreHistory: number[] = [];
 
   for (let cycle = 0; cycle < MAX_CODE_REVIEW_CYCLES; cycle++) {
     console.log(`\n--- Cycle ${cycle + 1}/${MAX_CODE_REVIEW_CYCLES} ---`);
+    console.log(`[전략] ${previousStrategy}`);
 
-    // Code Agent (첫 사이클: 스펙 기반 생성 / 이후: 리뷰 피드백 반영)
+    // Code Agent (첫 사이클: 스펙 기반 / 이후: 메타 분석 피드백 반영)
     const codeResult = await runCodeAgent(
       input,
       state.spec,
@@ -113,18 +117,60 @@ async function main() {
     );
     totalCost += reviewResult.cost;
 
+    // 점수 추출 (리뷰 결과에서 숫자 점수 파싱)
+    const scoreMatch = reviewResult.output.match(/(\d+)\s*[/\/]\s*100/);
+    const score = scoreMatch ? parseInt(scoreMatch[1]) : 0;
+    scoreHistory.push(score);
+    console.log(`[점수] ${score}/100 (히스토리: ${scoreHistory.join(" → ")})`);
+
     if (
       reviewResult.output.includes("통과") ||
-      reviewResult.output.includes("이슈 없음")
+      reviewResult.output.includes("이슈 없음") ||
+      score >= 90
     ) {
       reviewPassed = true;
       state.reviewResult = reviewResult.output;
+      console.log("[Ralph] 검증 통과!");
       break;
     }
 
-    reviewFeedback = reviewResult.output;
+    // ── Ralph 핵심: 정체 감지 ──
+    if (scoreHistory.length >= STAGNATION_THRESHOLD) {
+      const recent = scoreHistory.slice(-STAGNATION_THRESHOLD);
+      const isStagnant = recent.every((s) => Math.abs(s - recent[0]) <= 5);
+      if (isStagnant) {
+        console.log("[Ralph] 정체 감지! 전략을 근본적으로 전환합니다.");
+        previousStrategy = `이전 전략(${previousStrategy})이 ${STAGNATION_THRESHOLD}회 연속 정체 → 완전히 다른 접근으로 전환. 기존 코드를 버리고 구조부터 재설계`;
+      }
+    }
+
+    // ── Ralph 핵심: 자기참조 메타 분석 → 전략 진화 ──
+    const scoreImproving = scoreHistory.length >= 2 &&
+      score > scoreHistory[scoreHistory.length - 2];
+
+    const metaAnalysis = [
+      `## 메타 분석 (Cycle ${cycle + 1})`,
+      `- 현재 점수: ${score}/100`,
+      `- 점수 추이: ${scoreHistory.join(" → ")} (${scoreImproving ? "개선 중" : "정체/하락"})`,
+      `- 이전 전략: ${previousStrategy}`,
+      `- 전략 평가: ${scoreImproving ? "방향은 맞음, 같은 방향으로 더 깊이 개선" : "접근법 자체를 바꿔야 함"}`,
+      "",
+      `## 리뷰 피드백`,
+      reviewResult.output,
+      "",
+      `## 다음 전략 지시`,
+      scoreImproving
+        ? "현재 방향이 효과적이므로 리뷰 피드백의 구체적 지적사항만 집중 수정하세요."
+        : "이전 접근이 효과가 없었습니다. 왜 실패했는지 근본 원인을 분석하고, 코드 구조/설계 자체를 다르게 접근하세요.",
+    ].join("\n");
+
+    reviewFeedback = metaAnalysis;
+    previousStrategy = scoreImproving
+      ? `${previousStrategy} → 피드백 반영 심화`
+      : `전략 전환: 리뷰 실패 원인 기반 재설계`;
+
     console.log(
-      `Cycle ${cycle + 1} 리뷰 미통과. ${cycle + 1 < MAX_CODE_REVIEW_CYCLES ? "재시도..." : "최대 사이클 도달."}`
+      `Cycle ${cycle + 1} 리뷰 미통과. ${scoreImproving ? "개선 중 →" : "전략 전환 →"} ${cycle + 1 < MAX_CODE_REVIEW_CYCLES ? "재시도..." : "최대 사이클 도달."}`
     );
   }
 
