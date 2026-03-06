@@ -1,6 +1,7 @@
-# AI Agent 기본기 — fe-auto 프로젝트 해부
+# AI Agent 기본기 — 에이전틱 패턴 학습 노트
 
-> `services/fe-auto/`의 실제 코드를 한 줄씩 따라가며 오케스트레이션, Ralph, 하네스를 이해한다.
+> AI 에이전트의 핵심 패턴을 실제 코드로 이해하기 위한 학습 노트.
+> fe-auto 프로젝트를 해부하며 오케스트레이션, Ralph, 하네스, 멀티 모델 오케스트레이션을 학습한다.
 
 ---
 
@@ -14,6 +15,7 @@
 6. [데이터 흐름 추적 — 변수별 생명주기](#6-데이터-흐름-추적--변수별-생명주기)
 7. [비유와 멘탈 모델](#7-비유와-멘탈-모델)
 8. [한계와 트레이드오프](#8-한계와-트레이드오프)
+9. [멀티 모델 오케스트레이션 — Claude + OpenAI 병렬 리뷰](#9-멀티-모델-오케스트레이션--claude--openai-병렬-리뷰)
 
 ---
 
@@ -944,6 +946,7 @@ export interface FeAutoInput {
   projectPath: string;    // FE 프로젝트 경로
   ticketId?: string;      // Linear 티켓 ID (선택)
   convertSpec?: boolean;  // true면 Spec Agent 경유
+  reviewer?: "claude" | "openai" | "both";  // 리뷰어 선택
 }
 
 /** 파이프라인 상태 — 오케스트레이터가 관리 */
@@ -953,3 +956,185 @@ export interface PipelineState {
   reviewResult?: string;
 }
 ```
+
+---
+
+## 9. 멀티 모델 오케스트레이션 — Claude + OpenAI 병렬 리뷰
+
+### 에이전틱 관점에서 왜 중요한가
+
+실제 AI 에이전트 시스템에서 **모든 작업에 같은 모델을 쓸 이유가 없다**.
+모델마다 강점이 다르고, 비용도 다르고, 관점도 다르다.
+
+```
+단일 모델 에이전트:
+  모든 서브에이전트가 같은 모델 사용
+  → 같은 편향, 같은 강점, 같은 약점
+
+멀티 모델 에이전트:
+  서브에이전트마다 최적의 모델 선택
+  → 다양한 관점, 상호 보완, 비용 최적화
+```
+
+이건 사람 팀에서 "리뷰어를 다양하게 두는 것"과 같다.
+시니어 A가 놓치는 걸 시니어 B가 잡고, 그 반대도 마찬가지.
+
+### SDK별 에이전트의 현실
+
+**핵심 발견**: Claude Agent SDK와 OpenAI Codex SDK는 **놀랍도록 유사한 구조**다.
+
+```
+Claude Agent SDK → query()                    → Claude Code CLI 서브프로세스 → Claude 모델
+Codex SDK        → Codex.startThread().run()   → Codex CLI 서브프로세스      → OpenAI 모델
+```
+
+둘 다 CLI 도구를 서브프로세스로 실행하고, **구독 기반 인증**을 사용한다 (API 키 불요).
+각 SDK는 자기 모델만 지원하므로, 멀티 모델 에이전트를 만들려면 **오케스트레이터가 서로 다른 SDK를 호출**해야 한다.
+이것이 에이전틱 시스템에서 오케스트레이터의 진짜 역할이다 — 단순 순서 관리가 아니라, **이종 시스템을 통합**하는 것.
+
+### 구현: Claude vs OpenAI 리뷰 에이전트 비교
+
+#### 같은 인터페이스, 다른 내부
+
+두 리뷰 에이전트 모두 동일한 `AgentResult`를 반환한다.
+오케스트레이터 입장에서는 **누가 리뷰했는지 모르고, 결과만 받는다**.
+
+```typescript
+// 오케스트레이터는 이것만 안다
+interface AgentResult {
+  output: string;       // 리뷰 결과 텍스트
+  sessionId?: string;   // 세션 (있으면)
+  turns: number;        // 대화 턴 수
+  cost: number;         // 비용
+}
+
+// Claude든 OpenAI든 같은 타입으로 반환
+async function executeReview(reviewer, ...): Promise<AgentResult> {
+  if (reviewer === "claude") return runReviewAgent(...);
+  if (reviewer === "openai") return runReviewAgentOpenAI(...);
+  // both: 병렬 실행
+}
+```
+
+이게 에이전틱의 핵심 원칙 — **인터페이스 통일, 구현 교체 가능**.
+
+#### Claude 리뷰 에이전트의 동작 방식
+
+```typescript
+// agents/review-agent.ts — Claude Agent SDK
+for await (const message of query({
+  prompt: buildReviewPrompt(...),
+  options: {
+    model: "haiku",
+    systemPrompt: REVIEW_SYSTEM_PROMPT,
+    plugins: [FE_WORKFLOW_PLUGIN],          // ← 플러그인이 컨벤션 자동 주입
+    permissionMode: "bypassPermissions",
+    ...(isFirst ? {} : { resume: sessionId }), // ← 세션으로 대화 이어가기
+  },
+})) { ... }
+```
+
+**특징**:
+- Claude Code CLI를 서브프로세스로 실행
+- **파일 시스템 도구 사용 가능** — 프로젝트의 실제 파일을 직접 읽을 수 있음
+- **플러그인으로 컨벤션 주입** — fe-workflow 플러그인이 시스템에 FE 규칙을 넣어줌
+- **세션 유지** — `resume: sessionId`로 이전 대화 이어서 재리뷰 가능
+
+#### Codex 리뷰 에이전트의 동작 방식
+
+```typescript
+// agents/review-agent-openai.ts — OpenAI Codex SDK
+const codex = new Codex();                 // ChatGPT 구독 인증 자동 사용
+const conventions = loadConventions();     // ← 컨벤션을 직접 파일에서 읽어야 함
+
+const thread = codex.startThread({
+  sandboxMode: "read-only",
+  approvalPolicy: "never",
+});
+
+const turn = await thread.run(
+  buildReviewPrompt(conventions, ...)      // ← 프롬프트에 컨벤션 직접 포함
+);
+
+lastResult = turn.finalResponse;           // 결과 텍스트
+totalTokens += turn.usage?.input_tokens;   // 토큰 사용량
+
+// 재시도 시 스레드 이어서
+const retryThread = codex.resumeThread(thread.id!, ...);
+```
+
+**특징**:
+- Codex CLI를 서브프로세스로 실행 (Claude Agent SDK와 동일한 패턴!)
+- **구독 기반 인증** — ChatGPT Plus/Pro 구독으로 동작, API 키 불요
+- **스레드로 세션 유지** — `resumeThread(id)`로 대화 이어가기 (Claude의 `resume`와 동일)
+- **컨벤션을 프롬프트에 직접 포함** — 플러그인 시스템이 없으니 파일을 읽어서 넣어줌
+
+### 두 SDK의 구조 비교
+
+두 SDK가 놀랍도록 유사하다는 것 자체가 중요한 학습 포인트다.
+
+| | Claude Agent SDK | OpenAI Codex SDK |
+|---|---|---|
+| **패키지** | `@anthropic-ai/claude-agent-sdk` | `@openai/codex-sdk` |
+| **실행 방식** | `query()` → Claude Code CLI | `Codex.startThread().run()` → Codex CLI |
+| **인증** | Claude Code 구독 (Pro/Max) | ChatGPT 구독 (Plus/Pro) |
+| **세션** | `resume: sessionId` | `resumeThread(threadId)` |
+| **플러그인** | `plugins: [...]` 지원 | 없음 (프롬프트에 직접 포함) |
+| **도구** | 파일 시스템, 웹 등 자동 제공 | 샌드박스 내 명령 실행 |
+| **비용** | 구독에 포함 | 구독에 포함 |
+
+**에이전틱 시사점**:
+- 두 SDK 모두 **CLI 도구를 서브프로세스로 실행**하는 같은 아키텍처
+- 차이점은 **플러그인/도구 생태계** — Claude는 플러그인으로 컨벤션 자동 주입, Codex는 수동
+- 실제 시스템에서는 **작업 특성에 따라 SDK를 선택**한다
+
+### both 모드: 병렬 실행과 다관점 리뷰
+
+```typescript
+// main.ts — both 모드
+const [claudeResult, openaiResult] = await Promise.all([
+  runReviewAgent(projectPath, spec, codeOutput),        // Claude 리뷰
+  runReviewAgentOpenAI(projectPath, spec, codeOutput),  // OpenAI 리뷰 (동시 실행)
+]);
+
+// 두 결과를 합쳐서 Code Agent에 전달
+return {
+  output: `## Claude 리뷰\n${claudeResult.output}\n\n## OpenAI 리뷰\n${openaiResult.output}`,
+  cost: claudeResult.cost + openaiResult.cost,
+};
+```
+
+**에이전틱 패턴**: 다관점 검증 (Multi-Perspective Verification)
+- 같은 코드를 서로 다른 모델이 리뷰
+- Claude는 도구를 써서 실제 파일 구조까지 보고 리뷰
+- OpenAI는 프롬프트에 포함된 정보만으로 리뷰
+- 둘의 관점이 다르기 때문에 **한쪽이 놓친 이슈를 다른 쪽이 잡을 수 있음**
+
+이걸 Ralph 루프와 결합하면:
+```
+Cycle 1: Code Agent → [Claude 리뷰 + OpenAI 리뷰] → 두 리뷰 모두 반영한 메타 분석
+Cycle 2: Code Agent (두 관점의 피드백 반영) → [Claude + OpenAI] → ...
+```
+
+**단일 모델 리뷰 대비 장점**:
+- 관점 다양성 → 이슈 커버리지 ↑
+- 모델 편향 상쇄 → 점수 신뢰성 ↑ (Ralph의 약점 보완)
+
+**단점**:
+- 비용 2배
+- 두 리뷰가 충돌할 수 있음 (Claude는 통과, OpenAI는 미통과)
+
+### 확장 가능성
+
+이 패턴은 리뷰뿐 아니라 어디든 적용 가능하다:
+
+```
+오케스트레이터
+  ├── Spec Agent     → Claude (구조화된 문서 생성에 강함)
+  ├── Code Agent     → Claude Code (파일 시스템 접근 필요)
+  ├── Review Agent   → OpenAI o3 (추론 능력 활용)
+  ├── Security Agent → Claude (보안 분석)
+  └── Test Agent     → OpenAI Codex (테스트 코드 생성)
+```
+
+각 에이전트에 가장 적합한 모델을 매칭하는 것 — 이게 멀티 모델 오케스트레이션의 본질이다.

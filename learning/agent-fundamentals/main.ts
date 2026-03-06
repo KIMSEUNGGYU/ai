@@ -1,8 +1,11 @@
 import { runCodeAgent } from "./agents/code-agent.js";
 import { runReviewAgent } from "./agents/review-agent.js";
+import { runReviewAgentOpenAI } from "./agents/review-agent-openai.js";
 import { runSpecAgent } from "./agents/spec-agent.js";
 import { loadSpec } from "./conventions.js";
-import type { FeAutoInput, PipelineState } from "./types.js";
+import type { AgentResult, FeAutoInput, PipelineState } from "./types.js";
+
+type ReviewerType = "claude" | "openai" | "both";
 
 const MAX_CODE_REVIEW_CYCLES = 5;
 const STAGNATION_THRESHOLD = 2; // 연속 점수 정체 시 탈출
@@ -16,11 +19,12 @@ function parseArgs(): FeAutoInput {
 
   if (!specPath) {
     console.error("사용법:");
-    console.error("  pnpm fe-auto <스펙파일> [프로젝트경로]");
-    console.error("  pnpm fe-auto --convert <기획문서> [프로젝트경로] [--ticket LINEAR-123]");
+    console.error("  pnpm fe-auto <스펙파일> [프로젝트경로] [--reviewer claude|openai|both]");
+    console.error("  pnpm fe-auto --convert <기획문서> [프로젝트경로] [--ticket LINEAR-123] [--reviewer claude|openai|both]");
     console.error("");
     console.error("예시:");
     console.error("  pnpm fe-auto ./spec.md ~/work/ishopcare-frontend");
+    console.error("  pnpm fe-auto ./spec.md ~/work/ishopcare-frontend --reviewer both");
     console.error("  pnpm fe-auto --convert ./planning.md ~/work/ishopcare-frontend --ticket FE-456");
     process.exit(1);
   }
@@ -28,6 +32,8 @@ function parseArgs(): FeAutoInput {
   // --convert 모드: 기획문서 → Spec Agent → Code Agent
   const convertIdx = args.indexOf("--convert");
   const ticketIdx = args.indexOf("--ticket");
+  const reviewerIdx = args.indexOf("--reviewer");
+  const reviewer = (reviewerIdx !== -1 ? args[reviewerIdx + 1] : "claude") as ReviewerType;
 
   if (convertIdx !== -1) {
     const docPath = args[convertIdx + 1];
@@ -44,11 +50,12 @@ function parseArgs(): FeAutoInput {
       projectPath,
       convertSpec: true,
       ticketId: ticketIdx !== -1 ? args[ticketIdx + 1] : undefined,
+      reviewer,
     };
   }
 
   const projectPath = args[1] || "~/work/ishopcare-frontend";
-  return { specPath, projectPath };
+  return { specPath, projectPath, reviewer };
 }
 
 // ──────────────────────────────────────────────
@@ -109,8 +116,9 @@ async function main() {
     codeOutput = codeResult.output;
     totalCost += codeResult.cost;
 
-    // Review Agent
-    const reviewResult = await runReviewAgent(
+    // Review Agent — reviewer 옵션에 따라 분기
+    const reviewResult = await executeReview(
+      input.reviewer ?? "claude",
       input.projectPath,
       state.spec,
       codeOutput
@@ -182,6 +190,49 @@ async function main() {
   console.log(`총 비용: $${totalCost.toFixed(4)}`);
   console.log(`리뷰: ${reviewPassed ? "통과" : "이슈 있음 (수동 확인 필요)"}`);
   console.log("\nPR 생성은 검수 후 수동으로 진행하세요.");
+}
+
+// ──────────────────────────────────────────────
+// 리뷰어 실행 — claude / openai / both
+// ──────────────────────────────────────────────
+async function executeReview(
+  reviewer: ReviewerType,
+  projectPath: string,
+  spec: string,
+  codeOutput: string
+): Promise<AgentResult> {
+  if (reviewer === "claude") {
+    return runReviewAgent(projectPath, spec, codeOutput);
+  }
+
+  if (reviewer === "openai") {
+    return runReviewAgentOpenAI(projectPath, spec, codeOutput);
+  }
+
+  // both: 병렬 실행 → 결과 비교
+  console.log("\n[Both] Claude + OpenAI 리뷰 병렬 실행");
+  const [claudeResult, openaiResult] = await Promise.all([
+    runReviewAgent(projectPath, spec, codeOutput),
+    runReviewAgentOpenAI(projectPath, spec, codeOutput),
+  ]);
+
+  console.log("\n" + "─".repeat(50));
+  console.log("[비교] Claude vs OpenAI 리뷰 결과");
+  console.log("─".repeat(50));
+  console.log("\n📋 Claude 리뷰:");
+  console.log(claudeResult.output.slice(0, 500));
+  console.log("\n📋 OpenAI 리뷰:");
+  console.log(openaiResult.output.slice(0, 500));
+  console.log("\n─".repeat(50));
+  console.log(`비용: Claude $${claudeResult.cost.toFixed(4)} | OpenAI $${openaiResult.cost.toFixed(4)}`);
+  console.log("─".repeat(50));
+
+  // 두 결과를 합쳐서 반환 (Ralph 루프에서 둘 다 참고)
+  return {
+    output: `## Claude 리뷰\n${claudeResult.output}\n\n## OpenAI 리뷰\n${openaiResult.output}`,
+    turns: claudeResult.turns + openaiResult.turns,
+    cost: claudeResult.cost + openaiResult.cost,
+  };
 }
 
 main().catch((err) => {
