@@ -370,8 +370,8 @@ function SessionDrawer({ session, events, isLoading, onClose }: {
                         key={cat}
                         onClick={() => toggleCategory(cat)}
                         className={`rounded border px-1.5 py-0.5 text-[10px] font-medium transition-opacity ${
-                          CATEGORY_COLORS[cat]
-                        } ${!isFiltering || isActive ? "opacity-100" : "opacity-30"}`}
+                          isActive ? CATEGORY_COLORS[cat] : "border-border/50 text-muted-foreground/50 bg-transparent"
+                        } ${isActive ? "opacity-100" : "opacity-60"}`}
                       >
                         {cat} ({count})
                       </button>
