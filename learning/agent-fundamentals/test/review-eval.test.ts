@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { computeScoreFromReview, evaluateReview } from "../evaluators/review-eval.js";
+import { computeScoreFromReview, evaluateReview } from "../src/evaluators/review-eval.js";
 
 describe("computeScoreFromReview", () => {
   it("이슈 없음 → 100점", () => {

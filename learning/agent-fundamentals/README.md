@@ -7,45 +7,47 @@ AI 에이전트 시스템의 핵심 패턴을 학습하기 위한 프로젝트.
 
 | 패턴 | 설명 | 코드 위치 |
 |------|------|-----------|
-| 오케스트레이션 | 서브에이전트 호출 순서 + 데이터 연결 | `main.ts` |
-| Ralph (자기참조 루프) | 메타 분석 → 전략 진화 → 정체 감지 | `main.ts` (루프 안) |
-| 하네스 (Eval) | 에이전트 출력 품질 자동 검증 | `evaluators/` |
+| 오케스트레이션 | 서브에이전트 호출 순서 + 데이터 연결 | `src/main.ts` |
+| Ralph (자기참조 루프) | 메타 분석 → 전략 진화 → 정체 감지 | `src/main.ts` (루프 안) |
+| 하네스 (Eval) | 에이전트 출력 품질 자동 검증 | `src/evaluators/` |
 
 ## 구조
 
 ```
 agent-fundamentals/
-├── main.ts              ← 오케스트레이터 (파이프라인 + Ralph 루프)
-├── agents/
-│   ├── spec-agent.ts         ← 기획문서 → 구현 스펙
-│   ├── code-agent.ts         ← 스펙 → 코드 생성
-│   ├── review-agent.ts       ← 코드 리뷰 (Claude SDK)
-│   └── review-agent-openai.ts ← 코드 리뷰 (Codex SDK)
-├── evaluators/
-│   ├── spec-eval.ts          ← 스펙 품질 검증
-│   ├── code-eval.ts          ← 코드 품질 검증
-│   └── review-eval.ts        ← 리뷰 결과 검증 + 점수 산출
-├── test/                     ← 단위 테스트
-├── evals/                    ← 테스트 스펙 파일 (시험 문제)
-│   └── output/               ← 테스트 출력 (.gitignore)
-├── types.ts             ← 공통 타입
-├── conventions.ts       ← 플러그인 경로, 파일 로더
-├── NOTES.md             ← 개념 정리 학습 노트
-└── README.md            ← 이 파일
+├── src/
+│   ├── main.ts              ← 오케스트레이터 (파이프라인 + Ralph 루프)
+│   ├── types.ts             ← 공통 타입
+│   ├── conventions.ts       ← 플러그인 경로, 파일 로더
+│   ├── test-plugin.ts
+│   ├── agents/
+│   │   ├── spec-agent.ts         ← 기획문서 → 구현 스펙
+│   │   ├── code-agent.ts         ← 스펙 → 코드 생성
+│   │   ├── review-agent.ts       ← 코드 리뷰 (Claude SDK)
+│   │   └── review-agent-openai.ts ← 코드 리뷰 (Codex SDK)
+│   └── evaluators/
+│       ├── spec-eval.ts          ← 스펙 품질 검증
+│       ├── code-eval.ts          ← 코드 품질 검증
+│       └── review-eval.ts        ← 리뷰 결과 검증 + 점수 산출
+├── specs/                        ← 테스트용 스펙 문서
+│   └── output/                   ← 에이전트 출력 (.gitignore)
+├── test/                         ← 단위 테스트
+├── NOTES.md                      ← 개념 정리 학습 노트
+└── README.md
 ```
 
 ## 실행
 
 ```bash
 # 스펙 직접 전달
-unset CLAUDECODE && npx tsx main.ts ./spec.md ~/work/ishopcare-frontend
+unset CLAUDECODE && npx tsx src/main.ts ./spec.md ~/work/ishopcare-frontend
 
 # 기획문서 → 스펙 변환 모드
-unset CLAUDECODE && npx tsx main.ts --convert ./planning.md ~/work/ishopcare-frontend --ticket FE-456
+unset CLAUDECODE && npx tsx src/main.ts --convert ./planning.md ~/work/ishopcare-frontend --ticket FE-456
 
 # 리뷰어 선택 (기본: claude)
-unset CLAUDECODE && npx tsx main.ts ./spec.md ./evals/output --reviewer openai
-unset CLAUDECODE && npx tsx main.ts ./spec.md ./evals/output --reviewer both
+unset CLAUDECODE && npx tsx src/main.ts ./spec.md ./specs/output --reviewer openai
+unset CLAUDECODE && npx tsx src/main.ts ./spec.md ./specs/output --reviewer both
 ```
 
 ## 테스트
@@ -58,20 +60,20 @@ unset CLAUDECODE && npx tsx main.ts ./spec.md ./evals/output --reviewer both
 cd ~/dev/agents/learning/agent-fundamentals
 ```
 
-`evals/` 폴더에 준비된 테스트 스펙으로 실행:
+`specs/` 폴더에 준비된 테스트 스펙으로 실행:
 
 ```bash
 # 가벼운 유틸 함수 (비용 최소)
-unset CLAUDECODE && npx tsx main.ts ./evals/spec-date-utils.md ./evals/output --reviewer openai
+unset CLAUDECODE && npx tsx src/main.ts ./specs/spec-date-utils.md ./specs/output --reviewer openai
 
 # API 파라미터 빌더
-unset CLAUDECODE && npx tsx main.ts ./evals/spec-api-params.md ./evals/output --reviewer openai
+unset CLAUDECODE && npx tsx src/main.ts ./specs/spec-api-params.md ./specs/output --reviewer openai
 
 # React 컴포넌트
-unset CLAUDECODE && npx tsx main.ts ./evals/spec-status-badge.md ./evals/output --reviewer openai
+unset CLAUDECODE && npx tsx src/main.ts ./specs/spec-status-badge.md ./specs/output --reviewer openai
 
 # 멀티 모델 리뷰 (Claude + OpenAI 동시)
-unset CLAUDECODE && npx tsx main.ts ./evals/spec-date-utils.md ./evals/output --reviewer both
+unset CLAUDECODE && npx tsx src/main.ts ./specs/spec-date-utils.md ./specs/output --reviewer both
 ```
 
 | 스펙 | 난이도 | 포인트 |
