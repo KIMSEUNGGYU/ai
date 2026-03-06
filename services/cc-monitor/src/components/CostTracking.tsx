@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { costQueryOptions } from "@/lib/query-options";
 import type { CostResponse, CostSummary, ModelCostBreakdown, DailyCost } from "@/lib/types";
 
 interface CostTrackingProps {
@@ -14,38 +16,38 @@ function formatCost(amount: number): string {
 
 function CostSummaryCards({ summary }: { summary: CostSummary }) {
   return (
-    <div style={styles.summaryGrid}>
-      <div style={{ ...styles.summaryCard, ...styles.totalCard }}>
-        <span style={styles.summaryLabel}>Total Cost</span>
-        <span style={styles.totalValue}>{formatCost(summary.totalCost)}</span>
+    <div className="grid grid-cols-4 gap-2 mb-4">
+      <div className="col-span-full flex flex-col items-center gap-1 px-2 py-2.5 bg-green-900/30 border border-green-700 rounded-md">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Total Cost</span>
+        <span className="text-[28px] font-extrabold text-green-400">{formatCost(summary.totalCost)}</span>
       </div>
-      <div style={styles.summaryCard}>
-        <span style={styles.summaryLabel}>Input</span>
-        <span style={styles.summaryValue}>{formatCost(summary.inputCost)}</span>
+      <div className="flex flex-col items-center gap-1 px-2 py-2.5 bg-card border border-border rounded-md">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Input</span>
+        <span className="text-base font-bold text-blue-400">{formatCost(summary.inputCost)}</span>
       </div>
-      <div style={styles.summaryCard}>
-        <span style={styles.summaryLabel}>Output</span>
-        <span style={styles.summaryValue}>{formatCost(summary.outputCost)}</span>
+      <div className="flex flex-col items-center gap-1 px-2 py-2.5 bg-card border border-border rounded-md">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Output</span>
+        <span className="text-base font-bold text-blue-400">{formatCost(summary.outputCost)}</span>
       </div>
-      <div style={styles.summaryCard}>
-        <span style={styles.summaryLabel}>Cache Write</span>
-        <span style={styles.summaryValue}>{formatCost(summary.cacheWriteCost)}</span>
+      <div className="flex flex-col items-center gap-1 px-2 py-2.5 bg-card border border-border rounded-md">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Cache Write</span>
+        <span className="text-base font-bold text-blue-400">{formatCost(summary.cacheWriteCost)}</span>
       </div>
-      <div style={styles.summaryCard}>
-        <span style={styles.summaryLabel}>Cache Read</span>
-        <span style={styles.summaryValue}>{formatCost(summary.cacheReadCost)}</span>
+      <div className="flex flex-col items-center gap-1 px-2 py-2.5 bg-card border border-border rounded-md">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Cache Read</span>
+        <span className="text-base font-bold text-blue-400">{formatCost(summary.cacheReadCost)}</span>
       </div>
-      <div style={styles.summaryCard}>
-        <span style={styles.summaryLabel}>Avg/Session</span>
-        <span style={styles.summaryValue}>{formatCost(summary.avgCostPerSession)}</span>
+      <div className="flex flex-col items-center gap-1 px-2 py-2.5 bg-card border border-border rounded-md">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Avg/Session</span>
+        <span className="text-base font-bold text-blue-400">{formatCost(summary.avgCostPerSession)}</span>
       </div>
-      <div style={styles.summaryCard}>
-        <span style={styles.summaryLabel}>Avg/Turn</span>
-        <span style={styles.summaryValue}>{formatCost(summary.avgCostPerTurn)}</span>
+      <div className="flex flex-col items-center gap-1 px-2 py-2.5 bg-card border border-border rounded-md">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Avg/Turn</span>
+        <span className="text-base font-bold text-blue-400">{formatCost(summary.avgCostPerTurn)}</span>
       </div>
-      <div style={styles.summaryCard}>
-        <span style={styles.summaryLabel}>Sessions</span>
-        <span style={styles.summaryValue}>{summary.sessionCount}</span>
+      <div className="flex flex-col items-center gap-1 px-2 py-2.5 bg-card border border-border rounded-md">
+        <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Sessions</span>
+        <span className="text-base font-bold text-blue-400">{summary.sessionCount}</span>
       </div>
     </div>
   );
@@ -57,31 +59,28 @@ function ModelBreakdown({ models }: { models: ModelCostBreakdown[] }) {
   const maxCost = Math.max(...models.map((m) => m.totalCost));
 
   return (
-    <div style={styles.section}>
-      <h3 style={styles.sectionTitle}>MODEL BREAKDOWN</h3>
+    <div className="mt-4">
+      <h3 className="text-[11px] font-semibold tracking-wide text-muted-foreground mb-2 uppercase">MODEL BREAKDOWN</h3>
       {models.map((m) => {
         const pct = maxCost > 0 ? (m.totalCost / maxCost) * 100 : 0;
         return (
-          <div key={m.modelId} style={styles.modelRow}>
-            <div style={styles.modelInfo}>
-              <span style={styles.modelName}>
+          <div key={m.modelId} className="flex items-center gap-2 py-1.5 border-b border-border/60">
+            <div className="w-[140px] shrink-0">
+              <span className="text-xs font-semibold text-foreground block">
                 {m.displayName}
-                {!m.isKnownModel && <span style={styles.unknownBadge}> (est.)</span>}
+                {!m.isKnownModel && <span className="text-[10px] text-yellow-600 font-normal"> (est.)</span>}
               </span>
-              <span style={styles.modelMeta}>
+              <span className="text-[10px] text-muted-foreground/60">
                 {m.sessionCount} sessions
               </span>
             </div>
-            <div style={styles.barContainer}>
+            <div className="flex-1 h-3.5 bg-border/40 rounded-sm overflow-hidden">
               <div
-                style={{
-                  ...styles.bar,
-                  width: `${Math.max(pct, 2)}%`,
-                  background: m.isKnownModel ? "#238636" : "#8b8000",
-                }}
+                className={`h-full rounded-sm transition-[width] duration-300 ease-in-out ${m.isKnownModel ? "bg-green-700" : "bg-yellow-700"}`}
+                style={{ width: `${Math.max(pct, 2)}%` }}
               />
             </div>
-            <span style={styles.modelCost}>{formatCost(m.totalCost)}</span>
+            <span className="w-[70px] text-right text-xs font-bold text-green-400 shrink-0">{formatCost(m.totalCost)}</span>
           </div>
         );
       })}
@@ -95,22 +94,20 @@ function DailyCostChart({ daily }: { daily: DailyCost[] }) {
   const maxCost = Math.max(...daily.map((d) => d.totalCost));
 
   return (
-    <div style={styles.section}>
-      <h3 style={styles.sectionTitle}>DAILY COST TREND</h3>
-      <div style={styles.dailyChart}>
+    <div className="mt-4">
+      <h3 className="text-[11px] font-semibold tracking-wide text-muted-foreground mb-2 uppercase">DAILY COST TREND</h3>
+      <div className="flex items-end gap-0.5 h-[100px] py-2">
         {daily.map((d) => {
           const pct = maxCost > 0 ? (d.totalCost / maxCost) * 100 : 0;
           return (
-            <div key={d.date} style={styles.dailyCol} title={`${d.date}: ${formatCost(d.totalCost)} (${d.sessionCount} sessions)`}>
-              <div style={styles.dailyBarWrapper}>
+            <div key={d.date} className="flex-1 flex flex-col items-center h-full" title={`${d.date}: ${formatCost(d.totalCost)} (${d.sessionCount} sessions)`}>
+              <div className="flex-1 w-full flex items-end justify-center">
                 <div
-                  style={{
-                    ...styles.dailyBar,
-                    height: `${Math.max(pct, 3)}%`,
-                  }}
+                  className="w-4/5 max-w-5 bg-green-700 rounded-t-sm transition-[height] duration-300 ease-in-out"
+                  style={{ height: `${Math.max(pct, 3)}%` }}
                 />
               </div>
-              <span style={styles.dailyLabel}>{d.date.slice(5)}</span>
+              <span className="text-[9px] text-muted-foreground/60 mt-1 whitespace-nowrap">{d.date.slice(5)}</span>
             </div>
           );
         })}
@@ -123,38 +120,41 @@ function PricingTable({ table }: { table: CostResponse["pricingTable"] }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div style={styles.section}>
-      <div style={styles.pricingHeader}>
-        <h3 style={styles.sectionTitle}>PRICING TABLE</h3>
-        <button onClick={() => setExpanded(!expanded)} style={styles.toggleBtn}>
+    <div className="mt-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">PRICING TABLE</h3>
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="bg-transparent border border-border rounded px-2.5 py-0.5 text-[10px] text-muted-foreground cursor-pointer hover:border-muted-foreground/60 transition-colors"
+        >
           {expanded ? "Hide" : "Show"}
         </button>
       </div>
       {expanded && (
-        <div style={styles.tableWrapper}>
-          <table style={styles.table}>
+        <div className="mt-2 overflow-x-auto">
+          <table className="w-full border-collapse text-[11px]">
             <thead>
               <tr>
-                <th style={styles.th}>Model</th>
-                <th style={{ ...styles.th, textAlign: "right" }}>Input</th>
-                <th style={{ ...styles.th, textAlign: "right" }}>Output</th>
-                <th style={{ ...styles.th, textAlign: "right" }}>Cache Write</th>
-                <th style={{ ...styles.th, textAlign: "right" }}>Cache Read</th>
+                <th className="px-2 py-1.5 border-b border-border text-left text-muted-foreground font-semibold">Model</th>
+                <th className="px-2 py-1.5 border-b border-border text-right text-muted-foreground font-semibold">Input</th>
+                <th className="px-2 py-1.5 border-b border-border text-right text-muted-foreground font-semibold">Output</th>
+                <th className="px-2 py-1.5 border-b border-border text-right text-muted-foreground font-semibold">Cache Write</th>
+                <th className="px-2 py-1.5 border-b border-border text-right text-muted-foreground font-semibold">Cache Read</th>
               </tr>
             </thead>
             <tbody>
               {table.map((row) => (
                 <tr key={row.modelId}>
-                  <td style={styles.td}>{row.displayName}</td>
-                  <td style={{ ...styles.td, textAlign: "right" }}>${row.inputPerMTok}</td>
-                  <td style={{ ...styles.td, textAlign: "right" }}>${row.outputPerMTok}</td>
-                  <td style={{ ...styles.td, textAlign: "right" }}>${row.cacheWritePerMTok}</td>
-                  <td style={{ ...styles.td, textAlign: "right" }}>${row.cacheReadPerMTok}</td>
+                  <td className="px-2 py-[5px] border-b border-border/60 text-foreground">{row.displayName}</td>
+                  <td className="px-2 py-[5px] border-b border-border/60 text-foreground text-right">${row.inputPerMTok}</td>
+                  <td className="px-2 py-[5px] border-b border-border/60 text-foreground text-right">${row.outputPerMTok}</td>
+                  <td className="px-2 py-[5px] border-b border-border/60 text-foreground text-right">${row.cacheWritePerMTok}</td>
+                  <td className="px-2 py-[5px] border-b border-border/60 text-foreground text-right">${row.cacheReadPerMTok}</td>
                 </tr>
               ))}
             </tbody>
           </table>
-          <p style={styles.pricingNote}>단위: $/MTok (1M 토큰 당)</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-1.5 italic">단위: $/MTok (1M 토큰 당)</p>
         </div>
       )}
     </div>
@@ -162,44 +162,18 @@ function PricingTable({ table }: { table: CostResponse["pricingTable"] }) {
 }
 
 export function CostTracking({ userId }: CostTrackingProps) {
-  const [data, setData] = useState<CostResponse | null>(null);
   const [days, setDays] = useState(30);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const params = new URLSearchParams();
-      if (userId) params.set("userId", userId);
-      if (days) params.set("days", String(days));
-      const qs = params.toString();
-      const res = await fetch(`/api/cost${qs ? `?${qs}` : ""}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json() as CostResponse;
-      setData(json);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch cost data");
-    } finally {
-      setLoading(false);
-    }
-  }, [userId, days]);
-
-  // Initial fetch + polling every 30s
-  useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 30_000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
+  const { data, isLoading, error } = useQuery(costQueryOptions({ userId, days: days || undefined }));
 
   return (
     <section>
-      <div style={styles.headerRow}>
-        <h2 style={styles.title}>COST TRACKING</h2>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-[13px] font-semibold tracking-wide text-muted-foreground">COST TRACKING</h2>
         <select
           value={days}
           onChange={(e) => setDays(Number(e.target.value))}
-          style={styles.daysSelect}
+          className="bg-background border border-border rounded px-2 py-0.5 text-[11px] text-foreground"
         >
           <option value={7}>7일</option>
           <option value={14}>14일</option>
@@ -209,8 +183,8 @@ export function CostTracking({ userId }: CostTrackingProps) {
         </select>
       </div>
 
-      {loading && !data && <p style={styles.loading}>Loading...</p>}
-      {error && <p style={styles.error}>{error}</p>}
+      {isLoading && !data && <p className="text-muted-foreground/60 italic text-[13px]">Loading...</p>}
+      {error && <p className="text-red-400 text-[13px]">{error.message}</p>}
 
       {data && (
         <>
@@ -221,216 +195,9 @@ export function CostTracking({ userId }: CostTrackingProps) {
         </>
       )}
 
-      {!loading && !error && data && data.summary.sessionCount === 0 && (
-        <p style={styles.empty}>비용 데이터 없음 — 토큰 데이터가 있는 세션이 필요합니다.</p>
+      {!isLoading && !error && data && data.summary.sessionCount === 0 && (
+        <p className="text-muted-foreground/60 italic text-[13px]">비용 데이터 없음 -- 토큰 데이터가 있는 세션이 필요합니다.</p>
       )}
     </section>
   );
 }
-
-const styles: Record<string, React.CSSProperties> = {
-  title: {
-    fontSize: 13,
-    fontWeight: 600,
-    letterSpacing: "0.05em",
-    color: "#8b949e",
-    marginBottom: 0,
-  },
-  headerRow: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  daysSelect: {
-    background: "#0d1117",
-    border: "1px solid #30363d",
-    borderRadius: 4,
-    color: "#c9d1d9",
-    padding: "3px 8px",
-    fontSize: 11,
-  },
-  loading: { color: "#484f58", fontStyle: "italic", fontSize: 13 },
-  error: { color: "#f85149", fontSize: 13 },
-  empty: { color: "#484f58", fontStyle: "italic", fontSize: 13 },
-
-  // Summary Grid
-  summaryGrid: {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr 1fr 1fr",
-    gap: 8,
-    marginBottom: 16,
-  },
-  summaryCard: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    gap: 4,
-    padding: "10px 8px",
-    background: "#161b22",
-    border: "1px solid #30363d",
-    borderRadius: 6,
-  },
-  totalCard: {
-    gridColumn: "1 / -1",
-    background: "#0d2818",
-    border: "1px solid #238636",
-  },
-  summaryLabel: {
-    fontSize: 10,
-    fontWeight: 600,
-    color: "#8b949e",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-  },
-  summaryValue: {
-    fontSize: 16,
-    fontWeight: 700,
-    color: "#58a6ff",
-  },
-  totalValue: {
-    fontSize: 28,
-    fontWeight: 800,
-    color: "#3fb950",
-  },
-
-  // Section
-  section: {
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 11,
-    fontWeight: 600,
-    letterSpacing: "0.05em",
-    color: "#8b949e",
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
-
-  // Model Breakdown
-  modelRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "6px 0",
-    borderBottom: "1px solid #21262d",
-  },
-  modelInfo: {
-    width: 140,
-    flexShrink: 0,
-  },
-  modelName: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: "#c9d1d9",
-    display: "block",
-  },
-  modelMeta: {
-    fontSize: 10,
-    color: "#484f58",
-  },
-  unknownBadge: {
-    fontSize: 10,
-    color: "#8b8000",
-    fontWeight: 400,
-  },
-  barContainer: {
-    flex: 1,
-    height: 14,
-    background: "#21262d",
-    borderRadius: 3,
-    overflow: "hidden",
-  },
-  bar: {
-    height: "100%",
-    borderRadius: 3,
-    transition: "width 0.3s ease",
-  },
-  modelCost: {
-    width: 70,
-    textAlign: "right" as const,
-    fontSize: 12,
-    fontWeight: 700,
-    color: "#3fb950",
-    flexShrink: 0,
-  },
-
-  // Daily Chart
-  dailyChart: {
-    display: "flex",
-    alignItems: "flex-end",
-    gap: 2,
-    height: 100,
-    padding: "8px 0",
-  },
-  dailyCol: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    height: "100%",
-  },
-  dailyBarWrapper: {
-    flex: 1,
-    width: "100%",
-    display: "flex",
-    alignItems: "flex-end",
-    justifyContent: "center",
-  },
-  dailyBar: {
-    width: "80%",
-    maxWidth: 20,
-    background: "#238636",
-    borderRadius: "2px 2px 0 0",
-    transition: "height 0.3s ease",
-  },
-  dailyLabel: {
-    fontSize: 9,
-    color: "#484f58",
-    marginTop: 4,
-    whiteSpace: "nowrap",
-  },
-
-  // Pricing Table
-  pricingHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  toggleBtn: {
-    background: "transparent",
-    border: "1px solid #30363d",
-    borderRadius: 4,
-    color: "#8b949e",
-    padding: "2px 10px",
-    fontSize: 10,
-    cursor: "pointer",
-  },
-  tableWrapper: {
-    marginTop: 8,
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    fontSize: 11,
-  },
-  th: {
-    padding: "6px 8px",
-    borderBottom: "1px solid #30363d",
-    color: "#8b949e",
-    fontWeight: 600,
-    textAlign: "left" as const,
-  },
-  td: {
-    padding: "5px 8px",
-    borderBottom: "1px solid #21262d",
-    color: "#c9d1d9",
-  },
-  pricingNote: {
-    fontSize: 10,
-    color: "#484f58",
-    marginTop: 6,
-    fontStyle: "italic",
-  },
-};
