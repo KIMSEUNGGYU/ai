@@ -8,7 +8,8 @@
 ├── services/morning-brief/    ← 모닝 브리프 에이전트 (MVP)
 ├── learning/                  ← 워크스페이스 밖 (npm 패키지 아님)
 │   ├── claude-code/           ← SDK 학습 (교안+코드+노트)
-│   └── agent-study/           ← Claude Code 사용법 (subtree)
+│   ├── agent-study/           ← Claude Code 사용법 (subtree)
+│   └── openclaw/              ← OpenClaw 학습 (스킬+워크스페이스+노트)
 ├── docs/                      ← 개념 문서
 └── .ai/                       ← 작업 관리 (active/specs/archive)
 ```
