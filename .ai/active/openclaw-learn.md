@@ -5,6 +5,7 @@
 - 설치 → 스킬 시스템 이해 → 커스텀 에이전트 구축
 
 ## 학습 계획
+## 작업
 
 ### Phase 1: 설치 + 기본 동작 이해 (완료)
 - [x] OpenClaw 설치 + Gateway 실행 (다른 PC)
@@ -63,3 +64,23 @@
 - 워크스페이스 파일은 매 턴 주입 → 짧게 유지
 
 <!-- last-active: 2026-03-07 -->
+## 현재 컨텍스트
+- 브랜치: `learn/openclaw` (PR #15 생성됨)
+- Phase 1~2 완료, Phase 3부터 다른 PC에서 진행
+- OpenClaw는 다른 PC에 설치 (`~/.openclaw/`)
+- 학습 자료: `learning/openclaw/` (notes, skills, workspace)
+
+## 결정사항
+- Telegram 채널 유지 (변경 가능)
+- 접근법: 해부 → 클론 → 확장
+- 스킬 파일은 Git 레포로 관리
+- description이 스킬 트리거의 핵심
+
+## 메모
+- 다른 PC도 동일한 3폴더 체계(work/dev/hq) 사용
+- pc-map.md에 다른 PC 정보 추가 완료
+
+<!-- last-active: 2026-03-08 -->
+
+## 세션 이력
+- d6b62e5f-f548-4bf9-8c92-617ebc75cb84 (2026-03-08 00:00)
