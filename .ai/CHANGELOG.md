@@ -1,5 +1,8 @@
 # 작업 이력
 
+## 2026-03-09
+- 자가학습 개선 — profile.md 도입 + /done profile 트랙 추가 (v0.12.0) ✅
+
 ## 2026-03-08
 - session-manager 키워드 개선 v0.9.0 (교정+긍정 키워드 카테고리 분리) ✅
 - .ai/ 구조 통합 (docs/plans → specs/backlog, archive → CHANGELOG) ✅

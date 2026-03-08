@@ -17,5 +17,8 @@
 ## 사용자 지시 존중
 - 사용자가 '하나의 레포'라고 명시하면 여러 레포로 분리하지 말고 하나로 합쳐라 — 사용자의 구체적 구조 지시를 임의로 변경 금지 <!-- learned: 2026-03-08, task: dotfiles-통합 -->
 
+## specs 관리
+- 완료된 작업의 spec 파일은 삭제 — CHANGELOG 요약 + profile/learnings 패턴으로 충분, specs는 진행 중 작업용 <!-- learned: 2026-03-09, task: self-learning-improvement -->
+
 ## 브랜치/환경
 - worktree 사용 시 env 복붙 등 추가 설정이 번거로우므로, 간단한 수정은 stash + 브랜치 전환 선호 <!-- learned: 2026-03-07, task: 주문_서류_상세 -->

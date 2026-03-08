@@ -6,3 +6,4 @@
 - 자가학습은 session_id 유무와 관계없이 항상 수행 — session_id 없으면 현재 세션 transcript 사용 <!-- learned: 2026-03-07, task: 주문_서류_상세 -->
 - active 파일 0개여도 자가학습은 정상 실행 — "종료"로 스킵하지 않음 <!-- learned: 2026-03-07, task: 주문_서류_상세 -->
 - archive 저장은 실질적 가치가 낮으면 제거 검토 대상 <!-- learned: 2026-03-07, task: 주문_서류_상세 -->
+- 플러그인 버전 업데이트 후 반영 시점 안내 — exit 후 새 세션에서 반영됨을 명시 <!-- learned: 2026-03-09, task: self-learning-improvement -->
