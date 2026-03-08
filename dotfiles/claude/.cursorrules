@@ -1,0 +1,3 @@
+# Git Commit Messages
+- Commit messages should always be in Korean.
+- Use Conventional Commits format (e.g., feat, fix, docs, refactor, chore).
