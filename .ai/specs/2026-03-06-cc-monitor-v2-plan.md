@@ -8,7 +8,7 @@
 
 **Tech Stack:** Next.js (Pages Router), Prisma + libSQL (Turso), TypeScript, Tailwind CSS
 
-**설계 문서:** `docs/plans/2026-03-06-cc-monitor-v2-design.md`
+**설계 문서:** `.ai/specs/2026-03-06-cc-monitor-v2-design.md`
 
 ---
 
