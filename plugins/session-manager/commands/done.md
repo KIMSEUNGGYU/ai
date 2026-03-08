@@ -1,5 +1,5 @@
 ---
-description: 작업 완료 처리 — 자가학습 + 패턴 질문 + active 정리 + INDEX 업데이트
+description: 작업 완료 처리 — 자가학습 + 패턴 질문 + CHANGELOG 기록 + active 정리
 allowed-tools: Read, Write, Edit, Glob, Bash, Agent, AskUserQuestion
 argument-hint: [작업 파일명 (선택)]
 ---
@@ -40,7 +40,10 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-corrections.mjs" {transcript_path1} 
 
 페이지 구현, 공통 UI 조합, 새 도메인 API, 새 상태관리일 때만 `.ai/patterns/` 저장 제안. 버그 수정/단순 변경은 스킵.
 
-## 4. active 정리 + INDEX 업데이트
+## 4. CHANGELOG 기록 + active 정리 + INDEX 업데이트
+
+`.ai/CHANGELOG.md`에 완료 기록 한 줄 추가. 형식: `- {작업 제목} — {한 줄 요약} ✅`
+날짜 섹션(`## YYYY-MM-DD`)이 없으면 새로 생성.
 
 active 파일 있으면 삭제, `.ai/INDEX.md` 진행 중 섹션에서 링크 제거.
 
