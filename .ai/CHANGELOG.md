@@ -3,7 +3,9 @@
 ## 2026-03-08
 - session-manager 키워드 개선 v0.9.0 (교정+긍정 키워드 카테고리 분리) ✅
 - .ai/ 구조 통합 (docs/plans → specs/backlog, archive → CHANGELOG) ✅
+- 작업 파일 frontmatter 템플릿 도입 (v0.11.0) ✅
 - 멀티모델 오케스트레이션 설계 → backlog
+- 자가학습 개선(profile.md) + 제2의 나(비전) → backlog
 - CLAUDE.md 전면 개선 (/init)
 
 ## 2026-03-07
