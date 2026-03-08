@@ -26,9 +26,9 @@ argument-hint: [작업 파일명 (선택)]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-corrections.mjs" {transcript_path1} [{transcript_path2} ...]
 ```
 
-`{project-hash}`: cwd를 `-`로 변환. 출력: `{ messages, stats: { correctionHits, extracted } }`
+`{project-hash}`: cwd를 `-`로 변환. 출력: `{ messages, stats: { correctionHits, positiveHits, extracted } }`
 
-**2-2.** `correctionHits === 0` 또는 `extracted < 3`이면 스킵.
+**2-2.** `(correctionHits === 0 && positiveHits === 0)` 또는 `extracted < 3`이면 스킵.
 
 **2-3.** Agent로 서브에이전트 실행. 프롬프트에 messages를 넘기고, 분류 기준([교정/신규/위반/선호])과 카테고리(code→learnings-code.md, thinking→learnings-thinking.md, workflow→learnings-workflow.md, domain→learnings-domain.md, meta→learnings-meta.md)로 JSON 배열 출력 요청. 교정 없으면 빈 배열.
 

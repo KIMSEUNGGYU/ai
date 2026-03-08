@@ -2,10 +2,11 @@
  * extract-corrections.mjs
  *
  * transcript JSONL에서 사용자 메시지를 추출하여 교정 분석용 텍스트 생성.
- * 추출 전략: 초반 3개(맥락) + 중간(교정 키워드만) + 마지막 7개(교정 집중 구간)
+ * 추출 전략: 초반 3개(맥락) + 중간(학습 신호만) + 마지막 7개(교정 집중 구간)
+ * 학습 신호: 교정 키워드(부정/수정) + 긍정 키워드(기억/유지/선호)
  *
  * Usage: node extract-corrections.mjs <transcript-path> [<transcript-path2> ...]
- * Output: JSON { messages: string[], stats: { total, extracted, correctionHits } }
+ * Output: JSON { messages: string[], stats: { total, extracted, correctionHits, positiveHits } }
  */
 
 import { readFile } from 'node:fs/promises';
@@ -17,6 +18,15 @@ const CORRECTION_KEYWORDS = [
   '그렇게 말고', '다시 해', '수정해', '고쳐', '바꿔', '잘못',
   '틀렸', '아닌데', '그게 아닌', '하지 마', '하지마', '빼',
   '넣지 마', '안 했', '못 했', '왜 이렇게', '이상한', '엉뚱',
+  '아까', '그거 말고', '다르게', '이게 아니라', '아니',
+  '안 돼', '안돼', '그만', '됐어', '치워',
+  '왜 자꾸', '아직', '덜', '너무', '과하',
+];
+
+const POSITIVE_KEYWORDS = [
+  '기억해', '좋아', '이거 좋', '맞아', '이렇게 해줘',
+  '앞으로', '항상', '계속', '유지해', '이대로',
+  '잊지 마', '명심', '참고해',
 ];
 
 const FIRST_N = 3;
@@ -94,22 +104,36 @@ function hasCorrection(text) {
   return CORRECTION_KEYWORDS.some(kw => lower.includes(kw));
 }
 
+function hasPositive(text) {
+  const lower = text.toLowerCase();
+  return POSITIVE_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+function hasLearningSignal(text) {
+  return hasCorrection(text) || hasPositive(text);
+}
+
 function selectMessages(allMessages) {
   if (allMessages.length <= FIRST_N + LAST_N) {
-    return { selected: allMessages, correctionHits: allMessages.filter(hasCorrection).length };
+    return {
+      selected: allMessages,
+      correctionHits: allMessages.filter(hasCorrection).length,
+      positiveHits: allMessages.filter(hasPositive).length,
+    };
   }
 
   const first = allMessages.slice(0, FIRST_N);
   const last = allMessages.slice(-LAST_N);
   const middle = allMessages.slice(FIRST_N, -LAST_N);
 
-  // 중간에서 교정 키워드 포함 메시지만
-  const middleCorrections = middle.filter(hasCorrection);
+  // 중간에서 학습 신호 포함 메시지만
+  const middleSignals = middle.filter(hasLearningSignal);
 
-  const selected = [...first, ...middleCorrections, ...last];
+  const selected = [...first, ...middleSignals, ...last];
   const correctionHits = selected.filter(hasCorrection).length;
+  const positiveHits = selected.filter(hasPositive).length;
 
-  return { selected, correctionHits };
+  return { selected, correctionHits, positiveHits };
 }
 
 // --- main ---
@@ -132,7 +156,7 @@ for (const path of transcriptPaths) {
   }
 }
 
-const { selected, correctionHits } = selectMessages(allMessages);
+const { selected, correctionHits, positiveHits } = selectMessages(allMessages);
 
 const output = {
   messages: selected,
@@ -140,6 +164,7 @@ const output = {
     total: allMessages.length,
     extracted: selected.length,
     correctionHits,
+    positiveHits,
   },
 };
 
