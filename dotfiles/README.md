@@ -1,6 +1,6 @@
 # dotfiles
 
-`.claude/`와 `.openclaw/` 설정을 `agents/` repo에서 중앙 관리.
+`.claude/`와 `.openclaw/` 설정을 `ai/` repo에서 중앙 관리.
 심링크로 실제 경로에 연결.
 
 ## 구조
@@ -27,8 +27,8 @@ dotfiles/
 
 ```bash
 # 1. repo clone
-git clone https://github.com/KIMSEUNGGYU/agents.git ~/dev/agents
-cd ~/dev/agents && pnpm install
+git clone https://github.com/KIMSEUNGGYU/ai.git ~/dev/ai
+cd ~/dev/ai && pnpm install
 
 # 2. 심링크 설정
 ./dotfiles/setup.sh
@@ -45,13 +45,13 @@ cd ~/dev/agents && pnpm install
 
 | 심링크 경로 | → 실제 파일 |
 |------------|------------|
-| `~/.claude/rules/` | `agents/dotfiles/claude/rules/` |
-| `~/.claude/skills/` | `agents/dotfiles/claude/skills/` |
-| `~/.claude/hooks/` | `agents/dotfiles/claude/hooks/` |
-| `~/.claude/commands/` | `agents/dotfiles/claude/commands/` |
-| `~/.claude/CLAUDE.md` | `agents/dotfiles/claude/CLAUDE.md` |
-| `~/.claude/keybindings.json` | `agents/dotfiles/claude/keybindings.json` |
-| `~/.openclaw/workspace/` | `agents/dotfiles/openclaw/workspace/` |
-| `~/.openclaw/workspace-brief/` | `agents/dotfiles/openclaw/workspace-brief/` |
-| `~/.openclaw/workspace-docs/` | `agents/dotfiles/openclaw/workspace-docs/` |
-| `~/.openclaw/workspace-work/` | `agents/dotfiles/openclaw/workspace-work/` |
+| `~/.claude/rules/` | `ai/dotfiles/claude/rules/` |
+| `~/.claude/skills/` | `ai/dotfiles/claude/skills/` |
+| `~/.claude/hooks/` | `ai/dotfiles/claude/hooks/` |
+| `~/.claude/commands/` | `ai/dotfiles/claude/commands/` |
+| `~/.claude/CLAUDE.md` | `ai/dotfiles/claude/CLAUDE.md` |
+| `~/.claude/keybindings.json` | `ai/dotfiles/claude/keybindings.json` |
+| `~/.openclaw/workspace/` | `ai/dotfiles/openclaw/workspace/` |
+| `~/.openclaw/workspace-brief/` | `ai/dotfiles/openclaw/workspace-brief/` |
+| `~/.openclaw/workspace-docs/` | `ai/dotfiles/openclaw/workspace-docs/` |
+| `~/.openclaw/workspace-work/` | `ai/dotfiles/openclaw/workspace-work/` |

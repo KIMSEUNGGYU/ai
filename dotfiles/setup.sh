@@ -1,18 +1,18 @@
 #!/bin/bash
-# agents dotfiles 동기화 스크립트
-# 새 PC에서 실행: ~/dev/agents/dotfiles/setup.sh
+# ai dotfiles 동기화 스크립트
+# 새 PC에서 실행: ~/dev/ai/dotfiles/setup.sh
 
 set -e
 
-AGENTS_DIR="$HOME/dev/agents"
+AGENTS_DIR="$HOME/dev/ai"
 DOTFILES_DIR="$AGENTS_DIR/dotfiles"
 
-echo "=== agents dotfiles 동기화 ==="
+echo "=== ai dotfiles 동기화 ==="
 
-# 1. agents repo 확인
+# 1. ai repo 확인
 if [ ! -d "$AGENTS_DIR" ]; then
   echo "❌ $AGENTS_DIR 가 없습니다. 먼저 clone 하세요:"
-  echo "   git clone https://github.com/KIMSEUNGGYU/agents.git ~/dev/agents"
+  echo "   git clone https://github.com/KIMSEUNGGYU/ai.git ~/dev/ai"
   exit 1
 fi
 
@@ -96,7 +96,7 @@ echo "아래 명령어를 수동으로 실행하세요:"
 echo "  claude plugin install session-manager@gyu-plugins"
 echo ""
 echo "마켓플레이스가 없으면 먼저 등록:"
-echo "  claude marketplace add https://github.com/KIMSEUNGGYU/agents.git"
+echo "  claude marketplace add https://github.com/KIMSEUNGGYU/ai.git"
 
 # 5. 완료
 echo ""

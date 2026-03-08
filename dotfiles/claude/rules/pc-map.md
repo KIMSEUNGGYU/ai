@@ -31,11 +31,12 @@ AI가 PC 전체 구조를 이해하기 위한 참조 파일.
 │   ├── scripts/               (인프라 유틸리티)
 │   └── task/                  (사내 과제 모음)
 ├── dev/           ← 개인 코드 (개발, 학습, 실험 전부)
-│   ├── ai-ax/                 (Claude Code 플러그인 레포)
-│   └── agents/                (SDK 에이전트 모노레포, pnpm workspace)
+│   └── ai/                    (AI 올인원 모노레포, pnpm workspace)
 │       ├── packages/shared/   (@agents/shared 공통 유틸)
 │       ├── services/morning-brief/ (모닝 브리프 에이전트)
-│       ├── learning/          (학습 트랙: claude-code, agent-study)
+│       ├── plugins/           (Claude Code 플러그인)
+│       ├── dotfiles/          (심링크 대상: .claude, .openclaw 설정)
+│       ├── learning/          (학습 트랙)
 │       ├── docs/              (개념 문서)
 │       └── .ai/               (작업 관리 — 자체 관리)
 ├── hq/            ← 지식 본부 (Obsidian 볼트)
@@ -86,8 +87,7 @@ AI가 PC 전체 구조를 이해하기 위한 참조 파일.
 | 프로젝트 (코드) | 노트 (지식) |
 |----------------|-------------|
 | `~/work/ishopcare-frontend/` | `~/hq/10_Work/` |
-| `~/dev/ai-ax/` | `~/hq/15_Projects/` |
-| `~/dev/agents/` | `~/dev/agents/.ai/` (자체 관리) |
+| `~/dev/ai/` | `~/dev/ai/.ai/` (자체 관리) |
 
 ## 플러그인 소스 매핑
 
@@ -95,8 +95,8 @@ AI가 PC 전체 구조를 이해하기 위한 참조 파일.
 
 | 플러그인 | 소스 레포 | 성격 |
 |---------|----------|------|
-| `session-manager` | `~/dev/ai-ax/session-manager/` | 개인 |
-| `fe` (fe-workflow) | `~/dev/ai-ax/fe-workflow/` | 개인 |
+| `session-manager` | `~/dev/ai/plugins/session-manager/` | 개인 |
+| `fe` (fe-workflow) | `~/dev/ai/plugins/fe-workflow/` | 개인 |
 | `dev` (dev-workflow) | `~/work/claude-plugins-node-main/dev-workflow/` | 회사 |
 | `work-recap` | `~/work/claude-plugins-node-main/isc-sync/` | 회사 |
 
