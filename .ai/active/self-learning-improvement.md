@@ -1,6 +1,6 @@
 ---
 title: Claude Code 자가학습 개선 — profile.md 도입
-status: backlog
+status: active
 created: 2026-03-08
 last-active: 2026-03-08
 tags: [plugin, session-manager, self-learning, profile]

@@ -6,6 +6,7 @@
 - 작업 파일 frontmatter 템플릿 도입 (v0.11.0) ✅
 - 멀티모델 오케스트레이션 설계 → backlog
 - 자가학습 개선(profile.md) + 제2의 나(비전) → backlog
+- session-manager 개선 + .ai 구조 정비 완료 (v0.9.0→v0.11.0) ✅
 - CLAUDE.md 전면 개선 (/init)
 
 ## 2026-03-07
