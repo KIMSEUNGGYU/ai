@@ -5,5 +5,8 @@
 ## 진행 스타일
 - 완료 확인 질문보다는 결과를 간결하게 보여주고 다음 단계로 넘어가라 <!-- learned: 2026-03-07, task: session-manager-개선-설계 -->
 
+## 문서 동기화
+- PC 구조, 설정, 워크플로우 변경 시 세컨브레인(SECOND_BRAIN.md)과 OpenClaw workspace 문서도 함께 업데이트 — AI가 두 시스템 모두 최신 상태를 알 수 있도록 <!-- learned: 2026-03-08, task: dotfiles-통합 -->
+
 ## 브랜치/환경
 - worktree 사용 시 env 복붙 등 추가 설정이 번거로우므로, 간단한 수정은 stash + 브랜치 전환 선호 <!-- learned: 2026-03-07, task: 주문_서류_상세 -->
