@@ -29,6 +29,19 @@ const POSITIVE_KEYWORDS = [
   '잊지 마', '명심', '참고해',
 ];
 
+const DECISION_KEYWORDS = [
+  // 선택지 선택
+  'A)', 'B)', 'C)', 'D)',
+  '첫번째', '두번째', '세번째',
+  '첫 번째', '두 번째', '세 번째',
+  '전자', '후자', '위에', '아래',
+  '그거', '그걸로', '이거', '이걸로',
+  // 판단 표현
+  '으로 하자', '로 하자', '로 가자', '으로 가자',
+  '이게 낫', '이게 더', '그게 낫', '그게 더',
+  '하는 게 좋', '하는게 좋',
+];
+
 const FIRST_N = 3;
 const LAST_N = 7;
 
@@ -99,6 +112,59 @@ function cleanText(raw) {
   return text;
 }
 
+async function extractAllMessages(transcriptPath) {
+  const messages = [];
+
+  const rl = createInterface({
+    input: createReadStream(transcriptPath, 'utf-8'),
+    crlfDelay: Infinity,
+  });
+
+  for await (const line of rl) {
+    if (!line.trim()) continue;
+
+    let obj;
+    try {
+      obj = JSON.parse(line);
+    } catch {
+      continue;
+    }
+
+    if (obj.type === 'user') {
+      const text = extractText(obj.message?.content);
+      if (text) messages.push({ role: 'user', text });
+    } else if (obj.type === 'assistant') {
+      const text = extractAssistantText(obj.message?.content);
+      if (text) messages.push({ role: 'assistant', text });
+    }
+  }
+
+  return messages;
+}
+
+function extractAssistantText(content) {
+  if (!content) return null;
+
+  if (typeof content === 'string') return truncateText(content, 500);
+
+  if (Array.isArray(content)) {
+    const texts = content
+      .filter(item => item?.type === 'text')
+      .map(item => item.text)
+      .filter(Boolean);
+    return truncateText(texts.join('\n'), 500) || null;
+  }
+
+  return null;
+}
+
+function truncateText(text, maxLen) {
+  if (!text) return null;
+  const cleaned = text.trim();
+  if (cleaned.length <= maxLen) return cleaned;
+  return cleaned.slice(0, maxLen) + '...';
+}
+
 function hasCorrection(text) {
   const lower = text.toLowerCase();
   return CORRECTION_KEYWORDS.some(kw => lower.includes(kw));
@@ -111,6 +177,36 @@ function hasPositive(text) {
 
 function hasLearningSignal(text) {
   return hasCorrection(text) || hasPositive(text);
+}
+
+function hasDecision(text) {
+  return DECISION_KEYWORDS.some(kw => text.includes(kw));
+}
+
+function extractDecisionTurns(allMessages) {
+  const turns = [];
+
+  for (let i = 0; i < allMessages.length; i++) {
+    const msg = allMessages[i];
+    if (msg.role !== 'user') continue;
+    if (!hasDecision(msg.text) && !hasLearningSignal(msg.text)) continue;
+
+    // 직전 AI 메시지 찾기
+    let prevAssistant = null;
+    for (let j = i - 1; j >= 0; j--) {
+      if (allMessages[j].role === 'assistant') {
+        prevAssistant = allMessages[j].text;
+        break;
+      }
+    }
+
+    turns.push({
+      assistant: prevAssistant,
+      user: msg.text,
+    });
+  }
+
+  return turns;
 }
 
 function selectMessages(allMessages) {
@@ -158,13 +254,28 @@ for (const path of transcriptPaths) {
 
 const { selected, correctionHits, positiveHits } = selectMessages(allMessages);
 
+// 의사결정 턴 추출
+let allFullMessages = [];
+for (const path of transcriptPaths) {
+  try {
+    const msgs = await extractAllMessages(path);
+    allFullMessages.push(...msgs);
+  } catch (err) {
+    // 이미 위에서 경고 출력됨
+  }
+}
+
+const decisionTurns = extractDecisionTurns(allFullMessages);
+
 const output = {
   messages: selected,
+  decisionTurns,
   stats: {
     total: allMessages.length,
     extracted: selected.length,
     correctionHits,
     positiveHits,
+    decisionTurnCount: decisionTurns.length,
   },
 };
 
