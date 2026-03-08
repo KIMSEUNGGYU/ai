@@ -35,6 +35,14 @@
 - [ ] 밤 1회: 데일리 로그 정리 + 내일 첫 액션 생성
 - [ ] 2~3일 간격: daily 로그에서 MEMORY 승격 후보 추출
 
+## PC 폴더 구조 (2026-03-08 정리 완료)
+- `~/work/` — 회사 코드 (ishopcare)
+- `~/dev/ai/` — AI 올인원 monorepo (플러그인, dotfiles, 서비스, 학습 전부)
+- `~/dev/git/` — GitHub 개인 프로젝트 모음
+- `~/hq/` — Obsidian 볼트 (지식 본부)
+- `~/.claude/`, `~/.openclaw/` — dotfiles는 `~/dev/ai/dotfiles/`에서 심링크로 관리
+- 동기화: `~/dev/ai/`에서 `git push` 한 번이면 양쪽 PC 동기화
+
 ## 코딩 워크플로 연동
 1. 구현은 Claude Code에서 수행
 2. 결과를 OpenClaw에 짧게 보고

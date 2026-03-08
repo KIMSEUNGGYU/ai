@@ -23,7 +23,7 @@ AI가 PC 전체 구조를 이해하기 위한 참조 파일.
 
 ```
 ~/
-├── work/          ← 회사 코드
+├── work/          ← 회사 코드 (구 isc-git)
 │   ├── ishopcare-frontend/
 │   ├── ishopcare-frontend-second/
 │   ├── ishopcare-retool-server/
@@ -31,14 +31,17 @@ AI가 PC 전체 구조를 이해하기 위한 참조 파일.
 │   ├── scripts/               (인프라 유틸리티)
 │   └── task/                  (사내 과제 모음)
 ├── dev/           ← 개인 코드 (개발, 학습, 실험 전부)
-│   └── ai/                    (AI 올인원 모노레포, pnpm workspace)
-│       ├── packages/shared/   (@agents/shared 공통 유틸)
-│       ├── services/morning-brief/ (모닝 브리프 에이전트)
-│       ├── plugins/           (Claude Code 플러그인)
-│       ├── dotfiles/          (심링크 대상: .claude, .openclaw 설정)
-│       ├── learning/          (학습 트랙)
-│       ├── docs/              (개념 문서)
-│       └── .ai/               (작업 관리 — 자체 관리)
+│   ├── ai/                    (AI 올인원 모노레포, pnpm workspace)
+│   │   ├── packages/shared/   (@agents/shared 공통 유틸)
+│   │   ├── services/          (모닝 브리프 등 TS 서비스)
+│   │   ├── plugins/           (Claude Code 플러그인: session-manager, fe-workflow)
+│   │   ├── dotfiles/          (심링크 대상: .claude, .openclaw 설정)
+│   │   │   ├── claude/        → ~/.claude/rules, skills, hooks 등
+│   │   │   └── openclaw/      → ~/.openclaw/workspace 등
+│   │   ├── learning/          (학습 트랙)
+│   │   ├── docs/              (개념 문서)
+│   │   └── .ai/               (작업 관리 — 자체 관리)
+│   └── git/                   (GitHub 개인 프로젝트 모음)
 ├── hq/            ← 지식 본부 (Obsidian 볼트)
 │   ├── 00_Inbox/
 │   ├── 01_TODO/
@@ -52,6 +55,21 @@ AI가 PC 전체 구조를 이해하기 위한 참조 파일.
 │   ├── 99_System/
 │   └── 회고/
 └── conductor/     ← Conductor 앱 관리 (터치 안 함)
+```
+
+## 심링크 구조
+
+```
+~/.claude/rules/           → ~/dev/ai/dotfiles/claude/rules/
+~/.claude/skills/          → ~/dev/ai/dotfiles/claude/skills/
+~/.claude/hooks/           → ~/dev/ai/dotfiles/claude/hooks/
+~/.claude/commands/        → ~/dev/ai/dotfiles/claude/commands/
+~/.claude/CLAUDE.md        → ~/dev/ai/dotfiles/claude/CLAUDE.md
+~/.claude/keybindings.json → ~/dev/ai/dotfiles/claude/keybindings.json
+~/.openclaw/workspace/       → ~/dev/ai/dotfiles/openclaw/workspace/
+~/.openclaw/workspace-brief/ → ~/dev/ai/dotfiles/openclaw/workspace-brief/
+~/.openclaw/workspace-docs/  → ~/dev/ai/dotfiles/openclaw/workspace-docs/
+~/.openclaw/workspace-work/  → ~/dev/ai/dotfiles/openclaw/workspace-work/
 ```
 
 ## 폴더 역할
