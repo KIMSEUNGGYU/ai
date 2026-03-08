@@ -1,0 +1,5 @@
+{
+  "name": "session-manager-v2",
+  "description": "자동 세션 컨텍스트 복원 — JSONL 기반, 수동 저장 불필요",
+  "version": "0.1.0"
+}

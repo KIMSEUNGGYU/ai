@@ -1,0 +1,20 @@
+{
+  "name": "gyu-plugins",
+  "owner": {
+    "name": "seunggyu-kim",
+    "email": "dev.seunggyu@gmail.com",
+    "url": "https://github.com/kimseunggyu"
+  },
+  "plugins": [
+    {
+      "name": "fe-workflow",
+      "source": "./plugins/fe-workflow",
+      "description": "프론트엔드 개발 워크플로우 플러그인"
+    },
+    {
+      "name": "session-manager",
+      "source": "./plugins/session-manager",
+      "description": "AI 페어 프로그래밍 context 관리 — 세션 간 맥락 유지"
+    }
+  ]
+}

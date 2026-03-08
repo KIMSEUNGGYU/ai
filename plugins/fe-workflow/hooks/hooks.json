@@ -1,0 +1,28 @@
+{
+  "description": "FE 컨벤션 자동 적용 훅",
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "matcher": "remote|mutation|query|API|api|dto|DTO|schema|컴포넌트|페이지|구현|추가해|작성|연동|통합|리팩토링|refactor|리뷰|review|hook|훅|useEffect|폴더|folder|error|에러|fetch|endpoint|form|zod|추상화|분리|추출|개선|정리|구조|component|handler",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/fe-convention-prompt.sh"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/post-edit-convention.sh",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
