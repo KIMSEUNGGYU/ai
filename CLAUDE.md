@@ -45,6 +45,8 @@ unset CLAUDECODE      # SDK 에이전트 실행 전 필수
 ## 작업 관리
 
 - `.ai/active/` — 진행 중 작업
-- `.ai/specs/` — 설계 문서
+- `.ai/specs/` — 설계 + 구현 계획 (superpowers 계획 문서 포함)
+- `.ai/backlog/` — 백로그 (아이디어, 미착수 계획)
 - `.ai/archive/` — 완료된 작업
 - hq가 아닌 이 프로젝트 내에서 자체 관리
+- **계획 문서는 `docs/plans/` 대신 `.ai/specs/`에 저장**
