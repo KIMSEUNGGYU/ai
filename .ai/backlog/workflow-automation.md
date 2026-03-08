@@ -1,3 +1,11 @@
+---
+title: FE 자동화 에이전트 (fe-auto)
+status: backlog
+created: 2026-03-03
+last-active: 2026-03-05
+tags: [service, fe-auto, sdk, automation]
+---
+
 # FE 자동화 에이전트 (fe-auto)
 
 ## 목표

@@ -1,3 +1,11 @@
+---
+title: OpenClaw AI 에이전트 프레임워크 학습
+status: backlog
+created: 2026-03-06
+last-active: 2026-03-08
+tags: [learning, openclaw, multi-agent]
+---
+
 # OpenClaw AI 에이전트 프레임워크 학습
 
 ## 스펙

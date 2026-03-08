@@ -1,7 +1,12 @@
-# cc-monitor: Claude Code 팀 모니터링 서비스
+---
+title: cc-monitor — Claude Code 팀 모니터링 서비스
+status: backlog
+created: 2026-03-04
+last-active: 2026-03-06
+tags: [service, monitoring, next.js]
+---
 
-> 시작일: 2026-03-04
-> 상태: Phase 2 완료 + main 머지 완료
+# cc-monitor: Claude Code 팀 모니터링 서비스
 
 ## 진행 체크리스트
 

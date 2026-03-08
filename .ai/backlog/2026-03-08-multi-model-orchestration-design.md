@@ -1,3 +1,11 @@
+---
+title: 멀티모델 오케스트레이션 설계
+status: backlog
+created: 2026-03-08
+last-active: 2026-03-08
+tags: [design, multi-model, codex, review]
+---
+
 # 멀티모델 오케스트레이션 설계
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.

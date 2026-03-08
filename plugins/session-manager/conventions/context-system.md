@@ -33,9 +33,17 @@
 [작업 완료] /done → archive 저장 + 패턴 질문 + active 삭제
 ```
 
-## active 파일 포맷
+## 작업 파일 포맷 (active/backlog 공통)
 
 ```markdown
+---
+title: 작업 제목
+status: active | backlog | done
+created: YYYY-MM-DD
+last-active: YYYY-MM-DD
+tags: [카테고리, 기술, ...]
+---
+
 # {작업 제목}
 
 ## 스펙
@@ -51,7 +59,15 @@
 
 ## 결정사항
 - 이 작업에서 내린 기술 결정
+
+## 세션 이력
+- session_id (YYYY-MM-DD HH:mm) — 한 줄 요약
 ```
+
+**frontmatter 규칙:**
+- `status`: 폴더와 동기화 (active/ → active, backlog/ → backlog)
+- `last-active`: /save 또는 /done 시 자동 업데이트
+- `tags`: 자유 태깅 (검색/필터용)
 
 ## patterns 파일 포맷
 

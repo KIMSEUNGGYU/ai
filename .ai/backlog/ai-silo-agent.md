@@ -1,3 +1,11 @@
+---
+title: AI 사일로 에이전트 시스템 (토스 방식)
+status: backlog
+created: 2026-03-07
+last-active: 2026-03-07
+tags: [agent, slack, multi-agent]
+---
+
 # AI 사일로 에이전트 시스템 (토스 방식)
 
 ## 스펙
