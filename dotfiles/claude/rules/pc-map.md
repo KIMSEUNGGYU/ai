@@ -119,7 +119,7 @@ AI가 PC 전체 구조를 이해하기 위한 참조 파일.
 |---------|----------|------|
 | `session-manager` | `~/dev/ai/plugins/session-manager/` | 개인 |
 | `fe` (fe-workflow) | `~/dev/ai/plugins/fe-workflow/` | 개인 |
-| `dev` (dev-workflow) | `~/work/claude-plugins-node-main/dev-workflow/` | 회사 |
+| `dev` (dev-workflow) | `~/dev/ai/plugins/dev-workflow/` | 개인 |
 | `work-recap` | `~/work/claude-plugins-node-main/isc-sync/` | 회사 |
 
 **플러그인 수정 워크플로우:**
