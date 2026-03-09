@@ -10,7 +10,8 @@ export type HookEventName =
   | "Notification"
   | "SubagentStart"
   | "SubagentStop"
-  | "PreCompact";
+  | "PreCompact"
+  | "PluginHook";
 
 export interface HookEventBase {
   session_id: string;
@@ -50,12 +51,27 @@ export interface StopEvent extends HookEventBase {
   transcript_path?: string;
 }
 
+export interface PluginHookEvent extends HookEventBase {
+  hook_event_name: "PluginHook";
+  /** 플러그인 이름 (e.g. "fe-workflow") */
+  plugin_name: string;
+  /** hook 이름 (e.g. "fe-convention-prompt", "post-edit-convention") */
+  hook_name: string;
+  /** 주입된 컨벤션 파일 목록 */
+  injected_conventions?: string[];
+  /** 매칭된 키워드 */
+  matched_keywords?: string[];
+  /** 대상 파일 (PostToolUse hook인 경우) */
+  target_file?: string;
+}
+
 export type HookEvent =
   | SessionStartEvent
   | SessionEndEvent
   | ToolUseEvent
   | UserPromptSubmitEvent
   | StopEvent
+  | PluginHookEvent
   | (HookEventBase & Record<string, unknown>);
 
 // ── 저장용 타입 ──

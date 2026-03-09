@@ -35,6 +35,33 @@ export function processEvent(event: HookEvent, userId: string): Omit<StoredEvent
     const promptEvent = event as { prompt?: string };
     const raw = promptEvent.prompt?.substring(0, 500) ?? null;
     base.prompt_text = raw ? maskSensitiveData(raw) : null;
+  } else if (event.hook_event_name === "PluginHook") {
+    const pluginEvent = event as {
+      plugin_name?: string;
+      hook_name?: string;
+      injected_conventions?: string[];
+      matched_keywords?: string[];
+      target_file?: string;
+    };
+    base.tool_name = `${pluginEvent.plugin_name ?? "unknown"}:${pluginEvent.hook_name ?? "unknown"}`;
+    const parts: string[] = [];
+    if (pluginEvent.injected_conventions?.length) {
+      parts.push(`injected: ${pluginEvent.injected_conventions.join(", ")}`);
+    }
+    if (pluginEvent.matched_keywords?.length) {
+      parts.push(`keywords: ${pluginEvent.matched_keywords.join(", ")}`);
+    }
+    if (pluginEvent.target_file) {
+      parts.push(`file: ${pluginEvent.target_file}`);
+    }
+    base.tool_input_summary = parts.join(" | ") || null;
+    base.raw_data = JSON.stringify({
+      plugin_name: pluginEvent.plugin_name,
+      hook_name: pluginEvent.hook_name,
+      injected_conventions: pluginEvent.injected_conventions,
+      matched_keywords: pluginEvent.matched_keywords,
+      target_file: pluginEvent.target_file,
+    });
   }
 
   return base;
