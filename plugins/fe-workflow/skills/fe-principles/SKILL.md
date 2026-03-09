@@ -1,9 +1,24 @@
 ---
 name: fe-principles
-description: Use when writing, reviewing, or refactoring frontend code. Triggers on React components, hooks, API integration, TypeScript patterns, folder structure decisions, or error handling implementation.
+description: >
+  TRIGGER when: code imports React/Next.js, writing .tsx/.ts files in ~/work/ projects,
+  creating components/hooks/pages, API integration (query/mutation/remote/dto),
+  form handling (zod/react-hook-form), folder structure decisions, error handling,
+  or any frontend implementation task.
+  DO NOT TRIGGER when: backend-only code, ~/dev/ projects, documentation-only tasks,
+  or non-TypeScript/non-React code.
 ---
 
 # 프론트엔드 코드 원칙
+
+## 워크플로우
+
+| 시점 | 액션 |
+|------|------|
+| **설계 필요 시** | `/fe:architecture` 실행 — 컨벤션 기반 설계 산출물 생성 |
+| **코드 작성 전** | 아래 references 테이블에서 해당 파일을 반드시 Read |
+| **코드 작성 후** | `/fe:review` 실행 — 컨벤션 기반 코드 리뷰 (점수 + 피드백) |
+| **API 연동 시** | `/fe:api-integrate` 실행 — API → FE 코드 자동 생성 |
 
 ## 코드 작성 전 필수
 
