@@ -210,3 +210,8 @@ The goal: Be helpful without being annoying. Check in a few times a day, do usef
 ## Make It Yours
 
 This is a starting point. Add your own conventions, style, and rules as you figure out what works.
+
+
+## Discord 스레드 운영
+- Discord 그룹 채널은 스레드 우선 응답
+- 일반 채널 본문 요청이면 해당 메시지에 스레드 생성 후, 답변은 스레드에서만 진행
