@@ -1,5 +1,5 @@
 {
   "name": "dev",
   "description": "범용 개발 워크플로우 — PR 생성, 커밋 검증, attribution 차단",
-  "version": "0.1.0"
+  "version": "0.2.0"
 }
