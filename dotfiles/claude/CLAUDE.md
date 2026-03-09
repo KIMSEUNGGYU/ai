@@ -1,9 +1,9 @@
 # Global CLAUDE.md
 
-##d자기소개 
-- 이름 : 김승규 
+## 자기소개
+- 이름 : 김승규
 - env : mac / warp
-- Favorite Languages: Typescriptㄱㄱ
+- Favorite Languages: TypeScript
 - Favorite tools : AskUserQuestion (질문할때는 반드시), Tasks(여러 Tasks 수행할떄) Explore (정보 파악이 필요할때)
 
 ## 언어 설정

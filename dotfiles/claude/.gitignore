@@ -33,6 +33,7 @@ telemetry/
 todos/
 usage-data/
 *.log
+mcp-needs-auth-cache.json
 .session-stats.json
 claude-dashboard.local.json
 temp.md
