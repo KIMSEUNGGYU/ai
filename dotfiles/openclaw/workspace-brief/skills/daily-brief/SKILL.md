@@ -39,7 +39,7 @@ curl -s "wttr.in/Seoul?format=%c+%t+(체감+%f),+바람+%w&lang=ko"
 curl -s -X POST https://api.linear.app/graphql \
   -H "Content-Type: application/json" \
   -H "Authorization: $LINEAR_API_KEY" \
-  -d '{"query": "{ viewer { assignedIssues(filter: { state: { type: { nin: [\"completed\", \"canceled\"] } } }, orderBy: priority, first: 5) { nodes { identifier title state { name type } priorityLabel } } } }"}'
+  -d '{"query": "{ viewer { assignedIssues(filter: { state: { type: { nin: [\"completed\", \"canceled\"] } } }, first: 5) { nodes { identifier title state { name type } priorityLabel } } } }"}'
 ```
 
 ### Step 3: GitHub PR 리뷰 대기 조회
