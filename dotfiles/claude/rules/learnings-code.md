@@ -13,3 +13,16 @@
 
 ## as 타입 단언 금지
 - `as` 타입 단언 절대 사용 금지 — 타입 가드나 명시적 타입 선언으로 해결. TS 서버 일시적 에러에 `as`로 대응하지 말 것 <!-- learned: 2026-03-11, task: 주문_서류_상세 -->
+
+## 함수 인자 타입 정의
+- 함수 인자는 무조건 interface로 분리 — 인라인 타입 객체(`{ a: string; b: number }`) 대신 named interface 사용 <!-- learned: 2026-03-11, task: 주문_서류_상세 -->
+
+## 변수명 이중 부정 제거
+- `is.falsy(hasContent)` 같은 이중 부정 대신 `isEmpty` 등 직관적 변수명 사용 — 조건문에서 바로 읽히도록 <!-- learned: 2026-03-11, task: 주문_서류_상세 -->
+
+## boolean 부정 표현
+- `!value` 대신 `is.falsy(value)` 사용 — 리팩토링 중에도 `@tossteam/is` 컨벤션 유지, `!`로 되돌리지 말 것 <!-- learned: 2026-03-11, task: ISH-1326 -->
+
+## watch 사용 최소화 (react-hook-form)
+- `watch` 사용 최소화 — 동적 검증도 가능하면 `resolver`만으로 해결, `isDynamicFieldsValid` 같은 watch 파생값 지양 <!-- learned: 2026-03-11, task: ISH-1326 -->
+
