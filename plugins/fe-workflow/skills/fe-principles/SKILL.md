@@ -16,11 +16,14 @@ description: >
 | 시점 | 액션 |
 |------|------|
 | **설계 필요 시** | `/fe:architecture` 실행 — 컨벤션 기반 설계 산출물 생성 |
-| **코드 작성 전** | 아래 references 테이블에서 해당 파일을 반드시 Read |
+| **코드 작성 시** | `/fe:implement` 실행 — code-writer Agent에게 위임 (컨벤션 내재화 코드 생성) |
 | **코드 작성 후** | `/fe:review` 실행 — 컨벤션 기반 코드 리뷰 (점수 + 피드백) |
 | **API 연동 시** | `/fe:api-integrate` 실행 — API → FE 코드 자동 생성 |
 
 ## 코드 작성 전 필수
+
+> `/fe:implement`로 code-writer Agent에 위임하면 Agent가 컨벤션을 자동으로 읽는다.
+> 아래는 Agent 없이 직접 코드를 작성할 때의 fallback 규칙이다.
 
 **코드를 작성하기 전에 반드시 작업에 해당하는 references 파일을 읽어야 한다.**
 요약만으로는 구체적 코드 패턴(form, zod, query, mutation, 폴더 규칙 등)을 정확히 적용할 수 없다.
