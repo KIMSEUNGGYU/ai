@@ -10,3 +10,6 @@
 
 ## overlay + Suspense
 - `overlay.open` 내에서 `useSuspenseQuery` 사용하는 컴포넌트는 `<Suspense>`로 래핑 필요 — overlay는 Suspense boundary 밖에서 렌더링됨 <!-- learned: 2026-03-07, task: 주문_서류_상세 -->
+
+## as 타입 단언 금지
+- `as` 타입 단언 절대 사용 금지 — 타입 가드나 명시적 타입 선언으로 해결. TS 서버 일시적 에러에 `as`로 대응하지 말 것 <!-- learned: 2026-03-11, task: 주문_서류_상세 -->
