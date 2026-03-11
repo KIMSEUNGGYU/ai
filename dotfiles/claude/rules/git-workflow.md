@@ -15,11 +15,12 @@ Note: Attribution disabled globally via ~/.claude/settings.json.
 ## Pull Request Workflow
 
 When creating PRs:
-1. Analyze full commit history (not just latest commit)
-2. Use `git diff [base-branch]...HEAD` to see all changes
-3. Draft comprehensive PR summary
-4. Include test plan with TODOs
-5. Push with `-u` flag if new branch
+1. **PR 생성 전 반드시 `/simplify` 실행** — 변경 코드의 중복, 품질, 효율 리뷰 후 문제 수정
+2. Analyze full commit history (not just latest commit)
+3. Use `git diff [base-branch]...HEAD` to see all changes
+4. Draft comprehensive PR summary
+5. Include test plan with TODOs
+6. Push with `-u` flag if new branch
 
 ## Feature Implementation Workflow
 
