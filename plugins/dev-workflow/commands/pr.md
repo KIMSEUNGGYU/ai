@@ -1,7 +1,7 @@
 ---
 description: GitHub PR 자동 생성/업데이트 — 커밋 분석 기반 PR 설명 자동 생성
 allowed-tools: Read, Grep, Glob, Bash
-argument-hint: [base 브랜치 (선택, 기본: 자동 감지)]
+argument-hint: "[base 브랜치 (선택, 기본: 자동 감지)]"
 ---
 
 너는 PR 생성 오케스트레이터다. 분석 → 커밋 → 푸시 → PR 생성/업데이트를 **논스톱으로 실행**한다.
