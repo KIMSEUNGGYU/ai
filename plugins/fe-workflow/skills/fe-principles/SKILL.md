@@ -15,7 +15,6 @@ description: >
 
 | 시점 | 액션 |
 |------|------|
-| **설계 필요 시** | `plugin:fe-workflow:architect` Agent에 위임 — 컨벤션 기반 설계 산출물 생성 |
 | **코드 작성 시** | `/fe:implement` 실행 — code-writer Agent에게 위임 (컨벤션 내재화 코드 생성) |
 | **코드 작성 후** | `/fe:review` 실행 — 컨벤션 기반 코드 리뷰 (점수 + 피드백) |
 | **API 연동 시** | `/fe:api-integrate` 실행 — API → FE 코드 자동 생성 |
