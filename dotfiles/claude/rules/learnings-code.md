@@ -26,3 +26,9 @@
 ## watch 사용 최소화 (react-hook-form)
 - `watch` 사용 최소화 — 동적 검증도 가능하면 `resolver`만으로 해결, `isDynamicFieldsValid` 같은 watch 파생값 지양 <!-- learned: 2026-03-11, task: ISH-1326 -->
 
+## DTO 타입은 서버 코드 기반
+- DTO 타입 정의 전에 서버 소스 코드를 직접 확인하라 — FE 코드 추론이나 string 등으로 대체하지 말 것 <!-- learned: 2026-03-12, task: ISH-1267 -->
+
+## 전역 API 패턴 준수
+- 새 API 추가 시 기존 전역 패턴(remotes/, queries/, models/)을 먼저 파악하고 동일하게 정의 — 독자적 패턴 사용 금지 <!-- learned: 2026-03-12, task: ISH-1267 -->
+

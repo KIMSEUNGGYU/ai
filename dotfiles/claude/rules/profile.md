@@ -20,6 +20,7 @@
 - 세션 요약 단계 불필요 판단 (2단계 필터링으로 충분) <!-- pattern: 2026-03-09, task: self-learning -->
 - AI 이해도 기준으로 형식 선택 — 사람 가독성보다 AI 활용 효율 우선 <!-- pattern: 2026-03-09, task: self-learning-improvement -->
 - 프로젝트 컨벤션 > AI의 가독성 판단 — is.falsy 등 일관성이 개별 최적화보다 우선 <!-- pattern: 2026-03-11, task: ISH-1326 -->
+- 추정보다 실제 확인 — AI 추론 기반 완료 보고 거부, 서버 코드/파일 상태 직접 확인 후 판단 <!-- pattern: 2026-03-12, task: ISH-1267 -->
 
 ### 자동화 지향
 - 자가학습 profile 자동 갱신 선택 (수동 정리 X) <!-- pattern: 2026-03-09, task: self-learning -->
