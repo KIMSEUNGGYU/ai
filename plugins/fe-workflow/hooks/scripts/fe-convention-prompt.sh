@@ -66,8 +66,7 @@ if [ ${#INJECTED[@]} -eq 0 ]; then
 [Query] useSuspenseQuery + queryOptions 팩토리, staleTime 설정
 [Mutation] mutateAsync+try-catch, onSuccess에서 invalidateQueries
 [컴포넌트] useEffect 기명함수, 명령형 로딩 분기 금지
-[폴더] Page First, 지역성 원칙, models/remotes/mutations 도메인 단위
-[추상화] 2-3번 반복 전 이른 추출 금지, 분리!=추상화'
+[폴더] Page First, 지역성 원칙, models/remotes/mutations 도메인 단위'
 fi
 
 # ── 로깅 + cc-monitor 전송 ──
