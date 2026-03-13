@@ -117,8 +117,10 @@ export function PluginHealth({ events }: PluginHealthProps) {
     for (const e of ctx.hooks) {
       if (!e.raw_data) continue;
       try {
-        const data = JSON.parse(e.raw_data) as { injected_conventions?: string[] };
+        const data = JSON.parse(e.raw_data) as { injected_conventions?: string[]; target_file?: string };
         for (const conv of data.injected_conventions ?? []) {
+          // 빈 문자열, 확장자만 있는 값(tsx, ts 등) 필터링 — 실제 파일명(.md 등)만 표시
+          if (conv.length === 0 || !conv.includes(".")) continue;
           map.set(conv, (map.get(conv) ?? 0) + 1);
         }
       } catch { /* skip */ }
