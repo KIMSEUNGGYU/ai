@@ -1,44 +1,41 @@
-# fe-workflow + dev-workflow 플러그인 개선
+# fe-workflow + session-manager 워크플로우 개선
 
 ## 스펙
-- 최종 목표: superpowers로 초안 개발 시 AI가 자동으로 회사 컨벤션을 따르게 → 수동 수정 최소화
-- cc-monitor로 Hook 발동 여부 추적 가능하게
-- dev-workflow 플러그인 분리 — 범용 PR/커밋 워크플로우
-- (2차) 하네스로 컨벤션 점수화 + 자동 재수행
+- 목표: superpowers 실행 품질 문제 해결 — FE 컨벤션 주입 + Phase 기반 검증 + 자가학습 강화
+- superpowers 사고 스킬(brainstorming 등) 유지, 계획+실행만 fe-workflow로 대체
 
 ## 작업
-- [x] 문제 진단 — cc-monitor 대시보드에서 fe-workflow skill/agent 0회 호출 확인
-- [x] Hook 추적 구현 — 로컬 로그(~/.claude/logs/fe-hook.log) + cc-monitor PluginHook 이벤트 전송
-- [x] cc-monitor PluginHook 타입 추가 — types.ts, event-processor.ts
-- [x] fe-principles skill description 강화 — TRIGGER/DO NOT TRIGGER 패턴 + 워크플로우 테이블
-- [x] `/fe:pr` → `/dev:pr` 분리 — dev-workflow 플러그인 신규 생성 (v0.2.0)
-- [x] `/dev:auto` 추가 — 완전 자동 PR (티켓→브랜치→커밋→push→PR), Linear 선택적
-- [x] `validate-attribution.sh` — Claude attribution 차단 hook
-- [ ] **다른 PC에서 검증** — fe-workflow plugin update + dev-workflow plugin install → 실제 개발 → 로그 확인
-- [ ] 검증 결과에 따라: Hook 주입됨 → 컨벤션 문서 표현 개선 / Hook 안 됨 → 디버깅
-- [ ] (2차) 하네스 — 컨벤션 점수화 + 자동 재수행 루프
+- [x] fe-spec 강화 — Gap Analysis 단계 추가 (빠진 요구사항/모호함/컨텍스트 충돌 질문)
+- [x] fe-spec — 스펙 템플릿에 구현 Phases 포함 (검증 기준 + Phase 분리)
+- [x] implement — Phase 감지 → Phase별 Agent 위임 (Phase 2A) + 전체 위임 (Phase 2B)
+- [x] implement — Agent에 결정사항/컨벤션 변경 반환 형식 지정
+- [x] implement — "나머지 전부 진행" 옵션으로 확인 피로 경감
+- [x] phase-execution convention 신규 — Phase별 실행 강제 규칙 + 검증 보고 형식
+- [x] /done 자가학습 확장 — active 파일 결정사항/컨벤션/스펙변경 → learnings 추출 (2-B 트랙)
+- [x] context-system.md — active 파일 포맷에 컨벤션 변경/스펙 변경 섹션 추가
+- [x] GUIDE.md — superpowers 하이브리드 워크플로우 사용 가이드
+- [x] 2차 검증 (서브에이전트 반박) — Critical/Major 해결 확인
+- [x] 커밋 + push 완료
+- [ ] 다른 PC에서 `claude plugin update` → 실제 작업에서 검증
+- [ ] 검증 결과에 따라 조정
 
 ## 현재 컨텍스트
-- 이 PC에서 할 수 있는 작업 완료 — 코드 변경 + push 완료
-- **다음 액션: 다른 PC에서 plugin update/install → 실제 개발 → 로그 확인**
+- session-manager v0.14.0, fe-workflow v0.24.0 push 완료
+- 2차 검증까지 완료 — 시스템 한계(프롬프트 기반 강제) 외 해결 가능한 문제 모두 수정
+- **다음 액션: 다른 PC에서 plugin update → 실제 FE 작업에서 하이브리드 워크플로우 검증**
 
 ## 결정사항
-- Hook 추적은 로컬 로그 + cc-monitor 이벤트 2트랙
-- PR/커밋 워크플로우는 dev-workflow로 분리 — FE 컨벤션과 무관한 범용 기능
-- `/dev:auto`에서 Linear MCP 있으면 티켓 자동 생성, 없으면 스킵 (범용성 유지)
-- 타입 자동 판별 (fix 고정 → feat/fix/refactor/chore)
-- 기존 PR 업데이트 시 body 덮어쓰기 아닌 기존 유지 + 신규 추가
-- description 개선만으로는 100% 보장 불가 — 로그 확인 후 추가 조치 판단
+- superpowers 사고 스킬 유지 + 계획/실행만 fe-workflow로 대체 (하이브리드)
+- Phase 강제는 implement 커맨드에 내장 (convention만으론 강제 불가 — 플랫폼 제약)
+- 자가학습: transcript(교정) + active 파일(결정사항) 2트랙 병행
+- "나머지 전부 진행" 선택 시에도 active 파일 업데이트는 계속 수행
+- phase-execution.md를 보고 형식의 정본(source of truth)으로 지정
+- archive 부활 안 함 — 관리 포인트 최소화 원칙 유지
 
 ## 플러그인 버전
-- fe-workflow: v0.21.1 (컨벤션 + 리뷰 + 설계)
-- dev-workflow: v0.2.0 (PR + 커밋 검증 + attribution 차단)
-
-## 메모
-- 이 PC에는 fe-workflow 미설치 (다른 PC에만 설치됨)
-- dev-workflow도 다른 PC에서 `claude plugin install` 필요
-- cc-monitor 대시보드에 PluginHook 필터/뷰는 아직 없음
-- Linear MCP 인증 끊김 이슈 → 필요 시 Personal API Key + Keychain 방식 전환 검토
+- session-manager: v0.14.0 (phase-execution convention + done 자가학습 확장)
+- fe-workflow: v0.24.0 (fe-spec Gap Analysis + implement Phase 실행 + GUIDE)
 
 ## 세션 이력
 - 584fa32a-4698-42a0-b990-3c160894e809 (2026-03-10 20:30)
+- c154b20d-d107-45bd-9bd8-1b2a7798c950 (2026-03-13 22:00)
