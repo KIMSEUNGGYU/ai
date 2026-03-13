@@ -7,7 +7,7 @@
   },
   "plugins": [
     {
-      "name": "fe-workflow",
+      "name": "fe",
       "source": "./plugins/fe-workflow",
       "description": "프론트엔드 개발 워크플로우 플러그인"
     },
@@ -17,7 +17,7 @@
       "description": "AI 페어 프로그래밍 context 관리 — 세션 간 맥락 유지"
     },
     {
-      "name": "dev-workflow",
+      "name": "dev",
       "source": "./plugins/dev-workflow",
       "description": "범용 개발 워크플로우 — PR 생성, 커밋 검증, attribution 차단"
     }
