@@ -1,5 +1,11 @@
 # 작업 이력
 
+## 2026-03-14
+- cc-monitor 대시보드 개선 — task 그룹핑 + Plugin Health + fe-workflow hook 데이터 수정 ✅
+  - 세션: b1bd2f2a-2753-4e8f-9e09-3ebe5c097eb9 (2026-03-13), 42f4f532-9003-47b7-a634-022cf595c58c (2026-03-14)
+  - 완료: Slash Commands 분석, 프롬프트 인증, task_name Accordion 그룹핑, Plugin Health 체크리스트, fe-workflow hook 컨벤션 파일명 전송 수정
+  - 자가학습: 1건 반영 (meta) — 자가학습 품질 기준 피드백
+
 ## 2026-03-09
 - 자가학습 개선 — profile.md 도입 + /done profile 트랙 추가 (v0.12.0) ✅
 
