@@ -9,6 +9,7 @@ import { getToolDescription } from "@/lib/tool-descriptions";
 import { formatTokens, formatTime, shortPath } from "@/lib/format";
 import { sessionEventsQueryOptions } from "@/lib/query-options";
 import { SessionEfficiency } from "@/components/sessions/SessionEfficiency";
+import { PluginHealth } from "@/components/sessions/PluginHealth";
 import type { Session, StoredEvent } from "@/lib/types";
 
 function parseToolSummary(json: string | null | undefined): Record<string, number> {
@@ -182,6 +183,14 @@ export function SessionDrawer({ session, fallbackEvents, onClose }: SessionDrawe
                       ))}
                   </div>
                 </div>
+              </>
+            )}
+
+            {/* Plugin Health */}
+            {events.length > 0 && (
+              <>
+                <Separator />
+                <PluginHealth events={events} />
               </>
             )}
 
