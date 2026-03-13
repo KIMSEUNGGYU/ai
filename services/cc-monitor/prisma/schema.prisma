@@ -64,6 +64,8 @@ model Session {
   config_hooks_events       String?   // JSON array: ["PreToolUse", "PostToolUse"]
   // v2: tool summary (Stop/SessionEnd에서 수집)
   tool_summary              String?   // JSON: {"Read": 42, "Edit": 8}
+  // v3: task grouping
+  task_name                 String?
 
   events                  Event[]
   prompt_logs             PromptLog[]

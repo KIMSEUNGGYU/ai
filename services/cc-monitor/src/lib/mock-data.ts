@@ -54,6 +54,7 @@ export const mockSessions: Session[] = [
     num_turns: 12,
     config: JSON.stringify({ maxTurnCount: 10, systemPromptLength: 2400, mcpServers: ["serena", "filesystem"], hasCustomInstructions: true }),
     tool_summary: JSON.stringify({ Read: 8, Edit: 5, Grep: 3, Bash: 2 }),
+    task_name: "demo-feature",
     last_event_at: iso(0.1),
   },
   {
@@ -75,6 +76,7 @@ export const mockSessions: Session[] = [
     num_turns: 8,
     config: JSON.stringify({ maxTurnCount: 25, systemPromptLength: 3100, mcpServers: ["linear", "slack"], hasCustomInstructions: false }),
     tool_summary: JSON.stringify({ Bash: 6, Read: 3, Agent: 1 }),
+    task_name: null,
     last_event_at: iso(0.4),
   },
   {
@@ -96,6 +98,7 @@ export const mockSessions: Session[] = [
     num_turns: 25,
     config: JSON.stringify({ maxTurnCount: 10, systemPromptLength: 1800, mcpServers: ["serena"], hasCustomInstructions: true }),
     tool_summary: JSON.stringify({ Read: 15, Edit: 8, Grep: 4, Write: 2, Skill: 1 }),
+    task_name: "demo-feature",
     last_event_at: iso(3),
   },
 ];

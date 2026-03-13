@@ -112,6 +112,7 @@ export interface Session {
   num_turns: number | null;
   config: string | null;
   tool_summary: string | null;
+  task_name: string | null;
   last_event_at: string | null;
 }
 
