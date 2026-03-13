@@ -22,12 +22,12 @@
 | `update` | PUT/PATCH | `updateMerchant` |
 | `delete` | DELETE | `deleteTid` |
 
-### 파라미터: 항상 `*Params` 타입 객체
+### 파라미터/응답: 항상 DTO 타입 사용
 
 ```typescript
-// ✅ *Params 타입으로 정의, 항상 객체 파라미터
+// ✅ *Params, *Response 타입으로 정의
 export const fetchMerchantDetail = (params: FetchMerchantDetailParams) => {
-  return httpClient.get<MerchantDetail>(`merchants/${params.merchantId}`);
+  return httpClient.get<FetchMerchantDetailResponse>(`merchants/${params.merchantId}`);
 };
 
 export const updateMerchant = (params: UpdateMerchantParams) => {
@@ -37,6 +37,8 @@ export const updateMerchant = (params: UpdateMerchantParams) => {
 
 // ❌ 인라인 타입, 개별 인자
 export const fetchMerchantDetail = (merchantId: string) => { ... };
+// ❌ 제네릭에 인라인 타입
+httpClient.get<{ items: Merchant[] }>(...);
 ```
 
 ### 공통 페이지네이션 타입
@@ -251,15 +253,13 @@ type TidRegistrationForm =
 
 **파일 단위:** 도메인별 한 파일 (`[domain].dto.ts`)
 
-**파일 내 순서:** 공통 타입 → API 엔드포인트별 그룹 (주석 구분)
+**파일 내 순서:** 공통 타입 → Params/Response/엔티티 순서. 엔드포인트 주석(`// ── GET /path ──`) 불필요 — 타입 이름(`Fetch*Params`, `Post*Params`)이 이미 엔드포인트를 나타냄.
 
 ```typescript
 // models/merchant.dto.ts
 
-// ── 공통 ──
 type MerchantStatus = 'active' | 'inactive';
 
-// ── GET /merchants (리스트) ──
 interface FetchMerchantListParams extends CursorPaginationParams {
   filters: MerchantFilters;
 }
@@ -278,7 +278,6 @@ interface MerchantListResponse extends CursorPaginationResponse<MerchantListItem
   totalCount: number;
 }
 
-// ── GET /merchants/:id (상세) ──
 interface FetchMerchantDetailParams {
   /** 가맹점 ID */
   merchantId: string;
@@ -295,7 +294,6 @@ interface MerchantDetail {
   van: Van;
 }
 
-// ── POST /merchants (생성) ──
 interface CreateMerchantParams {
   /** 가맹점명 */
   name: string;
@@ -303,7 +301,6 @@ interface CreateMerchantParams {
   businessNumber: string;
 }
 
-// ── PUT /merchants/:id (수정) ──
 interface UpdateMerchantParams {
   /** 가맹점 ID */
   merchantId: string;
@@ -386,7 +383,6 @@ DTO 속성에 **한글 JSDoc 주석**을 달아 필드의 의미를 명시한다
 ```typescript
 // models/funnel.dto.ts
 
-// ── GET /funnels/:id (상세) ──
 interface FunnelOrderDetail {
   /** 주문 ID */
   orderId: number;
@@ -418,7 +414,7 @@ interface FunnelOrderDetail {
 - `id`, `name` 등 자명한 필드도 도메인 맥락 설명 (e.g. `/** 주문 ID */`)
 - 값 형식이 특수하면 예시 포함 (e.g. `(e.g. '2021-01-15')`)
 - 마스킹/가공 여부 명시 (e.g. `(마스킹)`)
-- 엔드포인트 그룹 주석은 `// ── METHOD /path (설명) ──` 형식
+- 엔드포인트 그룹 주석(`// ── GET /path ──`) 금지 — 타입 이름이 이미 역할을 나타냄
 
 ---
 

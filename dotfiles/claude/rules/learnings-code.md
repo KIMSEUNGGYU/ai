@@ -32,3 +32,9 @@
 ## 전역 API 패턴 준수
 - 새 API 추가 시 기존 전역 패턴(remotes/, queries/, models/)을 먼저 파악하고 동일하게 정의 — 독자적 패턴 사용 금지 <!-- learned: 2026-03-12, task: ISH-1267 -->
 
+## 엔드포인트 주석 금지
+- DTO/remotes에 `// ── GET /path ──` 같은 엔드포인트 주석 추가 금지 — 타입 이름(`Fetch*Params`, `Post*Params`)이 이미 역할을 나타냄 <!-- learned: 2026-03-13, task: ISH-1313 -->
+
+## 라이브러리 내장 API 우선
+- 직접 구현하기 전에 사용 중인 라이브러리의 내장 API를 먼저 검토하라 — 예: `form.setValue`로 초기값 세팅 대신 `form.resetField` 사용 <!-- learned: 2026-03-12, task: ISH-1313 -->
+
