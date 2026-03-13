@@ -32,11 +32,37 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-corrections.mjs" {transcript_path1} 
 
 **2-A-2.** `(correctionHits === 0 && positiveHits === 0)` 또는 `extracted < 3`이면 스킵.
 
-**2-A-3.** Agent로 서브에이전트 실행. 프롬프트에 messages를 넘기고, 분류 기준([교정/신규/위반/선호])과 카테고리(code→learnings-code.md, thinking→learnings-thinking.md, workflow→learnings-workflow.md, domain→learnings-domain.md, meta→learnings-meta.md)로 JSON 배열 출력 요청. 교정 없으면 빈 배열.
+**2-A-3.** Agent로 서브에이전트 실행. 프롬프트에 messages를 넘기고, 분류 기준([교정/신규/위반/선호])과 카테고리(code→learnings-code.md, thinking→learnings-thinking.md, workflow→learnings-workflow.md, domain→learnings-domain.md, meta→learnings-meta.md)로 JSON 배열 출력 요청. 각 항목에 **trigger**(이 규칙이 적용되는 구체적 상황/조건)과 **action**(그때 해야 할 구체적 행동)을 필수 포함.
 
-**2-A-4.** 결과 있으면 AskUserQuestion으로 제안 → 전체/번호선택/스킵
+추가로 각 항목의 **원인을 분류**:
+- `type: "learning"` — 규칙은 명확한데 AI가 안 따름 → learnings에 TRIGGER+ACTION 기록
+- `type: "doc_improve"` — 기존 규칙 문서의 설명이 모호해서 발생 → `doc_target`(대상 문서 경로)과 `doc_suggestion`(보강 내용)을 기술
+- `type: "new_rule"` — 규칙 자체가 없었음 → `doc_target`과 `doc_suggestion`에 추가할 문서/내용 기술
 
-**2-A-5.** 승인 항목을 `~/.claude/rules/learnings-{category}.md`에 추가. 형식: `- {rule} <!-- learned: {날짜}, task: {작업명} -->`. 중복 금지.
+교정 없으면 빈 배열.
+
+**2-A-4.** 결과에 대해 **시뮬레이션 검증** 수행:
+- 각 항목에 대해 구체적 시나리오를 만들어 테스트: "세션에서 실수한 것과 동일한 상황을 제시하고, 이 TRIGGER+ACTION만 읽고 올바르게 행동하는지 1번만 검증"
+- 통과 → 유지
+- 실패 → trigger/action을 더 구체화하여 1회 재작성. 재작성 후에도 실패하면 type을 `doc_improve`로 변경 (규칙 자체가 부족한 것)
+
+**2-A-5.** 검증 통과한 항목을 AskUserQuestion으로 제안. type별 구분 표시:
+- `[학습]` learning 항목 — TRIGGER+ACTION 포함
+- `[문서개선]` doc_improve 항목 — 대상 문서 + 보강 내용
+- `[신규규칙]` new_rule 항목 — 대상 문서 + 규칙 내용
+- 전체/번호선택/스킵
+
+**2-A-6.** 승인 항목 반영:
+- `type: "learning"` → `~/.claude/rules/learnings-{category}.md`에 추가. 형식:
+  ```
+  - {rule} <!-- learned: {날짜}, task: {작업명} -->
+    - TRIGGER: {trigger}
+    - ACTION: {action}
+  ```
+- `type: "doc_improve"` → 대상 문서(`doc_target`)를 Edit으로 직접 보강 (사용자 확인 후). 대상 범위: `~/.claude/rules/` 내 파일 또는 프로젝트 CLAUDE.md만
+- `type: "new_rule"` → 대상 문서에 새 규칙 추가 (사용자 확인 후). 대상 범위: 동일
+
+중복 금지.
 
 ### 2-B. Active 파일 기반 학습 (결정사항/컨벤션 추출)
 
@@ -64,7 +90,13 @@ active 파일이 있을 때 실행. **"이렇게 해라" 패턴을 학습하는 
 - "active 파일에서 다음 학습 항목을 발견했습니다. 반영할까요?"
 - 전체/번호선택/스킵
 
-**2-B-5.** 승인 항목을 `~/.claude/rules/learnings-{category}.md`에 추가. 형식: `- {rule} <!-- learned: {날짜}, task: {작업명} -->`. 중복 금지.
+**2-B-5.** 승인 항목을 `~/.claude/rules/learnings-{category}.md`에 추가. 형식:
+```
+- {rule} <!-- learned: {날짜}, task: {작업명} -->
+  - TRIGGER: {이 규칙이 적용되는 구체적 상황/조건}
+  - ACTION: {그때 해야 할 구체적 행동}
+```
+중복 금지.
 
 ### 2-C. Profile 학습 (판단 패턴)
 
@@ -103,7 +135,7 @@ active 파일이 있을 때 실행. **"이렇게 해라" 패턴을 학습하는 
 - {작업 제목} — {한 줄 요약} ✅
   - 세션: {full_session_id} ({날짜}), ...
   - 완료: {active 파일의 [x] 항목을 한 줄로 요약}
-  - 자가학습: {N}건 반영 ({카테고리들}) / 스킵({사유}) / 교정 없음
+  - 자가학습: {N}건 반영 ({카테고리들}, {type별 건수: 학습N/문서개선N/신규규칙N}) / 스킵({사유}) / 교정 없음
 ```
 
 - **세션**: active 파일의 `## 세션 이력`에서 추출. 현재 세션도 포함. session_id 전체 기록.
