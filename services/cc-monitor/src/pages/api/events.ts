@@ -16,6 +16,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: "session_id and hook_event_name required" });
     }
 
+    // ClaudeProbe (health check) 세션 서버 측 필터링
+    if (event.cwd && typeof event.cwd === "string" && event.cwd.includes("ClaudeProbe")) {
+      return res.status(200).json({ ok: true, filtered: "ClaudeProbe" });
+    }
+
     const userId =
       (req.headers["x-cc-user"] as string) ??
       extractUserFromCwd(event.cwd) ??

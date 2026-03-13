@@ -203,6 +203,9 @@ export async function getSessions(status: "active" | "ended" | "all" = "active",
   if (filters?.toolName) {
     params.push(filters.toolName);
   }
+  // ClaudeProbe health check 세션 제외
+  conditions.push("(s.project_path IS NULL OR s.project_path NOT LIKE '%ClaudeProbe%')");
+
   if (status !== "all") {
     conditions.push("s.status = ?");
     params.push(status);

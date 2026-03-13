@@ -130,7 +130,7 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
                     </td>
                     <td className="px-4 py-3">
                       <div className="text-muted-foreground">{shortPath(s.project_path)}</div>
-                      <div className="text-[10px] font-mono text-muted-foreground/50">{s.session_id.slice(0, 8)}</div>
+                      <div className="text-[10px] font-mono text-muted-foreground/50">{s.session_id}</div>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{s.model ?? "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground">

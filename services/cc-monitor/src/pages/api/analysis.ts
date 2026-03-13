@@ -12,6 +12,7 @@ interface AnalysisData {
   mcpServers: ToolBreakdown[];
   hooks: ToolBreakdown[];
   commands: ToolBreakdown[];
+  slashCommands: ToolBreakdown[];
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -26,6 +27,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       mcpServers: [{ name: "serena", count: 20 }],
       hooks: [{ name: "fe-workflow:fe-convention-prompt", count: 8 }],
       commands: [{ name: "Bash", count: 100 }],
+      slashCommands: [{ name: "/save", count: 5 }, { name: "/done", count: 3 }],
     });
   }
 
@@ -110,6 +112,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     count: Number(r.cnt),
   }));
 
-  const data: AnalysisData = { skills, agents, mcpServers, hooks, commands };
+  // 슬래시 명령: UserPromptSubmit에서 커맨드 추출
+  // 제외: 파일 경로(/Users/, /home/, /tmp/ 등), 더블 슬래시(//)
+  const slashRows = await db.$queryRawUnsafe<Array<{ cmd: string; cnt: bigint }>>(
+    `SELECT
+       SUBSTR(prompt_text, 1, INSTR(prompt_text || ' ', ' ') - 1) as cmd,
+       COUNT(*) as cnt
+     FROM events
+     WHERE event_type = 'UserPromptSubmit'
+       AND prompt_text LIKE '/%'
+       AND prompt_text NOT LIKE '//%'
+       AND prompt_text NOT LIKE '/Users/%'
+       AND prompt_text NOT LIKE '/home/%'
+       AND prompt_text NOT LIKE '/tmp/%'
+       AND prompt_text NOT LIKE '/var/%'
+       AND prompt_text NOT LIKE '/etc/%'
+     GROUP BY cmd
+     ORDER BY cnt DESC`
+  );
+  const slashCommands: ToolBreakdown[] = slashRows.map((r) => ({
+    name: r.cmd,
+    count: Number(r.cnt),
+  }));
+
+  const data: AnalysisData = { skills, agents, mcpServers, hooks, commands, slashCommands };
   return res.json(data);
 }

@@ -22,6 +22,36 @@ interface SessionDrawerProps {
   onClose: () => void;
 }
 
+const PROMPT_PASSWORD = "gyu-test";
+const PROMPT_STORAGE_KEY = "cc-monitor-prompt-unlocked";
+
+function usePromptAuth() {
+  const [unlocked, setUnlocked] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return sessionStorage.getItem(PROMPT_STORAGE_KEY) === "true";
+  });
+  const [input, setInput] = useState("");
+  const [error, setError] = useState(false);
+
+  function tryUnlock() {
+    if (input === PROMPT_PASSWORD) {
+      setUnlocked(true);
+      sessionStorage.setItem(PROMPT_STORAGE_KEY, "true");
+      setError(false);
+    } else {
+      setError(true);
+    }
+  }
+
+  function lock() {
+    setUnlocked(false);
+    setInput("");
+    sessionStorage.removeItem(PROMPT_STORAGE_KEY);
+  }
+
+  return { unlocked, input, setInput, error, tryUnlock, lock };
+}
+
 export function SessionDrawer({ session, fallbackEvents, onClose }: SessionDrawerProps) {
   const { data: fetchedEvents, isLoading } = useQuery(sessionEventsQueryOptions(session.session_id));
   const events = fetchedEvents ?? fallbackEvents;
@@ -36,6 +66,8 @@ export function SessionDrawer({ session, fallbackEvents, onClose }: SessionDrawe
   }
   const toolSummary = { ...eventToolCounts, ...lightToolCounts };
   const prompts = events.filter((e) => e.event_type === "UserPromptSubmit");
+
+  const promptAuth = usePromptAuth();
 
   // 필터링 상태: 빈 Set = 전체 표시, 선택하면 해당 카테고리만 표시
   const [selectedCategories, setSelectedCategories] = useState<Set<ToolCategory>>(new Set());
@@ -158,19 +190,50 @@ export function SessionDrawer({ session, fallbackEvents, onClose }: SessionDrawe
               <>
                 <Separator />
                 <div>
-                  <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    프롬프트 ({prompts.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {prompts.map((ev) => (
-                      <div key={ev.id} className="rounded-md border border-border/40 bg-muted/10 px-3 py-2">
-                        <div className="mb-1 text-[10px] text-muted-foreground/80">{formatTime(ev.timestamp)}</div>
-                        <div className="whitespace-pre-wrap font-mono text-xs text-foreground/90 leading-relaxed">
-                          {ev.prompt_text ?? ev.tool_input_summary ?? "-"}
-                        </div>
-                      </div>
-                    ))}
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      프롬프트 ({prompts.length})
+                    </h4>
+                    {promptAuth.unlocked && (
+                      <button
+                        onClick={promptAuth.lock}
+                        className="text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        숨기기
+                      </button>
+                    )}
                   </div>
+                  {promptAuth.unlocked ? (
+                    <div className="space-y-2">
+                      {prompts.map((ev) => (
+                        <div key={ev.id} className="rounded-md border border-border/40 bg-muted/10 px-3 py-2">
+                          <div className="mb-1 text-[10px] text-muted-foreground/80">{formatTime(ev.timestamp)}</div>
+                          <div className="whitespace-pre-wrap font-mono text-xs text-foreground/90 leading-relaxed">
+                            {ev.prompt_text ?? ev.tool_input_summary ?? "-"}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        placeholder="비밀번호 입력"
+                        value={promptAuth.input}
+                        onChange={(e) => promptAuth.setInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && promptAuth.tryUnlock()}
+                        className={`h-8 rounded-md border bg-background px-3 text-xs font-mono focus:outline-none focus:ring-1 focus:ring-ring ${
+                          promptAuth.error ? "border-red-500" : "border-border"
+                        }`}
+                      />
+                      <Button variant="outline" size="sm" className="h-8 text-xs" onClick={promptAuth.tryUnlock}>
+                        확인
+                      </Button>
+                      {promptAuth.error && (
+                        <span className="text-xs text-red-500">비밀번호가 틀렸습니다</span>
+                      )}
+                    </div>
+                  )}
                 </div>
               </>
             )}

@@ -13,6 +13,7 @@ interface AnalysisData {
   mcpServers: ToolBreakdown[];
   hooks: ToolBreakdown[];
   commands: ToolBreakdown[];
+  slashCommands: ToolBreakdown[];
 }
 
 function fetchAnalysisData(): Promise<AnalysisData> {
@@ -25,6 +26,7 @@ const SECTION_COLORS = {
   mcpServers: { bar: "bg-teal-500", badge: "text-teal-400", icon: "text-teal-400" },
   hooks: { bar: "bg-orange-500", badge: "text-orange-400", icon: "text-orange-400" },
   commands: { bar: "bg-blue-500", badge: "text-blue-400", icon: "text-blue-400" },
+  slashCommands: { bar: "bg-pink-500", badge: "text-pink-400", icon: "text-pink-400" },
 } as const;
 
 function BreakdownSection({
@@ -52,7 +54,7 @@ function BreakdownSection({
         {items.length === 0 ? (
           <p className="text-xs text-muted-foreground">데이터 없음</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 max-h-80 overflow-y-auto pr-2">
             {items.map((item) => (
               <div key={item.name} className="group">
                 <div className="flex items-center justify-between text-xs">
@@ -98,13 +100,14 @@ export function AnalysisTab() {
   return (
     <div className="flex flex-col gap-6">
       {/* 상단 요약 카드 */}
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-6">
         {([
           { label: "Skills", count: data.skills.reduce((s, i) => s + i.count, 0), types: data.skills.length, color: "text-violet-400" },
           { label: "Agents", count: data.agents.reduce((s, i) => s + i.count, 0), types: data.agents.length, color: "text-emerald-400" },
           { label: "MCP", count: data.mcpServers.reduce((s, i) => s + i.count, 0), types: data.mcpServers.length, color: "text-teal-400" },
           { label: "Hooks", count: data.hooks.reduce((s, i) => s + i.count, 0), types: data.hooks.length, color: "text-orange-400" },
           { label: "Tools", count: data.commands.reduce((s, i) => s + i.count, 0), types: data.commands.length, color: "text-blue-400" },
+          { label: "Slash Cmds", count: data.slashCommands.reduce((s, i) => s + i.count, 0), types: data.slashCommands.length, color: "text-pink-400" },
         ] as const).map((s) => (
           <Card key={s.label}>
             <CardContent className="!p-4 text-center">
@@ -115,9 +118,14 @@ export function AnalysisTab() {
         ))}
       </div>
 
-      {/* 상세 분류 */}
+      {/* Slash Commands + Skills */}
       <div className="grid gap-6 lg:grid-cols-2">
+        <BreakdownSection title="Slash Commands" items={data.slashCommands} colorKey="slashCommands" />
         <BreakdownSection title="Skills" items={data.skills} colorKey="skills" />
+      </div>
+
+      {/* 나머지 분류 */}
+      <div className="grid gap-6 lg:grid-cols-2">
         <BreakdownSection title="Agents" items={data.agents} colorKey="agents" />
         <BreakdownSection title="MCP Servers" items={data.mcpServers} colorKey="mcpServers" />
         <BreakdownSection title="Plugin Hooks" items={data.hooks} colorKey="hooks" />
