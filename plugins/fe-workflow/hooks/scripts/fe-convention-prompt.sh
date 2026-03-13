@@ -82,7 +82,8 @@ else
 fi
 
 # cc-monitor 전송 (비동기, 실패해도 무시)
-if [ -n "$SESSION_ID" ]; then
+# 매칭된 컨벤션이 있을 때만 전송 (fallback은 전송하지 않음)
+if [ -n "$SESSION_ID" ] && [ ${#INJECTED[@]} -gt 0 ]; then
   CC_MONITOR_URL="${CC_MONITOR_URL:-https://cc-monitor.vercel.app}"
   INJECTED_JSON=$(printf '%s\n' "${INJECTED[@]}" | jq -R . | jq -s .)
   KEYWORDS_JSON=$(printf '%s\n' "${MATCHED_KEYWORDS[@]}" | jq -R . | jq -s .)
