@@ -38,3 +38,6 @@
 ## 라이브러리 내장 API 우선
 - 직접 구현하기 전에 사용 중인 라이브러리의 내장 API를 먼저 검토하라 — 예: `form.setValue`로 초기값 세팅 대신 `form.resetField` 사용 <!-- learned: 2026-03-12, task: ISH-1313 -->
 
+## API 경로 버그 디버깅
+- API 경로 에러(Cannot POST 등) 발생 시 서버 라우팅(Controller + RouterModule) 파일을 직접 확인해 실제 경로와 대조하라 — FE 코드만 보고 추론하지 말 것 <!-- learned: 2026-03-13, task: ISH-1328 -->
+
