@@ -6,14 +6,28 @@ import { SessionDrawer } from "@/components/sessions/SessionDrawer";
 import { TokenCell } from "@/components/sessions/TokenCell";
 import type { Session, StoredEvent } from "@/lib/types";
 
+type SortKey = "started_at" | "last_event_at" | "event_count" | "tokens";
+type SortDir = "asc" | "desc";
+
 interface SessionsTabProps {
   sessions: Session[];
   events: StoredEvent[];
   initialExpandedId?: string | null;
 }
 
+function getTokenTotal(s: Session): number {
+  return (s.total_input_tokens ?? 0) + (s.total_output_tokens ?? 0);
+}
+
+function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
+  if (!active) return <span className="ml-1 text-muted-foreground/40">↕</span>;
+  return <span className="ml-1">{dir === "asc" ? "↑" : "↓"}</span>;
+}
+
 export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTabProps) {
   const [selectedId, setSelectedId] = useState<string | null>(initialExpandedId ?? null);
+  const [sortKey, setSortKey] = useState<SortKey>("last_event_at");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
   useEffect(function syncInitialExpanded() {
     if (initialExpandedId) {
@@ -21,7 +35,6 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
     }
   }, [initialExpandedId]);
 
-  // Esc 키로 drawer 닫기
   useEffect(function handleEscKey() {
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") setSelectedId(null);
@@ -36,21 +49,45 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
     setSelectedId(selectedId === sessionId ? null : sessionId);
   }
 
-  // active 먼저, 최신 활동(ended_at or started_at) 기준 내림차순
+  function handleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === "desc" ? "asc" : "desc");
+    } else {
+      setSortKey(key);
+      setSortDir("desc");
+    }
+  }
+
   const sorted = [...sessions].sort((a, b) => {
+    // active 항상 먼저
     if (a.status !== b.status) return a.status === "active" ? -1 : 1;
-    const aTime = new Date(a.last_event_at ?? a.ended_at ?? a.started_at).getTime();
-    const bTime = new Date(b.last_event_at ?? b.ended_at ?? b.started_at).getTime();
-    return bTime - aTime;
+
+    let cmp = 0;
+    switch (sortKey) {
+      case "started_at":
+        cmp = new Date(a.started_at).getTime() - new Date(b.started_at).getTime();
+        break;
+      case "last_event_at":
+        cmp =
+          new Date(a.last_event_at ?? a.ended_at ?? a.started_at).getTime() -
+          new Date(b.last_event_at ?? b.ended_at ?? b.started_at).getTime();
+        break;
+      case "event_count":
+        cmp = a.event_count - b.event_count;
+        break;
+      case "tokens":
+        cmp = getTokenTotal(a) - getTokenTotal(b);
+        break;
+    }
+    return sortDir === "desc" ? -cmp : cmp;
   });
 
-  // 토큰 바 상대 비교용 최대값
-  const maxTokens = Math.max(...sessions.map((s) => (s.total_input_tokens ?? 0) + (s.total_output_tokens ?? 0)), 1);
+  const maxTokens = Math.max(...sessions.map(getTokenTotal), 1);
 
   const selectedSession = selectedId ? sessions.find((s) => s.session_id === selectedId) : null;
-
-  // fallback: useQuery 실패 시 전역 events에서 해당 세션 이벤트 추출
   const fallbackEvents = selectedId ? events.filter((e) => e.session_id === selectedId) : [];
+
+  const thClass = "px-4 py-3 cursor-pointer select-none hover:text-foreground transition-colors";
 
   return (
     <>
@@ -63,10 +100,18 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
                   <th className="px-4 py-3">상태</th>
                   <th className="px-4 py-3">프로젝트</th>
                   <th className="px-4 py-3">모델</th>
-                  <th className="px-4 py-3">시작</th>
-                  <th className="px-4 py-3">최신 활동</th>
-                  <th className="px-4 py-3 text-right">이벤트</th>
-                  <th className="px-4 py-3 text-right">토큰</th>
+                  <th className={thClass} onClick={() => handleSort("started_at")}>
+                    시작<SortIcon active={sortKey === "started_at"} dir={sortDir} />
+                  </th>
+                  <th className={thClass} onClick={() => handleSort("last_event_at")}>
+                    최신 활동<SortIcon active={sortKey === "last_event_at"} dir={sortDir} />
+                  </th>
+                  <th className={`${thClass} text-right`} onClick={() => handleSort("event_count")}>
+                    이벤트<SortIcon active={sortKey === "event_count"} dir={sortDir} />
+                  </th>
+                  <th className={`${thClass} text-right`} onClick={() => handleSort("tokens")}>
+                    토큰<SortIcon active={sortKey === "tokens"} dir={sortDir} />
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -83,7 +128,10 @@ export function SessionsTab({ sessions, events, initialExpandedId }: SessionsTab
                         {s.status === "active" ? "Active" : "Ended"}
                       </Badge>
                     </td>
-                    <td className="px-4 py-3 text-muted-foreground">{shortPath(s.project_path)}</td>
+                    <td className="px-4 py-3">
+                      <div className="text-muted-foreground">{shortPath(s.project_path)}</div>
+                      <div className="text-[10px] font-mono text-muted-foreground/50">{s.session_id.slice(0, 8)}</div>
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">{s.model ?? "-"}</td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {formatDate(s.started_at)}

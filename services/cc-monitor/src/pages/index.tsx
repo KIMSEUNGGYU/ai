@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryState, parseAsStringLiteral } from "nuqs";
 import type { GetServerSideProps, InferGetServerSidePropsType } from "next";
 import { useQuery } from "@tanstack/react-query";
 import { getSessions } from "@/lib/queries";
@@ -13,6 +14,7 @@ import { HourlyActivity } from "@/components/HourlyActivity";
 import { TokenUsage } from "@/components/TokenUsage";
 import { CostTracking } from "@/components/CostTracking";
 import { ConfigOverview } from "@/components/ConfigOverview";
+import { AnalysisTab } from "@/components/AnalysisTab";
 import { TabNav } from "@/components/TabNav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,9 +31,12 @@ interface DashboardData {
   tokenUsage: TokenUsageSummary;
 }
 
+const TAB_IDS = ["overview", "sessions", "analysis", "config"] as const;
+
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "sessions", label: "Sessions" },
+  { id: "analysis", label: "Analysis" },
   { id: "config", label: "Config" },
 ];
 
@@ -61,7 +66,10 @@ export default function Dashboard({
   initial,
   isDemo,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useQueryState(
+    "tab",
+    parseAsStringLiteral(TAB_IDS).withDefault("overview"),
+  );
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedToolName, setSelectedToolName] = useState("");
   const [allTools, setAllTools] = useState(initial.tools);
@@ -165,7 +173,7 @@ export default function Dashboard({
         </CardContent>
       </Card>
 
-      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNav tabs={TABS} activeTab={activeTab} onTabChange={(id) => setActiveTab(id as typeof activeTab)} />
 
       {activeTab === "overview" && (
         <div className="flex flex-col gap-8">
@@ -179,6 +187,8 @@ export default function Dashboard({
       )}
 
       {activeTab === "sessions" && <SessionsTab sessions={sessions} events={events} />}
+
+      {activeTab === "analysis" && <AnalysisTab />}
 
       {activeTab === "config" && <ConfigOverview />}
     </div>
