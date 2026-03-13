@@ -42,6 +42,10 @@ async function main() {
   const hookEvent = event.hook_event_name as string | undefined;
   const toolName = event.tool_name as string | undefined;
   const sessionId = event.session_id as string | undefined;
+  const cwd = event.cwd as string | undefined;
+
+  // ClaudeProbe (health check) 세션 무시
+  if (cwd?.includes("ClaudeProbe")) process.exit(0);
 
   // 경량 도구: 서버 전송 대신 로컬 파일 카운터로 집계
   if (
