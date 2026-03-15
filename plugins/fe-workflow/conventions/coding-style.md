@@ -42,14 +42,18 @@ useEffect(() => {
 ```
 
 
-## Form 패턴 (react-hook-form)
+## Form 패턴 (react-hook-form + Zod)
 
-useForm + handleSubmit + mutateAsync 조합을 사용한다:
+> 상세 사용법은 `references/react-hook-form.md` 참조.
+
+### 기본 조합
+
+폼 입력은 react-hook-form, 검증은 항상 Zod. 둘은 세트로 사용한다:
 
 ```tsx
-// ✅ useForm + handleSubmit + mutateAsync
+// ✅ useForm + zodResolver + handleSubmit + mutateAsync
 const form = useForm<FormData>({
-  resolver: zodResolver(schema),
+  resolver: zodResolver(schema),  // 검증은 항상 Zod
   defaultValues: { name: '' },
 });
 
@@ -62,11 +66,44 @@ const handleFormSubmit = form.handleSubmit(async (data) => {
   }
 });
 
+// ❌ zodResolver 없이 수동 검증
 // ❌ onSubmit에서 form.getValues() 사용
-const handleSubmit = () => {
-  const data = form.getValues();
-  createMutation.mutate(data);
-};
+```
+
+### register vs Controller
+
+| 상황 | API |
+|------|-----|
+| TextField, Input (표준 HTML) | `register` |
+| Select, DatePicker, Autocomplete (TDS) | `Controller` |
+
+register로 충분하면 Controller 사용 금지.
+
+### useFieldArray
+
+동적 리스트에서 **`key={field.id}` 필수**. index를 key로 사용 금지 (리렌더링 버그).
+
+### submit 비활성화
+
+`formState.isValid`에 위임. watch로 유효성을 직접 계산하지 않는다:
+
+```tsx
+// ✅ isValid에 위임
+const form = useForm<FormData>({ resolver: zodResolver(schema), mode: 'onChange' });
+<Button disabled={is.falsy(form.formState.isValid)}>저장</Button>
+
+// ❌ watch로 유효성 직접 계산 — 스키마 검증과 중복
+const isValid = is.truthy(form.watch('name')) && is.truthy(form.watch('phone'));
+```
+
+### 서버 데이터 동기화
+
+`defaultValues`는 마운트 시에만 적용. mutation 후 refetch된 데이터 반영은 `useEffect + reset()`:
+
+```tsx
+useEffect(function syncFormWithServerData() {
+  reset({ items: data });
+}, [data, reset]);
 ```
 
 
@@ -217,3 +254,4 @@ type Status = (typeof Status)[keyof typeof Status];
 | 2026-03-04 | useEffect 기명함수, Form 패턴, Enum 금지 추가 |
 | 2026-03-04 | 범용 섹션(Immutability, Error Handling, Input Validation) 제거 — 프로젝트 특화 내용만 유지 |
 | 2026-03-04 | A-B-A-B, 분리≠추상화 중복 제거 → code-principles.md 참조로 변경 |
+| 2026-03-15 | Form 섹션 보강 — Zod 필수, register vs Controller, isValid 위임, 서버 동기화 규칙 추가. references/react-hook-form.md 신규 |
