@@ -12,7 +12,7 @@
  */
 import { hostname, userInfo } from "node:os";
 import {
-  isLightTool,
+  isServerRequired,
   incrementCounter,
   readAndClearCounters,
 } from "./tool-counter.ts";
@@ -47,16 +47,12 @@ async function main() {
   // ClaudeProbe (health check) 세션 무시
   if (cwd?.includes("ClaudeProbe")) process.exit(0);
 
-  // 경량 도구: 서버 전송 대신 로컬 파일 카운터로 집계
-  if (
-    (hookEvent === "PreToolUse" || hookEvent === "PostToolUse") &&
-    toolName &&
-    isLightTool(toolName)
-  ) {
-    if (hookEvent === "PostToolUse" && sessionId) {
-      incrementCounter(sessionId, toolName);
+  // PostToolUse: 일반 도구는 로컬 카운터, 특수 도구만 서버 전송
+  if (hookEvent === "PostToolUse" && toolName) {
+    if (!isServerRequired(toolName)) {
+      if (sessionId) incrementCounter(sessionId, toolName);
+      process.exit(0);
     }
-    process.exit(0);
   }
 
   // SessionStart 시 로컬 설정 스냅샷 첨부

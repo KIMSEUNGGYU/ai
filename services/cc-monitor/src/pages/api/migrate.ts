@@ -1,6 +1,6 @@
 // ── POST /api/migrate — 수동 스키마 마이그레이션 (Turso) ──
 import type { NextApiRequest, NextApiResponse } from "next";
-import { prisma, isDemoMode } from "@/lib/db";
+import { prisma } from "@/lib/db";
 
 const MIGRATIONS = [
   {
@@ -14,16 +14,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  if (isDemoMode()) {
-    return res.status(200).json({ ok: true, demo: true });
-  }
-
-  const db = prisma!;
   const results: Array<{ name: string; status: string }> = [];
 
   for (const m of MIGRATIONS) {
     try {
-      await db.$executeRawUnsafe(m.sql);
+      await prisma.$executeRawUnsafe(m.sql);
       results.push({ name: m.name, status: "applied" });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);

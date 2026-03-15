@@ -1,14 +1,8 @@
 // ── 비용 추적 쿼리 ──
 // 기존 세션 토큰 데이터를 활용하여 비용을 산출한다.
 
-import { prisma, isDemoMode } from "./db";
+import { prisma } from "./db";
 import { calculateSessionCost, getAllModelPricing, type CostBreakdown } from "./pricing";
-import {
-  mockCostSummary,
-  mockCostByModel,
-  mockDailyCosts,
-  mockCostResponse,
-} from "./mock-data";
 import type {
   CostSummary,
   ModelCostBreakdown,
@@ -33,7 +27,6 @@ interface SessionTokenRow {
  * 필터 조건에 맞는 토큰 데이터가 있는 세션 목록 조회
  */
 async function getSessionsWithTokens(filters?: FilterParams, days?: number): Promise<SessionTokenRow[]> {
-  const db = prisma!;
   const conditions: string[] = ["total_input_tokens IS NOT NULL"];
   const params: unknown[] = [];
 
@@ -50,7 +43,7 @@ async function getSessionsWithTokens(filters?: FilterParams, days?: number): Pro
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  return await db.$queryRawUnsafe<SessionTokenRow[]>(`
+  return await prisma.$queryRawUnsafe<SessionTokenRow[]>(`
     SELECT
       session_id, model, total_input_tokens, total_output_tokens,
       total_cache_create_tokens, total_cache_read_tokens,
@@ -65,7 +58,6 @@ async function getSessionsWithTokens(filters?: FilterParams, days?: number): Pro
  * 전체 비용 요약 산출
  */
 export async function getCostSummary(filters?: FilterParams, days?: number): Promise<CostSummary> {
-  if (isDemoMode()) return mockCostSummary;
   const sessions = await getSessionsWithTokens(filters, days);
 
   let inputCost = 0;
@@ -103,7 +95,6 @@ export async function getCostSummary(filters?: FilterParams, days?: number): Pro
  * 모델별 비용 내역 산출
  */
 export async function getCostByModel(filters?: FilterParams, days?: number): Promise<ModelCostBreakdown[]> {
-  if (isDemoMode()) return mockCostByModel;
   const sessions = await getSessionsWithTokens(filters, days);
 
   const modelMap = new Map<
@@ -169,7 +160,6 @@ export async function getCostByModel(filters?: FilterParams, days?: number): Pro
  * 일별 비용 추이
  */
 export async function getDailyCosts(filters?: FilterParams, days: number = 30): Promise<DailyCost[]> {
-  if (isDemoMode()) return mockDailyCosts;
   const sessions = await getSessionsWithTokens(filters, days);
 
   const dateMap = new Map<string, { totalCost: number; sessionCount: number }>();
@@ -200,7 +190,6 @@ export async function getDailyCosts(filters?: FilterParams, days: number = 30): 
  * 전체 비용 응답 데이터 생성
  */
 export async function getCostResponse(filters?: FilterParams, days?: number): Promise<CostResponse> {
-  if (isDemoMode()) return mockCostResponse;
   return {
     summary: await getCostSummary(filters, days),
     byModel: await getCostByModel(filters, days),

@@ -42,6 +42,7 @@ export function processEvent(event: HookEvent, userId: string): Omit<StoredEvent
       injected_conventions?: string[];
       injection_bytes?: number[];
       injection_total_bytes?: number;
+      injection_hash?: string;
       matched_keywords?: string[];
       target_file?: string;
     };
@@ -63,6 +64,7 @@ export function processEvent(event: HookEvent, userId: string): Omit<StoredEvent
       injected_conventions: pluginEvent.injected_conventions,
       injection_bytes: pluginEvent.injection_bytes,
       injection_total_bytes: pluginEvent.injection_total_bytes,
+      injection_hash: pluginEvent.injection_hash,
       matched_keywords: pluginEvent.matched_keywords,
       target_file: pluginEvent.target_file,
     });

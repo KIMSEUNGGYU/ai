@@ -65,6 +65,8 @@ export interface PluginHookEvent extends HookEventBase {
   injection_bytes?: number[];
   /** 주입된 컨벤션 총 바이트 수 */
   injection_total_bytes?: number;
+  /** 주입된 컨벤션 내용의 md5 해시 (파일 변경 감지용) */
+  injection_hash?: string;
   /** 대상 파일 (PostToolUse hook인 경우) */
   target_file?: string;
 }

@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getSessions } from "@/lib/queries";
 import { getRecentEvents } from "@/lib/queries";
 import { getToolUsageStats, getToolDurationStats, getHourlyActivity, getUserSummaries, getTokenUsageSummary } from "@/lib/queries";
-import { isDemoMode } from "@/lib/db";
 import { sessionsQueryOptions, feedQueryOptions, analyticsQueryOptions } from "@/lib/query-options";
 import { ActivityFeed } from "@/components/ActivityFeed";
 import { SessionsTab } from "@/components/SessionsTab";
@@ -17,7 +16,6 @@ import { ConfigOverview } from "@/components/ConfigOverview";
 import { AnalysisTab } from "@/components/AnalysisTab";
 import { HistoryTab } from "@/components/HistoryTab";
 import { TabNav } from "@/components/TabNav";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { Session, StoredEvent, ToolUsageStat, ToolDurationStat, HourlyActivity as HourlyActivityType, UserSummary as UserSummaryType, TokenUsageSummary } from "@/lib/types";
@@ -44,7 +42,6 @@ const TABS = [
 
 export const getServerSideProps: GetServerSideProps<{
   initial: DashboardData;
-  isDemo: boolean;
 }> = async () => {
   const [sessions, events, tools, toolDurations, hourly, users, tokenUsage] = await Promise.all([
     getSessions("all"),
@@ -59,14 +56,12 @@ export const getServerSideProps: GetServerSideProps<{
   return {
     props: {
       initial: { sessions, events, tools, toolDurations, hourly, users, tokenUsage },
-      isDemo: isDemoMode(),
     },
   };
 };
 
 export default function Dashboard({
   initial,
-  isDemo,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [activeTab, setActiveTab] = useQueryState(
     "tab",
@@ -116,11 +111,6 @@ export default function Dashboard({
         <div className="flex flex-wrap items-baseline gap-3 md:gap-4">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">cc-monitor</h1>
           <span className="text-sm text-muted-foreground">Claude Code 모니터링 대시보드</span>
-          {isDemo && (
-            <Badge variant="secondary" className="border border-amber-500/40 bg-amber-500/10 text-amber-300">
-              Demo Mode
-            </Badge>
-          )}
         </div>
       </header>
 

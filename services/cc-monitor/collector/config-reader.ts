@@ -104,18 +104,26 @@ function collectMdFiles(dir: string): string[] {
 }
 
 function readActiveTask(cwd: string): string | null {
-  const activeDir = path.join(cwd, ".ai", "active");
-  try {
-    if (!fs.existsSync(activeDir)) return null;
-    const files = fs.readdirSync(activeDir)
-      .filter((f) => f.endsWith(".md"))
-      .map((f) => ({
-        name: f.replace(/\.md$/, ""),
-        mtime: fs.statSync(path.join(activeDir, f)).mtimeMs,
-      }))
-      .sort((a, b) => b.mtime - a.mtime);
-    return files.length > 0 ? files[0].name : null;
-  } catch { return null; }
+  // cwd부터 상위로 올라가며 .ai/active/ 탐색
+  let dir = cwd;
+  const root = path.parse(dir).root;
+  while (dir !== root) {
+    const activeDir = path.join(dir, ".ai", "active");
+    try {
+      if (fs.existsSync(activeDir)) {
+        const files = fs.readdirSync(activeDir)
+          .filter((f) => f.endsWith(".md"))
+          .map((f) => ({
+            name: f.replace(/\.md$/, ""),
+            mtime: fs.statSync(path.join(activeDir, f)).mtimeMs,
+          }))
+          .sort((a, b) => b.mtime - a.mtime);
+        if (files.length > 0) return files[0].name;
+      }
+    } catch { /* ignore */ }
+    dir = path.dirname(dir);
+  }
+  return null;
 }
 
 function readJsonObjectKeys(filePath: string, key: string): string[] {

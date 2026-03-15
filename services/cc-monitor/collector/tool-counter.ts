@@ -2,10 +2,19 @@ import fs from "node:fs";
 import path from "node:path";
 import os from "node:os";
 
-const LIGHT_TOOLS = new Set(["Read", "Edit", "Glob", "Grep", "Write"]);
+/**
+ * 서버 전송이 필요한 특수 도구 (Analysis 탭에서 사용).
+ * 이 외의 일반 도구(Read, Edit, Bash 등)는 로컬 카운터로 집계.
+ */
+const SERVER_REQUIRED_TOOLS = new Set(["Skill", "Agent"]);
 
-export function isLightTool(toolName: string): boolean {
-  return LIGHT_TOOLS.has(toolName);
+/** MCP/플러그인 도구는 서버 전송 필요 */
+function isMcpOrPlugin(toolName: string): boolean {
+  return toolName.startsWith("mcp__") || toolName.includes(":");
+}
+
+export function isServerRequired(toolName: string): boolean {
+  return SERVER_REQUIRED_TOOLS.has(toolName) || isMcpOrPlugin(toolName);
 }
 
 function getCachePath(sessionId: string): string {

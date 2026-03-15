@@ -4,16 +4,7 @@
  * 기존 sessions/events 테이블 데이터를 활용하여
  * DAU/WAU/MAU, 세션 빈도, 기능 채택률, 참여 깊이, 리텐션 등을 계산한다.
  */
-import { prisma, isDemoMode } from "./db";
-import {
-  mockActiveUsersMetrics,
-  mockSessionFrequencyMetrics,
-  mockFeatureUsageMetrics,
-  mockEngagementMetrics,
-  mockRetentionMetrics,
-  mockAdoptionSummary,
-  mockAdoptionSnapshots,
-} from "./mock-data";
+import { prisma } from "./db";
 import type {
   AdoptionPeriod,
   AdoptionFilterParams,
@@ -72,8 +63,6 @@ function resolveDateRange(filters?: AdoptionFilterParams): {
 export async function getActiveUsersMetrics(
   filters?: AdoptionFilterParams
 ): Promise<ActiveUsersMetric[]> {
-  if (isDemoMode()) return mockActiveUsersMetrics;
-  const db = prisma!;
   const period = filters?.period ?? "day";
   const dateFormat = periodToDateFormat(period);
   const { since, until } = resolveDateRange(filters);
@@ -88,7 +77,7 @@ export async function getActiveUsersMetrics(
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     period_start: string;
     active_users: bigint;
     total_sessions: bigint;
@@ -121,8 +110,6 @@ export async function getActiveUsersMetrics(
 export async function getSessionFrequencyMetrics(
   filters?: AdoptionFilterParams
 ): Promise<SessionFrequencyMetric[]> {
-  if (isDemoMode()) return mockSessionFrequencyMetrics;
-  const db = prisma!;
   const { since, until } = resolveDateRange(filters);
 
   const conditions: string[] = ["s.started_at >= ?", "s.started_at <= ?"];
@@ -135,7 +122,7 @@ export async function getSessionFrequencyMetrics(
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     user_id: string;
     session_count: bigint;
     avg_duration_min: number;
@@ -192,8 +179,6 @@ export async function getSessionFrequencyMetrics(
 export async function getFeatureUsageMetrics(
   filters?: AdoptionFilterParams
 ): Promise<FeatureUsageMetric[]> {
-  if (isDemoMode()) return mockFeatureUsageMetrics;
-  const db = prisma!;
   const { since, until } = resolveDateRange(filters);
 
   // 전체 활성 사용자 수
@@ -205,7 +190,7 @@ export async function getFeatureUsageMetrics(
   }
   const userWhere = `WHERE ${userConditions.join(" AND ")}`;
 
-  const totalUsersRows = await db.$queryRawUnsafe<Array<{ total: bigint }>>(
+  const totalUsersRows = await prisma.$queryRawUnsafe<Array<{ total: bigint }>>(
     `SELECT COUNT(DISTINCT user_id) as total FROM sessions ${userWhere}`,
     ...userParams
   );
@@ -225,7 +210,7 @@ export async function getFeatureUsageMetrics(
   }
   const eventWhere = `WHERE ${eventConditions.join(" AND ")}`;
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     tool_name: string;
     unique_users: bigint;
     total_uses: bigint;
@@ -261,8 +246,6 @@ export async function getFeatureUsageMetrics(
 export async function getEngagementMetrics(
   filters?: AdoptionFilterParams
 ): Promise<EngagementMetric[]> {
-  if (isDemoMode()) return mockEngagementMetrics;
-  const db = prisma!;
   const { since, until } = resolveDateRange(filters);
 
   const eventConditions: string[] = [
@@ -277,7 +260,7 @@ export async function getEngagementMetrics(
   }
   const eventWhere = `WHERE ${eventConditions.join(" AND ")}`;
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     user_id: string;
     unique_tools_used: bigint;
     total_events: bigint;
@@ -324,8 +307,6 @@ export async function getRetentionMetrics(
   filters?: AdoptionFilterParams,
   maxWeeks: number = 8
 ): Promise<RetentionMetric[]> {
-  if (isDemoMode()) return mockRetentionMetrics;
-  const db = prisma!;
   const { since } = resolveDateRange(filters);
 
   const userCondition = filters?.userId ? "AND user_id = ?" : "";
@@ -334,7 +315,7 @@ export async function getRetentionMetrics(
     cohortParams.push(filters.userId);
   }
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     cohort_start: string;
     weeks_after: number;
     retained_users: bigint;
@@ -395,8 +376,6 @@ export async function getRetentionMetrics(
 export async function getAdoptionSummary(
   filters?: AdoptionFilterParams
 ): Promise<AdoptionSummary> {
-  if (isDemoMode()) return mockAdoptionSummary;
-  const db = prisma!;
   const now = new Date();
 
   const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
@@ -406,7 +385,7 @@ export async function getAdoptionSummary(
   const userCondition = filters?.userId ? "AND user_id = ?" : "";
   const userParams = filters?.userId ? [filters.userId] : [];
 
-  const activeRows = await db.$queryRawUnsafe<Array<{
+  const activeRows = await prisma.$queryRawUnsafe<Array<{
     dau: bigint;
     wau: bigint;
     mau: bigint;
@@ -425,7 +404,7 @@ export async function getAdoptionSummary(
   );
   const activeRow = activeRows[0];
 
-  const durationRows = await db.$queryRawUnsafe<Array<{ avg_duration_min: number }>>(
+  const durationRows = await prisma.$queryRawUnsafe<Array<{ avg_duration_min: number }>>(
     `SELECT
       COALESCE(
         AVG((julianday(ended_at) - julianday(started_at)) * 24 * 60),
@@ -436,7 +415,7 @@ export async function getAdoptionSummary(
     ...userParams
   );
 
-  const dailySessionRows = await db.$queryRawUnsafe<Array<{ avg_daily: number }>>(
+  const dailySessionRows = await prisma.$queryRawUnsafe<Array<{ avg_daily: number }>>(
     `SELECT
       COALESCE(AVG(daily_count), 0) as avg_daily
     FROM (
@@ -483,9 +462,7 @@ export async function getAdoptionSummary(
 export async function saveAdoptionSnapshot(
   snapshot: Omit<AdoptionSnapshot, "id" | "created_at">
 ): Promise<void> {
-  if (isDemoMode()) return;
-  const db = prisma!;
-  await db.$queryRawUnsafe(
+  await prisma.$queryRawUnsafe(
     `INSERT INTO adoption_snapshots (
       snapshot_date, period, active_users, total_sessions, total_users,
       avg_session_duration_min, avg_sessions_per_user, avg_turns_per_session,
@@ -516,8 +493,7 @@ export async function getAdoptionSnapshots(
   period: AdoptionPeriod = "day",
   limit: number = 30
 ): Promise<AdoptionSnapshot[]> {
-  if (isDemoMode()) return mockAdoptionSnapshots.filter((s) => s.period === period).slice(0, limit);
-  const rows = await prisma!.adoptionSnapshot.findMany({
+  const rows = await prisma.adoptionSnapshot.findMany({
     where: { period },
     orderBy: { snapshot_date: "desc" },
     take: limit,
@@ -526,13 +502,11 @@ export async function getAdoptionSnapshots(
 }
 
 export async function createDailySnapshot(): Promise<AdoptionSnapshot> {
-  if (isDemoMode()) return mockAdoptionSnapshots[0];
-  const db = prisma!;
   const today = new Date().toISOString().split("T")[0];
   const dayStart = `${today}T00:00:00.000Z`;
   const dayEnd = `${today}T23:59:59.999Z`;
 
-  const statsRows = await db.$queryRawUnsafe<Array<{
+  const statsRows = await prisma.$queryRawUnsafe<Array<{
     active_users: bigint;
     total_sessions: bigint;
     total_users: bigint;
@@ -547,7 +521,7 @@ export async function createDailySnapshot(): Promise<AdoptionSnapshot> {
   );
   const statsRow = statsRows[0];
 
-  const durationRows = await db.$queryRawUnsafe<Array<{ avg_min: number }>>(
+  const durationRows = await prisma.$queryRawUnsafe<Array<{ avg_min: number }>>(
     `SELECT COALESCE(
       AVG((julianday(ended_at) - julianday(started_at)) * 24 * 60),
       0
@@ -564,7 +538,7 @@ export async function createDailySnapshot(): Promise<AdoptionSnapshot> {
       ? Math.round((totalSessions / activeUsers) * 100) / 100
       : 0;
 
-  const turnsRows = await db.$queryRawUnsafe<Array<{ avg_turns: number }>>(
+  const turnsRows = await prisma.$queryRawUnsafe<Array<{ avg_turns: number }>>(
     `SELECT COALESCE(AVG(num_turns), 0) as avg_turns
     FROM sessions
     WHERE started_at >= ? AND started_at <= ? AND num_turns IS NOT NULL`,

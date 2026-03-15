@@ -1,23 +1,4 @@
-import { prisma, isDemoMode } from "./db";
-import {
-  mockSessions,
-  mockEvents,
-  mockToolUsageStats,
-  mockToolDurationStats,
-  mockHourlyActivity,
-  mockUserSummaries,
-  mockTokenUsage,
-  mockAdoptionSummary,
-  mockActiveUsersMetrics,
-  mockFeatureUsageMetrics,
-  mockSessionFrequencyMetrics,
-  mockEngagementMetrics,
-  mockRetentionMetrics,
-  mockAdoptionSnapshots,
-  mockPromptLogListResponse,
-  mockPromptLogUsers,
-  mockPromptLogProjects,
-} from "./mock-data";
+import { prisma } from "./db";
 import type {
   StoredEvent,
   Session,
@@ -47,38 +28,11 @@ import type {
 // ── 이벤트 ──
 
 export async function insertEvent(event: Omit<StoredEvent, "id">): Promise<void> {
-  if (isDemoMode()) return;
-  await prisma!.event.create({ data: event });
-}
-
-export async function calcToolDuration(toolUseId: string, postTimestamp: string): Promise<number | null> {
-  if (isDemoMode()) return null;
-  const db = prisma!;
-
-  const preEvent = await db.event.findFirst({
-    where: { tool_use_id: toolUseId, event_type: "PreToolUse" },
-    select: { timestamp: true },
-  });
-
-  if (!preEvent) return null;
-
-  const preTime = new Date(preEvent.timestamp).getTime();
-  const postTime = new Date(postTimestamp).getTime();
-  const duration = postTime - preTime;
-
-  if (duration >= 0) {
-    await db.event.updateMany({
-      where: { tool_use_id: toolUseId, event_type: "PostToolUse" },
-      data: { tool_duration_ms: duration },
-    });
-  }
-
-  return duration >= 0 ? duration : null;
+  await prisma.event.create({ data: event });
 }
 
 export async function getRecentEvents(limit: number = 50, filters?: FilterParams): Promise<StoredEvent[]> {
-  if (isDemoMode()) return mockEvents.slice(0, limit);
-  return await prisma!.event.findMany({
+  return await prisma.event.findMany({
     where: {
       ...(filters?.userId && { user_id: filters.userId }),
       ...(filters?.toolName && { tool_name: filters.toolName }),
@@ -89,16 +43,14 @@ export async function getRecentEvents(limit: number = 50, filters?: FilterParams
 }
 
 export async function getSessionEvents(sessionId: string): Promise<StoredEvent[]> {
-  if (isDemoMode()) return mockEvents.filter((e) => e.session_id === sessionId);
-  return await prisma!.event.findMany({
+  return await prisma.event.findMany({
     where: { session_id: sessionId },
     orderBy: { timestamp: "asc" },
   }) as StoredEvent[];
 }
 
 export async function getEventsSince(since: string, limit: number = 100, filters?: FilterParams): Promise<StoredEvent[]> {
-  if (isDemoMode()) return mockEvents.slice(0, limit);
-  return await prisma!.event.findMany({
+  return await prisma.event.findMany({
     where: {
       timestamp: { gt: since },
       ...(filters?.userId && { user_id: filters.userId }),
@@ -132,10 +84,7 @@ export async function upsertSession(session: {
   tool_summary?: string | null;
   task_name?: string | null;
 }): Promise<void> {
-  if (isDemoMode()) return;
-  const db = prisma!;
-
-  const existing = await db.session.findUnique({
+  const existing = await prisma.session.findUnique({
     where: { session_id: session.session_id },
   });
 
@@ -158,13 +107,13 @@ export async function upsertSession(session: {
     if (session.config_hooks_events !== undefined) data.config_hooks_events = session.config_hooks_events;
 
     if (Object.keys(data).length > 0) {
-      await db.session.update({
+      await prisma.session.update({
         where: { session_id: session.session_id },
         data,
       });
     }
   } else {
-    await db.session.create({
+    await prisma.session.create({
       data: {
         session_id: session.session_id,
         user_id: session.user_id ?? "unknown",
@@ -189,13 +138,6 @@ export async function upsertSession(session: {
 }
 
 export async function getSessions(status: "active" | "ended" | "all" = "active", filters?: FilterParams): Promise<Session[]> {
-  if (isDemoMode()) {
-    return status === "all"
-      ? mockSessions
-      : mockSessions.filter((s) => s.status === status);
-  }
-  const db = prisma!;
-
   // 복잡한 서브쿼리 + 조건부 JOIN이므로 $queryRaw 사용
   const conditions: string[] = [];
   const params: unknown[] = [];
@@ -220,7 +162,7 @@ export async function getSessions(status: "active" | "ended" | "all" = "active",
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-  const rows = await db.$queryRawUnsafe<Session[]>(`
+  const rows = await prisma.$queryRawUnsafe<Session[]>(`
     SELECT
       s.*,
       COALESCE(e.event_count, 0) as event_count,
@@ -248,8 +190,6 @@ export async function getSessions(status: "active" | "ended" | "all" = "active",
 // ── 분석 ──
 
 export async function getToolUsageStats(hours: number = 24, filters?: FilterParams): Promise<ToolUsageStat[]> {
-  if (isDemoMode()) return mockToolUsageStats;
-  const db = prisma!;
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
   const conditions: string[] = ["tool_name IS NOT NULL", "timestamp > ?"];
@@ -266,7 +206,7 @@ export async function getToolUsageStats(hours: number = 24, filters?: FilterPara
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  const rows = await db.$queryRawUnsafe<Array<{ tool_name: string; count: bigint }>>(`
+  const rows = await prisma.$queryRawUnsafe<Array<{ tool_name: string; count: bigint }>>(`
     SELECT tool_name, COUNT(*) as count
     FROM events
     ${where}
@@ -285,8 +225,6 @@ export async function getToolUsageStats(hours: number = 24, filters?: FilterPara
 }
 
 export async function getToolDurationStats(hours: number = 24, filters?: FilterParams): Promise<ToolDurationStat[]> {
-  if (isDemoMode()) return mockToolDurationStats;
-  const db = prisma!;
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
   const conditions: string[] = [
@@ -308,7 +246,7 @@ export async function getToolDurationStats(hours: number = 24, filters?: FilterP
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  const rows = await db.$queryRawUnsafe<ToolDurationStat[]>(`
+  const rows = await prisma.$queryRawUnsafe<ToolDurationStat[]>(`
     SELECT
       tool_name,
       CAST(AVG(tool_duration_ms) AS INTEGER) as avg_ms,
@@ -329,8 +267,6 @@ export async function getToolDurationStats(hours: number = 24, filters?: FilterP
 }
 
 export async function getHourlyActivity(hours: number = 24, filters?: FilterParams): Promise<HourlyActivity[]> {
-  if (isDemoMode()) return mockHourlyActivity;
-  const db = prisma!;
   const since = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
 
   const conditions: string[] = ["timestamp > ?"];
@@ -347,7 +283,7 @@ export async function getHourlyActivity(hours: number = 24, filters?: FilterPara
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  const rows = await db.$queryRawUnsafe<Array<{ hour: number; count: bigint }>>(`
+  const rows = await prisma.$queryRawUnsafe<Array<{ hour: number; count: bigint }>>(`
     SELECT CAST(strftime('%H', timestamp) AS INTEGER) as hour, COUNT(*) as count
     FROM events
     ${where}
@@ -359,9 +295,6 @@ export async function getHourlyActivity(hours: number = 24, filters?: FilterPara
 }
 
 export async function getUserSummaries(filters?: FilterParams): Promise<UserSummary[]> {
-  if (isDemoMode()) return mockUserSummaries;
-  const db = prisma!;
-
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -376,7 +309,7 @@ export async function getUserSummaries(filters?: FilterParams): Promise<UserSumm
 
   const clause = conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "";
 
-  const rows = await db.$queryRawUnsafe<UserSummary[]>(`
+  const rows = await prisma.$queryRawUnsafe<UserSummary[]>(`
     SELECT
       e.user_id,
       COUNT(DISTINCT CASE WHEN s.status = 'active' THEN s.session_id END) as active_sessions,
@@ -409,16 +342,14 @@ export async function updateSessionTokens(
     num_turns: number;
   }
 ): Promise<void> {
-  if (isDemoMode()) return;
-  await prisma!.session.update({
+  await prisma.session.update({
     where: { session_id: sessionId },
     data: tokens,
   });
 }
 
 export async function getSessionTranscriptPath(sessionId: string): Promise<string | null> {
-  if (isDemoMode()) return null;
-  const row = await prisma!.session.findUnique({
+  const row = await prisma.session.findUnique({
     where: { session_id: sessionId },
     select: { transcript_path: true },
   });
@@ -426,9 +357,6 @@ export async function getSessionTranscriptPath(sessionId: string): Promise<strin
 }
 
 export async function getTokenUsageSummary(filters?: FilterParams): Promise<TokenUsageSummary> {
-  if (isDemoMode()) return mockTokenUsage;
-  const db = prisma!;
-
   const conditions: string[] = ["total_input_tokens IS NOT NULL"];
   const params: unknown[] = [];
 
@@ -439,7 +367,7 @@ export async function getTokenUsageSummary(filters?: FilterParams): Promise<Toke
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     input_tokens: bigint;
     output_tokens: bigint;
     cache_create_tokens: bigint;
@@ -472,8 +400,6 @@ export async function getTokenUsageSummary(filters?: FilterParams): Promise<Toke
 // ── 프롬프트 로그 ──
 
 export async function insertPromptLog(input: PromptLogInput): Promise<PromptLogInsertResult> {
-  if (isDemoMode()) return { id: 0, session_id: input.session_id, timestamp: new Date().toISOString() };
-  const db = prisma!;
   const timestamp = input.timestamp ?? new Date().toISOString();
   const userId = input.user_id ?? "unknown";
   const projectPath = input.project_path ?? "";
@@ -481,13 +407,13 @@ export async function insertPromptLog(input: PromptLogInput): Promise<PromptLogI
   const rawData = input.raw_data ? JSON.stringify(input.raw_data) : null;
 
   // 세션이 없으면 자동 생성
-  const existingSession = await db.session.findUnique({
+  const existingSession = await prisma.session.findUnique({
     where: { session_id: input.session_id },
     select: { session_id: true },
   });
 
   if (!existingSession) {
-    await db.session.create({
+    await prisma.session.create({
       data: {
         session_id: input.session_id,
         user_id: userId,
@@ -501,7 +427,7 @@ export async function insertPromptLog(input: PromptLogInput): Promise<PromptLogI
   }
 
   // 1) events에 dual-write
-  const event = await db.event.create({
+  const event = await prisma.event.create({
     data: {
       session_id: input.session_id,
       event_type: "UserPromptSubmit",
@@ -520,7 +446,7 @@ export async function insertPromptLog(input: PromptLogInput): Promise<PromptLogI
   });
 
   // 2) prompt_logs에 저장
-  const promptLog = await db.promptLog.create({
+  const promptLog = await prisma.promptLog.create({
     data: {
       session_id: input.session_id,
       event_id: event.id,
@@ -550,11 +476,8 @@ export async function insertPromptLog(input: PromptLogInput): Promise<PromptLogI
 }
 
 export async function insertPromptLogBatch(inputs: PromptLogInput[]): Promise<PromptLogInsertResult[]> {
-  if (isDemoMode()) return inputs.map((i) => ({ id: 0, session_id: i.session_id, timestamp: new Date().toISOString() }));
-
-  // Prisma doesn't have native transaction like better-sqlite3, but we can use $transaction
   const results: PromptLogInsertResult[] = [];
-  await prisma!.$transaction(async () => {
+  await prisma.$transaction(async () => {
     for (const input of inputs) {
       results.push(await insertPromptLog(input));
     }
@@ -563,9 +486,6 @@ export async function insertPromptLogBatch(inputs: PromptLogInput[]): Promise<Pr
 }
 
 export async function getPromptLogs(filters?: PromptLogFilters): Promise<PromptLogListResponse> {
-  if (isDemoMode()) return mockPromptLogListResponse;
-  const db = prisma!;
-
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -603,7 +523,7 @@ export async function getPromptLogs(filters?: PromptLogFilters): Promise<PromptL
   const limit = Math.min(100, Math.max(1, filters?.limit ?? 20));
   const offset = (page - 1) * limit;
 
-  const countRows = await db.$queryRawUnsafe<Array<{ total: bigint }>>(`
+  const countRows = await prisma.$queryRawUnsafe<Array<{ total: bigint }>>(`
     SELECT COUNT(*) as total
     FROM prompt_logs p
     LEFT JOIN sessions s ON p.session_id = s.session_id
@@ -613,7 +533,7 @@ export async function getPromptLogs(filters?: PromptLogFilters): Promise<PromptL
   const total = Number(countRows[0].total);
   const totalPages = Math.ceil(total / limit);
 
-  const logs = await db.$queryRawUnsafe<PromptLog[]>(`
+  const logs = await prisma.$queryRawUnsafe<PromptLog[]>(`
     SELECT
       p.id,
       p.session_id,
@@ -640,10 +560,7 @@ export async function getPromptLogs(filters?: PromptLogFilters): Promise<PromptL
 }
 
 export async function getPromptLogDetail(logId: number): Promise<PromptLogDetail | null> {
-  if (isDemoMode()) return null;
-  const db = prisma!;
-
-  const rows = await db.$queryRawUnsafe<PromptLogDetail[]>(`
+  const rows = await prisma.$queryRawUnsafe<PromptLogDetail[]>(`
     SELECT
       p.id,
       p.session_id,
@@ -679,7 +596,7 @@ export async function getPromptLogDetail(logId: number): Promise<PromptLogDetail
 
   // response_text 없으면 events에서 Stop 이벤트 조회
   if (!log.response_text && log.event_id) {
-    const responses = await db.$queryRawUnsafe<Array<{ raw_data: string | null; response_timestamp: string }>>(`
+    const responses = await prisma.$queryRawUnsafe<Array<{ raw_data: string | null; response_timestamp: string }>>(`
       SELECT
         e2.raw_data,
         e2.timestamp as response_timestamp
@@ -709,9 +626,7 @@ export async function getPromptLogDetail(logId: number): Promise<PromptLogDetail
 }
 
 export async function getPromptLogUsers(): Promise<string[]> {
-  if (isDemoMode()) return mockPromptLogUsers;
-  const db = prisma!;
-  const rows = await db.$queryRawUnsafe<Array<{ user_id: string }>>(`
+  const rows = await prisma.$queryRawUnsafe<Array<{ user_id: string }>>(`
     SELECT DISTINCT user_id
     FROM events
     WHERE event_type = 'UserPromptSubmit' AND prompt_text IS NOT NULL
@@ -721,9 +636,7 @@ export async function getPromptLogUsers(): Promise<string[]> {
 }
 
 export async function getPromptLogProjects(): Promise<string[]> {
-  if (isDemoMode()) return mockPromptLogProjects;
-  const db = prisma!;
-  const rows = await db.$queryRawUnsafe<Array<{ project_path: string }>>(`
+  const rows = await prisma.$queryRawUnsafe<Array<{ project_path: string }>>(`
     SELECT DISTINCT project_path
     FROM events
     WHERE event_type = 'UserPromptSubmit' AND prompt_text IS NOT NULL AND project_path IS NOT NULL
@@ -735,32 +648,30 @@ export async function getPromptLogProjects(): Promise<string[]> {
 // ── 채택률 (Adoption) ──
 
 export async function getAdoptionSummary(filters?: AdoptionFilterParams): Promise<AdoptionSummary> {
-  if (isDemoMode()) return mockAdoptionSummary;
-  const db = prisma!;
   const userCondition = filters?.userId ? "AND user_id = ?" : "";
   const userParams = filters?.userId ? [filters.userId] : [];
 
-  const totalUsersRows = await db.$queryRawUnsafe<Array<{ cnt: bigint }>>(
+  const totalUsersRows = await prisma.$queryRawUnsafe<Array<{ cnt: bigint }>>(
     `SELECT COUNT(DISTINCT user_id) as cnt FROM sessions WHERE 1=1 ${userCondition}`,
     ...userParams
   );
 
-  const dauRows = await db.$queryRawUnsafe<Array<{ cnt: bigint }>>(
+  const dauRows = await prisma.$queryRawUnsafe<Array<{ cnt: bigint }>>(
     `SELECT COUNT(DISTINCT user_id) as cnt FROM sessions WHERE date(started_at) = date('now') ${userCondition}`,
     ...userParams
   );
 
-  const wauRows = await db.$queryRawUnsafe<Array<{ cnt: bigint }>>(
+  const wauRows = await prisma.$queryRawUnsafe<Array<{ cnt: bigint }>>(
     `SELECT COUNT(DISTINCT user_id) as cnt FROM sessions WHERE started_at >= datetime('now', '-7 days') ${userCondition}`,
     ...userParams
   );
 
-  const mauRows = await db.$queryRawUnsafe<Array<{ cnt: bigint }>>(
+  const mauRows = await prisma.$queryRawUnsafe<Array<{ cnt: bigint }>>(
     `SELECT COUNT(DISTINCT user_id) as cnt FROM sessions WHERE started_at >= datetime('now', '-30 days') ${userCondition}`,
     ...userParams
   );
 
-  const sessionStatsRows = await db.$queryRawUnsafe<Array<{ total_sessions: bigint; avg_duration_min: number }>>(
+  const sessionStatsRows = await prisma.$queryRawUnsafe<Array<{ total_sessions: bigint; avg_duration_min: number }>>(
     `SELECT
       COUNT(*) as total_sessions,
       COALESCE(AVG(
@@ -774,7 +685,7 @@ export async function getAdoptionSummary(filters?: AdoptionFilterParams): Promis
     ...userParams
   );
 
-  const avgDailyRows = await db.$queryRawUnsafe<Array<{ avg_daily: number }>>(
+  const avgDailyRows = await prisma.$queryRawUnsafe<Array<{ avg_daily: number }>>(
     `SELECT COALESCE(AVG(daily_count), 0) as avg_daily FROM (
       SELECT user_id, date(started_at) as d, COUNT(*) as daily_count
       FROM sessions
@@ -803,12 +714,10 @@ export async function getAdoptionSummary(filters?: AdoptionFilterParams): Promis
 }
 
 export async function getDailyActiveUsersTrend(days: number = 30, filters?: AdoptionFilterParams): Promise<ActiveUsersMetric[]> {
-  if (isDemoMode()) return mockActiveUsersMetrics;
-  const db = prisma!;
   const userCondition = filters?.userId ? "AND s.user_id = ?" : "";
   const userParams = filters?.userId ? [filters.userId] : [];
 
-  const rows = await db.$queryRawUnsafe<Array<{ period_start: string; active_users: bigint; total_sessions: bigint }>>(
+  const rows = await prisma.$queryRawUnsafe<Array<{ period_start: string; active_users: bigint; total_sessions: bigint }>>(
     `SELECT
       date(s.started_at) as period_start,
       COUNT(DISTINCT s.user_id) as active_users,
@@ -832,8 +741,6 @@ export async function getDailyActiveUsersTrend(days: number = 30, filters?: Adop
 }
 
 export async function getFeatureUsageMetrics(filters?: AdoptionFilterParams): Promise<FeatureUsageMetric[]> {
-  if (isDemoMode()) return mockFeatureUsageMetrics;
-  const db = prisma!;
   const conditions: string[] = ["e.tool_name IS NOT NULL"];
   const params: unknown[] = [];
 
@@ -854,13 +761,13 @@ export async function getFeatureUsageMetrics(filters?: AdoptionFilterParams): Pr
 
   const where = `WHERE ${conditions.join(" AND ")}`;
 
-  const totalUsersRows = await db.$queryRawUnsafe<Array<{ cnt: bigint }>>(
+  const totalUsersRows = await prisma.$queryRawUnsafe<Array<{ cnt: bigint }>>(
     `SELECT COUNT(DISTINCT e.user_id) as cnt FROM events e ${where}`,
     ...params
   );
   const totalActiveUsers = Number(totalUsersRows[0].cnt) || 1;
 
-  const rows = await db.$queryRawUnsafe<Array<{ tool_name: string; unique_users: bigint; total_uses: bigint }>>(
+  const rows = await prisma.$queryRawUnsafe<Array<{ tool_name: string; unique_users: bigint; total_uses: bigint }>>(
     `SELECT
       e.tool_name,
       COUNT(DISTINCT e.user_id) as unique_users,
@@ -885,8 +792,6 @@ export async function getFeatureUsageMetrics(filters?: AdoptionFilterParams): Pr
 }
 
 export async function getSessionFrequencyMetrics(filters?: AdoptionFilterParams): Promise<SessionFrequencyMetric[]> {
-  if (isDemoMode()) return mockSessionFrequencyMetrics;
-  const db = prisma!;
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -907,7 +812,7 @@ export async function getSessionFrequencyMetrics(filters?: AdoptionFilterParams)
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     user_id: string;
     session_count: bigint;
     avg_duration_min: number;
@@ -953,8 +858,6 @@ export async function getSessionFrequencyMetrics(filters?: AdoptionFilterParams)
 }
 
 export async function getEngagementMetrics(filters?: AdoptionFilterParams): Promise<EngagementMetric[]> {
-  if (isDemoMode()) return mockEngagementMetrics;
-  const db = prisma!;
   const conditions: string[] = [];
   const params: unknown[] = [];
 
@@ -975,7 +878,7 @@ export async function getEngagementMetrics(filters?: AdoptionFilterParams): Prom
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     user_id: string;
     unique_tools_used: bigint;
     total_events: bigint;
@@ -1014,12 +917,10 @@ export async function getEngagementMetrics(filters?: AdoptionFilterParams): Prom
 }
 
 export async function getRetentionMetrics(weeks: number = 8, filters?: AdoptionFilterParams): Promise<RetentionMetric[]> {
-  if (isDemoMode()) return mockRetentionMetrics;
-  const db = prisma!;
   const userCondition = filters?.userId ? "AND user_id = ?" : "";
   const userParams = filters?.userId ? [filters.userId] : [];
 
-  const rows = await db.$queryRawUnsafe<Array<{
+  const rows = await prisma.$queryRawUnsafe<Array<{
     cohort_start: string;
     weeks_after: number;
     retained_users: bigint;
@@ -1078,8 +979,6 @@ export async function saveAdoptionSnapshot(
   period: AdoptionPeriod = "day",
   date?: string
 ): Promise<void> {
-  if (isDemoMode()) return;
-  const db = prisma!;
   const snapshotDate = date ?? new Date().toISOString().split("T")[0];
   const summary = await getAdoptionSummary();
 
@@ -1090,11 +989,11 @@ export async function saveAdoptionSnapshot(
         ? summary.active_users.weekly
         : summary.active_users.monthly;
 
-  const avgTurnsRows = await db.$queryRawUnsafe<Array<{ avg_turns: number }>>(
+  const avgTurnsRows = await prisma.$queryRawUnsafe<Array<{ avg_turns: number }>>(
     `SELECT COALESCE(AVG(num_turns), 0) as avg_turns FROM sessions WHERE num_turns IS NOT NULL`
   );
 
-  await db.$queryRawUnsafe(
+  await prisma.$queryRawUnsafe(
     `INSERT OR REPLACE INTO adoption_snapshots
       (snapshot_date, period, active_users, total_sessions, total_users,
        avg_session_duration_min, avg_sessions_per_user, avg_turns_per_session, top_tools_json)
@@ -1124,41 +1023,8 @@ export async function getSessionConfigs(): Promise<Array<{
   config_claude_md_paths: string | null;
   config_hooks_events: string | null;
 }>> {
-  if (isDemoMode()) {
-    return [
-      {
-        user_id: "demo-user-1",
-        session_id: "demo-session-1",
-        started_at: new Date().toISOString(),
-        config_claude_md_count: 2,
-        config_rules_count: 5,
-        config_mcp_count: 3,
-        config_hooks_count: 6,
-        config_mcp_names: JSON.stringify(["serena", "linear", "slack"]),
-        config_rules_names: JSON.stringify(["git-workflow.md", "security.md", "performance.md", "agents.md", "pc-map.md"]),
-        config_claude_md_paths: JSON.stringify(["~/.claude/CLAUDE.md", "~/dev/agents/CLAUDE.md"]),
-        config_hooks_events: JSON.stringify(["SessionStart", "SessionEnd", "PreToolUse", "PostToolUse", "UserPromptSubmit", "Stop"]),
-      },
-      {
-        user_id: "demo-user-2",
-        session_id: "demo-session-2",
-        started_at: new Date(Date.now() - 3600000).toISOString(),
-        config_claude_md_count: 1,
-        config_rules_count: 2,
-        config_mcp_count: 1,
-        config_hooks_count: 3,
-        config_mcp_names: JSON.stringify(["serena"]),
-        config_rules_names: JSON.stringify(["git-workflow.md", "security.md"]),
-        config_claude_md_paths: JSON.stringify(["~/.claude/CLAUDE.md"]),
-        config_hooks_events: JSON.stringify(["SessionStart", "SessionEnd", "Stop"]),
-      },
-    ];
-  }
-
   // 각 user_id의 가장 최근 세션에서 config 정보 가져오기
-  // Prisma에서 group by + max를 직접 하기 어려우므로 rawQuery 대신
-  // 모든 config 있는 세션을 가져와서 JS에서 최신만 필터
-  const sessions = await prisma!.session.findMany({
+  const sessions = await prisma.session.findMany({
     where: {
       config_claude_md_count: { not: null },
     },
@@ -1193,8 +1059,7 @@ export async function getAdoptionSnapshots(
   period: AdoptionPeriod = "day",
   limit: number = 30
 ): Promise<AdoptionSnapshot[]> {
-  if (isDemoMode()) return mockAdoptionSnapshots.filter((s) => s.period === period).slice(0, limit);
-  const rows = await prisma!.adoptionSnapshot.findMany({
+  const rows = await prisma.adoptionSnapshot.findMany({
     where: { period },
     orderBy: { snapshot_date: "desc" },
     take: limit,

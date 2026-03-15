@@ -33,11 +33,20 @@ function SortIcon({ active, dir }: { active: boolean; dir: SortDir }) {
   return <span className="ml-1">{dir === "asc" ? "↑" : "↓"}</span>;
 }
 
+function extractProjectName(projectPath: string): string {
+  if (!projectPath) return "__ungrouped__";
+  // ~/dev/ai/services/cc-monitor → cc-monitor
+  // ~/work/ishopcare-frontend → ishopcare-frontend
+  // ~/dev/ai → ai
+  const cleaned = projectPath.replace(/^~\/|\/$/g, "");
+  return cleaned.split("/").pop() ?? "__ungrouped__";
+}
+
 function buildGroups(sessions: Session[]): SessionGroup[] {
   const map = new Map<string, Session[]>();
 
   for (const s of sessions) {
-    const key = s.task_name ?? "__ungrouped__";
+    const key = s.task_name ?? extractProjectName(s.project_path);
     const list = map.get(key);
     if (list) {
       list.push(s);

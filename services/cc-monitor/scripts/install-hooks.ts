@@ -17,7 +17,6 @@ const COLLECTOR_PATH = path.resolve(__dirname, "..", "collector", "send-event.ts
 const HOOK_EVENTS = [
   "SessionStart",
   "SessionEnd",
-  "PreToolUse",
   "PostToolUse",
   "UserPromptSubmit",
   "Stop",
