@@ -15,6 +15,7 @@ import { TokenUsage } from "@/components/TokenUsage";
 import { CostTracking } from "@/components/CostTracking";
 import { ConfigOverview } from "@/components/ConfigOverview";
 import { AnalysisTab } from "@/components/AnalysisTab";
+import { HistoryTab } from "@/components/HistoryTab";
 import { TabNav } from "@/components/TabNav";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,11 +32,12 @@ interface DashboardData {
   tokenUsage: TokenUsageSummary;
 }
 
-const TAB_IDS = ["overview", "sessions", "analysis", "config"] as const;
+const TAB_IDS = ["overview", "sessions", "history", "analysis", "config"] as const;
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "sessions", label: "Sessions" },
+  { id: "history", label: "History" },
   { id: "analysis", label: "Analysis" },
   { id: "config", label: "Config" },
 ];
@@ -187,6 +189,8 @@ export default function Dashboard({
       )}
 
       {activeTab === "sessions" && <SessionsTab sessions={sessions} events={events} />}
+
+      {activeTab === "history" && <HistoryTab />}
 
       {activeTab === "analysis" && <AnalysisTab />}
 
