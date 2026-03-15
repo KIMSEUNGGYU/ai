@@ -167,11 +167,17 @@ system.md     → "시스템/도구 운영 방법"
 
 ---
 
-## 구현 순서 (제안)
+## 구현 순서
 
-1. rules/ 5개 파일 생성 + 기존 내용 마이그레이션
-2. 기존 learnings/profile 파일 삭제
-3. CLAUDE.md 정리 (최소한만 유지)
-4. /done 자가학습 로직 수정 (session-manager 플러그인)
-5. session-wrap 삭제
-6. identity.md 충돌 해소 우선순위 상의
+### 완료 (2026-03-15)
+1. ✅ rules/ 5개 파일 생성 + 기존 내용 마이그레이션
+2. ✅ 기존 learnings/profile 파일 삭제
+3. ✅ CLAUDE.md 정리 (최소한만 유지)
+4. ✅ /done 자가학습 로직 수정 (session-manager v0.16.0)
+5. ✅ session-wrap 삭제
+6. ✅ identity.md 충돌 해소 우선순위 확정
+
+### 다음 작업 (실전 검증 후)
+7. ⬜ 실전 검증 — 회사 작업에서 /done 2~3회 실행, 트리거 A~D 포착 품질 확인
+8. ⬜ /review-rules 커맨드 — 주기적 감독용. decisions/conventions 전체 읽고 중복/모순/오래된 패턴 정리 제안
+9. ⬜ 피드백 루프 — AI가 decisions.md 패턴을 실제 판단에 활용했는지 트래킹 ("이 판단은 XX 패턴 참고")
