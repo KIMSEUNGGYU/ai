@@ -44,11 +44,6 @@ URL 동기화 필터와 cursor 기반 무한스크롤 테이블을 조합한 리
     └── columns.ts                 # 테이블 컬럼 정의
 ```
 
-### 참고 파일
-- [DocumentTaskPage](../../services/admin/src/pages/document-task/document-task-list)
-- [ShipmentPage](../../services/admin/src/pages/order-shipment/shipment)
-- [BranchPage](../../services/admin/src/pages/branch/branch-list)
-
 ---
 
 ## 2. 필터 구현
@@ -197,7 +192,7 @@ export const documentTaskQueryOptions = {
 
 ### 3.3 쿼리 키 정규화
 
-`normalizeFilters` — 배열 필터 정렬로 캐시 키 일관성 보장. 구현은 `api-tanstack-query.md` 참조.
+`normalizeFilters` — 배열 필터 정렬로 캐시 키 일관성 보장. 구현은 `api-layer convention` 참조.
 
 ---
 

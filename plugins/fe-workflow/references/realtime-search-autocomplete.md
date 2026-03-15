@@ -63,9 +63,6 @@ function SearchAutocomplete() {
 }
 ```
 
-### 참고 파일
-- [ShipmentCreateModal.tsx](../../services/admin/src/pages/order-shipment/shipment/components/ShipmentCreateModal.tsx)
-
 ---
 
 ## 2. react-hook-form
@@ -131,9 +128,6 @@ function FormWithAutocomplete() {
   );
 }
 ```
-
-### 참고 파일
-- [ProductCreateForm.tsx](../../services/admin/src/pages/order-shipment/product/product-option/components/ProductOptionUpdateModal/components/ProductCreateForm.tsx)
 
 ---
 
@@ -270,9 +264,6 @@ setProductName("품목A") ← input에 선택된 이름 표시
     ↓
 폼 제출 → { productId: 123 }
 ```
-
-### 참고 파일
-- [ProductCreateForm.tsx](../../services/admin/src/pages/order-shipment/product/product-option/components/ProductOptionUpdateModal/components/ProductCreateForm.tsx)
 
 ---
 

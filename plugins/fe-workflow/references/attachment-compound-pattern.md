@@ -16,7 +16,7 @@
 ## 폴더 구조
 
 ```
-services/admin/src/
+src/
 ├── components/
 │   └── Attachment.tsx       ← Compound Component 정의
 └── pages/
@@ -24,11 +24,6 @@ services/admin/src/
         └── components/
             └── {Feature}Attachment.tsx  ← 사용처
 ```
-
-## 참고 파일
-
-- [Attachment.tsx](../../services/admin/src/components/Attachment.tsx) - 컴포넌트 정의
-- [DocumentAttachment.tsx](../../services/admin/src/pages/document-task/document-task-detail/components/DocumentAttachment.tsx) - 적용 사례
 
 ## 타입 정의
 
@@ -170,10 +165,6 @@ function AttachFileItem({ attachment }: AttachFileItemProps) {
 ```
 
 ## 검증 체크리스트
-
-```bash
-pnpm -F admin typecheck
-```
 
 - [ ] Attachment import 확인
 - [ ] onClick 이벤트 연결 확인

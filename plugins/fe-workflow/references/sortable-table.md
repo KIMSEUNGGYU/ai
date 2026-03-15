@@ -27,13 +27,6 @@ src/
     └── components/table/{PageName}Table.tsx # 테이블 컴포넌트 ← 신규
 ```
 
-### 참고 파일
-- [useTableSort.ts](../../services/admin/src/hooks/useTableSort.ts)
-- [TableHeadRow.tsx](../../services/admin/src/components/table/TableHeadRow.tsx)
-- [table.ts (types)](../../services/admin/src/types/table.ts)
-- [DeliveryStatusTable.tsx](../../services/admin/src/pages/delivery-status/components/table/DeliveryStatusTable.tsx)
-- [columns.ts (delivery-status)](../../services/admin/src/pages/delivery-status/constants/columns.ts)
-
 ---
 
 ## 2. 타입 정의
@@ -305,10 +298,6 @@ const { sortConfig, getSortValue, handleSortChange } = useTableSort({
 ---
 
 ## 10. 검증 체크리스트
-
-```bash
-pnpm -F admin typecheck
-```
 
 - [ ] 컬럼 상수에 `satisfies TableHeadColumn[]` 추가
 - [ ] 정렬 컬럼에 `key`, `sortable`, `sortType` 모두 설정
