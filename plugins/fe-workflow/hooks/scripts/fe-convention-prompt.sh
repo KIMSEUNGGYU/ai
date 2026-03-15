@@ -94,6 +94,19 @@ if [ -n "$SESSION_ID" ] && [ ${#INJECTED[@]} -gt 0 ]; then
   TOTAL_BYTES=0
   for b in "${INJECTED_BYTES[@]}"; do TOTAL_BYTES=$((TOTAL_BYTES + b)); done
 
+  # injection_hash: 주입된 파일 내용의 md5 fingerprint (파일 변경 감지용)
+  HASH_INPUT=""
+  for f in "${INJECTED[@]}"; do
+    if [ -f "$CONV_DIR/$f" ]; then
+      HASH_INPUT="${HASH_INPUT}$(cat "$CONV_DIR/$f")"
+    fi
+  done
+  if command -v md5 >/dev/null 2>&1; then
+    INJECTION_HASH=$(printf '%s' "$HASH_INPUT" | md5 -q)
+  else
+    INJECTION_HASH=$(printf '%s' "$HASH_INPUT" | md5sum | cut -d' ' -f1)
+  fi
+
   curl -s -X POST "${CC_MONITOR_URL}/api/events" \
     -H "Content-Type: application/json" \
     -H "X-CC-User: $(whoami)" \
@@ -107,6 +120,7 @@ if [ -n "$SESSION_ID" ] && [ ${#INJECTED[@]} -gt 0 ]; then
       \"injected_conventions\": ${INJECTED_JSON},
       \"injection_bytes\": ${BYTES_JSON},
       \"injection_total_bytes\": ${TOTAL_BYTES},
+      \"injection_hash\": \"${INJECTION_HASH}\",
       \"matched_keywords\": ${KEYWORDS_JSON}
     }" >/dev/null 2>&1 &
 fi
