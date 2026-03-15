@@ -3,10 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { getToolCategory, CATEGORY_COLORS, ALL_CATEGORIES, type ToolCategory } from "@/lib/tool-categories";
-import { getToolDescription } from "@/lib/tool-descriptions";
 import { formatTokens, formatTime, shortPath } from "@/lib/format";
+import { EventTimeline } from "./EventTimeline";
 import { sessionEventsQueryOptions } from "@/lib/query-options";
 import { SessionEfficiency } from "@/components/sessions/SessionEfficiency";
 import { PluginHealth } from "@/components/sessions/PluginHealth";
@@ -108,7 +107,7 @@ export function SessionDrawer({ session, fallbackEvents, onClose }: SessionDrawe
         onClick={onClose}
       />
       {/* drawer */}
-      <div className="fixed right-0 top-0 z-50 flex h-full w-[55%] min-w-[400px] max-w-[800px] flex-col border-l border-border bg-background shadow-2xl animate-in slide-in-from-right duration-200">
+      <div className="fixed right-0 top-0 z-50 flex h-full w-[70%] min-w-[500px] max-w-[1100px] flex-col border-l border-border bg-background shadow-2xl animate-in slide-in-from-right duration-200">
         {/* header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <div className="flex items-center gap-3">
@@ -294,36 +293,7 @@ export function SessionDrawer({ session, fallbackEvents, onClose }: SessionDrawe
                 <p className="text-xs text-muted-foreground/80">이벤트 없음</p>
               )}
               {filteredEvents.length > 0 && (
-                <div className="space-y-0.5 rounded border border-border/50 bg-background/50 p-2">
-                  {filteredEvents.map((ev) => (
-                    <div key={ev.id} className="flex items-center gap-2 text-xs">
-                      <span className="w-16 shrink-0 text-muted-foreground/80">{formatTime(ev.timestamp)}</span>
-                      <span className={`inline-flex shrink-0 rounded border px-1 py-0.5 text-[10px] font-medium ${
-                        CATEGORY_COLORS[getToolCategory(ev.tool_name, ev.event_type)]
-                      }`}>
-                        {ev.tool_name ?? ev.event_type}
-                      </span>
-                      {ev.tool_name && (
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-help font-mono text-foreground/90 underline decoration-dotted underline-offset-2">
-                              {ev.tool_name}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent side="top" className="max-w-xs text-xs">
-                            {getToolDescription(ev.tool_name)}
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                      {ev.tool_duration_ms != null && (
-                        <span className="text-muted-foreground/70">{ev.tool_duration_ms}ms</span>
-                      )}
-                      {ev.tool_input_summary && (
-                        <span className="truncate text-muted-foreground/70">{ev.tool_input_summary}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                <EventTimeline events={filteredEvents} />
               )}
             </div>
           </div>
