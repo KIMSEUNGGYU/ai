@@ -1,42 +1,96 @@
-# fe-workflow + session-manager 워크플로우 개선
+# fe-workflow 구현 품질 개선
 
-## 스펙
-- 목표: superpowers 실행 품질 문제 해결 — FE 컨벤션 주입 + Phase 기반 검증 + 자가학습 강화
-- superpowers 사고 스킬(brainstorming 등) 유지, 계획+실행만 fe-workflow로 대체
+## 문제
+스펙 → AI 구현 → 사람 검토 → "이건 아닌데" → 수정 요청 반복. 이 루프가 너무 길다.
 
-## 작업
-- [x] fe-spec 강화 — Gap Analysis 단계 추가
-- [x] implement — Phase 감지 → Phase별 Agent 위임
-- [x] implement — Agent에 결정사항/컨벤션 변경 반환 형식 지정
-- [x] phase-execution convention 신규
+## 원인 분석 (세션 데이터 + 심층 분석)
+
+### 수정 요청 분류 (ishopcare-frontend 최근 10세션)
+| 원인 | 비율 |
+|------|------|
+| 패턴 불일치 | ~35% |
+| 컨벤션 위반 | ~25% |
+| 스펙/입력 무시 | ~15% |
+| 기존 코드 미참조 | ~10% |
+| 임의 판단 | ~10% |
+| 검증 부재 | ~5% |
+
+### 근본 원인
+1. **LLM의 한계** — 컨벤션을 읽고도(Read 로그 확인됨) 안 따름
+2. **정보 과부하** — 1903줄 컨벤션을 한꺼번에 읽으면 세부 규칙 놓침
+3. **자기검증 부실** — 체크리스트가 추상적이라 구체적 위반 못 잡음
+
+### 검증 완료 사항
+- 컨벤션 문서 품질 → 충분함
+- 패턴 문서 품질 → 충분함 (컨벤션과 대부분 겹침, 추가 전달 불필요)
+- 문서 전달 여부 → Read 되고 있음 (세션 로그 확인)
+- **문서를 더 잘 써서 해결할 수 있는 문제가 아님**
+
+## 해결: 하네스 (기계적 검증)
+
+### 원리
+```
+LLM이 읽고도 안 따름 (LLM 한계)
+     ↓
+"따랐는지"를 기계적으로 검증 (PostToolUse 훅)
+     ↓
+위반 발견 → stderr로 에러 → AI가 보고 자동 수정
+```
+
+### 작업
+- [x] 하네스 규칙 목록 정리 (9개)
+- [x] harness-check.sh 구현
+- [x] hooks.json에 PostToolUse 훅 추가
+- [x] 테스트 (7케이스 전부 통과)
+- [x] 커밋 + push (fe-workflow v0.26.0)
+- [ ] 회사 PC에서 `claude plugin update` → 실전 검증
+- [ ] 실전 결과 평가
+
+### 하네스 규칙 (9개)
+| # | 규칙 | 방법 |
+|---|------|------|
+| 1 | schema.ts → types/ | 파일 경로 |
+| 2 | dto.ts → models/ | 파일 경로 |
+| 3 | query.ts → queries/ | 파일 경로 |
+| 4 | mutation.ts → mutations/ | 파일 경로 |
+| 5 | inline 타입 금지 | grep |
+| 6 | useEffect 기명함수 | grep |
+| 7 | console.log 금지 | grep |
+| 8 | enum 금지 | grep |
+| 9 | any 금지 | grep |
+
+### 기계적 검증 불가 (사람/LLM 영역)
+- 컴포넌트 설계/추상화, 기존 코드 스타일 불일치 → Phase 2에서 다룸
+
+## Phase 로드맵
+
+| Phase | 주제 | 스펙 | 상태 |
+|-------|------|------|------|
+| 1 | 하네스 (기계적 검증) | `.ai/specs/phase1-패턴전달.md` | 구현 완료, 실전 검증 대기 |
+| 2 | 나머지 원인 해결 | `.ai/specs/phase2-품질개선.md` | Phase 1 이후 |
+| 3 | AI 에이전트 아키텍처 | `.ai/specs/phase3-에이전트-아키텍처.md` | Phase 2 이후 |
+| 4 | 시스템 자동화 | `.ai/specs/phase4-시스템-자동화.md` | Phase 3 이후 |
+
+## 논의 과정에서 검증/기각된 것들
+| 접근 | 결론 | 이유 |
+|------|------|------|
+| 패턴 문서 추가 전달 | 기각 | 컨벤션과 대부분 겹침 |
+| 컨벤션 요약본 | 보류 | 줄이면 예시 부족, 늘리면 과부하 — 트레이드오프 |
+| 분리된 AI 리뷰 | 보류 | 같은 모델 편향 |
+| Mastra/SDK | 불필요 | 코딩 에이전트는 Claude Code |
+
+## 기존 완료 작업
+- [x] fe-spec 강화 (Gap Analysis)
+- [x] implement Phase별 실행
 - [x] /done 자가학습 확장
-- [x] context-system.md, GUIDE.md
-- [x] 2차 검증 (서브에이전트 반박)
-- [x] 커밋 + push 완료
-- [ ] 다른 PC에서 `claude plugin update` → 실제 작업에서 검증
-- [ ] 검증 결과에 따라 조정
-- [ ] **구현 후 셀프 리뷰 자동화** — 4번 루프(검토→수정 반복) 줄이기
+- [x] GUIDE.md, phase-execution convention
+- [x] 커밋 + push (session-manager v0.14.0, fe-workflow v0.24.0)
 
-## 현재 컨텍스트
-- session-manager v0.14.0, fe-workflow v0.24.0 push 완료
-- **새 방향 논의**: AI 구현 품질 문제 → Mastra/SDK가 아닌 플러그인 셀프 리뷰로 해결
-  - 컨벤션은 잘 정의되어 있으나, AI가 상황별 적용 판단을 못함
-  - 해결책: (1) 기존 유사 코드 참조 강제 (2) 구현 후 Yes/No 체크리스트 셀프 리뷰 (3) 기존 코드 패턴 대조
-  - Mastra는 시스템 자동화(Linear→PR, 슬랙봇)용이라 이 문제의 답이 아님
-
-## 결정사항
-- superpowers 사고 스킬 유지 + 계획/실행만 fe-workflow로 대체 (하이브리드)
-- Phase 강제는 implement 커맨드에 내장
-- 자가학습: transcript(교정) + active 파일(결정사항) 2트랙 병행
-- phase-execution.md를 보고 형식의 정본으로 지정
-- **Mastra는 현재 유스케이스(코딩 에이전트)에 불필요 — 시스템 자동화 시점에 재검토**
-- **품질 개선은 플러그인 셀프 리뷰 단계 추가로 접근 (SDK 에이전트 불필요)**
-
-## 플러그인 버전
-- session-manager: v0.14.0
-- fe-workflow: v0.24.0
+## 관련 자료
+- Mastra 비교: `~/hq/00_Inbox/mastra-vs-sdk-에이전트-프레임워크-비교.md`
+- Ralph (에이전트 루프): https://github.com/snarktank/ralph
 
 ## 세션 이력
 - 584fa32a-4698-42a0-b990-3c160894e809 (2026-03-10 20:30)
 - c154b20d-d107-45bd-9bd8-1b2a7798c950 (2026-03-13 22:00)
-- 334c208c-df11-4bb2-beef-38cd813dbde3 (2026-03-14 23:30)
+- 334c208c-df11-4bb2-beef-38cd813dbde3 (2026-03-15 01:30)

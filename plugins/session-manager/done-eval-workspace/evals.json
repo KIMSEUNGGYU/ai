@@ -1,0 +1,40 @@
+{
+  "skill_name": "done-self-learning",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "doc-ambiguity-pcmap",
+      "prompt": "다음 세션 메시지에서 자가학습 항목을 추출하세요.\n\n[메시지들]\n- AI가 백엔드 컨벤션 정리 문서를 ~/hq/20_Learn/에 저장함\n- 사용자: '아니 10_Work 폴더가 있잖아'\n- AI가 pc-map.md를 다시 읽고 '10_Work가 맞습니다' 인정\n- 사용자: 'pc-map 관련해서 다시 읽고 왜 그랬는지 피드백해봐'\n- AI 분석: pc-map.md에 '업무 관련 → 10_Work'만 있고 판별 기준이 없어서 20_Learn으로 잘못 분류\n- 사용자: '내 시스템에 어떤 문제가 있던거야?'\n- AI: '레이블만 있고 판별 기준이 없다'\n\n[참고: pc-map.md 내용]\n- 업무 관련 → ~/hq/10_Work/\n- 학습 정리 → ~/hq/20_Learn/",
+      "expected_output": "doc_improve로 분류. pc-map.md에 판별 기준 추가 제안. TRIGGER+ACTION 포함.",
+      "assertions": [
+        {"text": "원인이 doc_improve 또는 규칙 문서 모호로 분류됨", "type": "semantic"},
+        {"text": "pc-map.md가 개선 대상 문서로 지목됨", "type": "semantic"},
+        {"text": "TRIGGER 조건이 구체적으로 명시됨 (~/hq/ 하위 저장 시 등)", "type": "semantic"},
+        {"text": "ACTION이 구체적 행동을 포함함 (pc-map 판별 기준 확인 등)", "type": "semantic"}
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "premature-implementation",
+      "prompt": "다음 세션 메시지에서 자가학습 항목을 추출하세요.\n\n[메시지들]\n- 사용자: '아이디어가 떠오름, 자가학습 시스템을 개선하는 건 어때?'\n- AI와 사용자가 방향 A vs B를 논의\n- 사용자: '1만 해' (개선 1번만 하라는 지시)\n- AI: 사용자 지시대로 구현 + '구현할까요?' 질문\n- AI: 대답 기다리지 않고 바로 done.md 수정 + plugin.json 버전 업\n- 사용자: '음.. 논의 단계였는데 왜 고침??'\n- AI: '죄송합니다. learnings-workflow 규칙을 어겼습니다'\n- 사용자: '되돌려'\n\n[참고: learnings-workflow.md 규칙]\n- 실행 요청 전에는 리서치/분석만 수행하고, 실제 변경은 사용자가 명시적으로 지시할 때까지 하지 않는다",
+      "expected_output": "learning으로 분류. 규칙은 이미 있었으므로 AI가 안 따른 것. 구체적 TRIGGER+ACTION.",
+      "assertions": [
+        {"text": "원인이 learning (규칙은 명확, AI가 안 따름)으로 분류됨", "type": "semantic"},
+        {"text": "TRIGGER에 논의/아이디어/브레인스토밍 상황 조건이 포함됨", "type": "semantic"},
+        {"text": "ACTION에 파일 수정하지 않는다 또는 명시적 지시 대기가 포함됨", "type": "semantic"},
+        {"text": "기존 learnings-workflow.md의 규칙과 중복이 아닌 더 구체적인 TRIGGER가 제시됨", "type": "semantic"}
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "simulation-catches-vague-rule",
+      "prompt": "다음 세션 메시지에서 자가학습 항목을 추출하고, 시뮬레이션 검증을 수행하세요.\n\n[메시지들]\n- AI가 파일을 ~/hq/20_Learn/에 저장 (잘못된 위치)\n- 사용자가 교정: '10_Work에 저장해'\n- AI 인정\n\n추출된 학습 후보:\n- rule: 'hq 폴더 저장 시 pc-map 참조'\n- trigger: 'hq 하위에 저장할 때'\n- action: 'pc-map.md를 확인한다'\n\n시뮬레이션: '백엔드 컨벤션 문서를 hq에 저장해' → 이 규칙만으로 10_Work/ 선택 가능한가?",
+      "expected_output": "시뮬레이션 실패 판정. 규칙이 너무 추상적. doc_improve로 전환 또는 더 구체화.",
+      "assertions": [
+        {"text": "시뮬레이션 검증이 실행됨", "type": "semantic"},
+        {"text": "해당 규칙이 시뮬레이션에서 실패로 판정됨 (규칙만으로 올바른 판단 불가)", "type": "semantic"},
+        {"text": "더 구체화된 버전을 제시하거나 doc_improve로 전환됨", "type": "semantic"}
+      ]
+    }
+  ]
+}
