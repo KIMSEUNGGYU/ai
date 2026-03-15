@@ -44,3 +44,7 @@ DTO/remotes에 `// ── GET /path ──` 같은 엔드포인트 주석 추가
 
 ## API 경로 버그 디버깅
 API 경로 에러(Cannot POST 등) 발생 시 서버 라우팅(Controller + RouterModule) 파일을 직접 확인해 실제 경로와 대조. FE 코드만 보고 추론하지 말 것. (ISH-1328)
+
+## code-gen 결과 보존
+사용자가 제공한 code-gen(TDS 컴포넌트 코드) 결과는 절대 요약/변형/삭제하지 않는다.
+code-gen의 컴포넌트명, props, 구조를 그대로 사용해서 구현한다. (2026-03-15)
