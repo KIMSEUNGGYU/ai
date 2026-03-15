@@ -1,6 +1,11 @@
 # 작업 이력
 
 ## 2026-03-15
+- .ai/ 폴더 정리 + 프로젝트 구조 정비 ✅
+  - 세션: 000bd9f6-9a74-454e-b5e2-bded0e338a58 (2026-03-15)
+  - 완료: 루트 심링크 3개 삭제, specs 12개→9개 정리(완료된 스펙 삭제), todo→backlog 통합, reference→notes 통합, 6폴더→4폴더로 session-manager 정의 일치
+  - 자가학습: 1건 반영 (decisions) — 관리 개선 시 기존 시스템 우선
+
 - 세컨드 브레인 시스템 재설계 — rules 구조 개편 + 자가학습 프로세스 변경 ✅
   - 세션: 16662c09-d48e-43a7-8aa8-dc11d3aae20a (2026-03-15)
   - 완료: rules/ 8→5개 재구성(identity/decisions/conventions/system/pc-map), /done 자가학습 재설계(트리거 A~D + 암묵적 선호 + 자동 저장), session-wrap 삭제, identity 충돌 해소 우선순위 확정
