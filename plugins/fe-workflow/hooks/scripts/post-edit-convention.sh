@@ -35,6 +35,10 @@ if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ]; then
 
     if [ -n "$SESSION_ID" ]; then
       CC_MONITOR_URL="${CC_MONITOR_URL:-https://cc-monitor.vercel.app}"
+      CONV_BYTES=0
+      if [ -n "$CONVENTION_FILE" ] && [ -f "${CLAUDE_PLUGIN_ROOT}/conventions/${CONVENTION_FILE}" ]; then
+        CONV_BYTES=$(wc -c < "${CLAUDE_PLUGIN_ROOT}/conventions/${CONVENTION_FILE}")
+      fi
       curl -s -X POST "${CC_MONITOR_URL}/api/events" \
         -H "Content-Type: application/json" \
         -H "X-CC-User: $(whoami)" \
@@ -46,6 +50,8 @@ if [ "$TOOL_NAME" = "Edit" ] || [ "$TOOL_NAME" = "Write" ]; then
           \"plugin_name\": \"fe-workflow\",
           \"hook_name\": \"post-edit-convention\",
           \"injected_conventions\": [\"${CONVENTION_FILE}\"],
+          \"injection_bytes\": [${CONV_BYTES}],
+          \"injection_total_bytes\": ${CONV_BYTES},
           \"matched_keywords\": [\"${CONVENTION_TYPE}\"],
           \"target_file\": \"${FILE}\"
         }" >/dev/null 2>&1 &

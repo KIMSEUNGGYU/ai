@@ -40,6 +40,8 @@ export function processEvent(event: HookEvent, userId: string): Omit<StoredEvent
       plugin_name?: string;
       hook_name?: string;
       injected_conventions?: string[];
+      injection_bytes?: number[];
+      injection_total_bytes?: number;
       matched_keywords?: string[];
       target_file?: string;
     };
@@ -59,6 +61,8 @@ export function processEvent(event: HookEvent, userId: string): Omit<StoredEvent
       plugin_name: pluginEvent.plugin_name,
       hook_name: pluginEvent.hook_name,
       injected_conventions: pluginEvent.injected_conventions,
+      injection_bytes: pluginEvent.injection_bytes,
+      injection_total_bytes: pluginEvent.injection_total_bytes,
       matched_keywords: pluginEvent.matched_keywords,
       target_file: pluginEvent.target_file,
     });

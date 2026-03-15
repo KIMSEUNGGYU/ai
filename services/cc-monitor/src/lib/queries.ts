@@ -130,6 +130,7 @@ export async function upsertSession(session: {
   config_claude_md_paths?: string | null;
   config_hooks_events?: string | null;
   tool_summary?: string | null;
+  task_name?: string | null;
 }): Promise<void> {
   if (isDemoMode()) return;
   const db = prisma!;
@@ -146,6 +147,7 @@ export async function upsertSession(session: {
     if (session.permission_mode) data.permission_mode = session.permission_mode;
     if (session.transcript_path) data.transcript_path = session.transcript_path;
     if (session.tool_summary) data.tool_summary = session.tool_summary;
+    if (session.task_name !== undefined) data.task_name = session.task_name;
     if (session.config_claude_md_count !== undefined) data.config_claude_md_count = session.config_claude_md_count;
     if (session.config_rules_count !== undefined) data.config_rules_count = session.config_rules_count;
     if (session.config_mcp_count !== undefined) data.config_mcp_count = session.config_mcp_count;
@@ -180,6 +182,7 @@ export async function upsertSession(session: {
         config_claude_md_paths: session.config_claude_md_paths ?? null,
         config_hooks_events: session.config_hooks_events ?? null,
         tool_summary: session.tool_summary ?? null,
+        task_name: session.task_name ?? null,
       },
     });
   }

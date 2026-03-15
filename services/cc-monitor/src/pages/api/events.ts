@@ -32,6 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // SessionStart는 새 세션 생성, 그 외는 기존 세션 없으면 자동 생성
     if (event.hook_event_name === "SessionStart") {
       const config = "config_snapshot" in event ? event.config_snapshot as Record<string, unknown> | null : null;
+      const activeTask = config?.active_task as string | null | undefined;
       await upsertSession({
         session_id: event.session_id,
         user_id: userId,
@@ -40,6 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         permission_mode: event.permission_mode ?? null,
         started_at: stored.timestamp,
         status: "active",
+        ...(activeTask ? { task_name: activeTask } : {}),
         ...(config ? {
           config_claude_md_count: config.claude_md_count as number,
           config_rules_count: config.rules_count as number,

@@ -11,6 +11,7 @@ export interface ConfigSnapshot {
   mcp_names: string[];
   hooks_count: number;
   hooks_events: string[];
+  active_task: string | null;
 }
 
 export function collectConfig(cwd: string): ConfigSnapshot {
@@ -25,6 +26,7 @@ export function collectConfig(cwd: string): ConfigSnapshot {
     mcp_names: [],
     hooks_count: 0,
     hooks_events: [],
+    active_task: null,
   };
 
   // CLAUDE.md 파일들
@@ -81,6 +83,9 @@ export function collectConfig(cwd: string): ConfigSnapshot {
   result.hooks_events = [...hooksEvents];
   result.hooks_count = hooksEvents.size;
 
+  // .ai/active/ 에서 현재 활성 task 읽기 (가장 최근 수정 파일)
+  result.active_task = readActiveTask(cwd);
+
   return result;
 }
 
@@ -96,6 +101,21 @@ function collectMdFiles(dir: string): string[] {
     }
   } catch { /* ignore */ }
   return results;
+}
+
+function readActiveTask(cwd: string): string | null {
+  const activeDir = path.join(cwd, ".ai", "active");
+  try {
+    if (!fs.existsSync(activeDir)) return null;
+    const files = fs.readdirSync(activeDir)
+      .filter((f) => f.endsWith(".md"))
+      .map((f) => ({
+        name: f.replace(/\.md$/, ""),
+        mtime: fs.statSync(path.join(activeDir, f)).mtimeMs,
+      }))
+      .sort((a, b) => b.mtime - a.mtime);
+    return files.length > 0 ? files[0].name : null;
+  } catch { return null; }
 }
 
 function readJsonObjectKeys(filePath: string, key: string): string[] {

@@ -88,6 +88,11 @@ const STATUS_STYLE = {
 
 const STATUS_ICON = { pass: "✓", fail: "✗", warn: "!" } as const;
 
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes}B`;
+  return `${(bytes / 1024).toFixed(1)}KB`;
+}
+
 export function PluginHealth({ events }: PluginHealthProps) {
   const ctx = useMemo(() => buildContext(events), [events]);
 
@@ -111,21 +116,54 @@ export function PluginHealth({ events }: PluginHealthProps) {
     return [...map.entries()].sort((a, b) => b[1] - a[1]);
   }, [ctx.hooks]);
 
-  // 발동된 convention 목록 (raw_data에서 추출)
-  const conventions = useMemo(() => {
-    const map = new Map<string, number>();
+  // 발동된 convention 목록 + 바이트 집계 (raw_data에서 추출)
+  const { conventions, injectionStats } = useMemo(() => {
+    const countMap = new Map<string, number>();
+    const bytesMap = new Map<string, number>();
+    let totalBytes = 0;
+
     for (const e of ctx.hooks) {
       if (!e.raw_data) continue;
       try {
-        const data = JSON.parse(e.raw_data) as { injected_conventions?: string[]; target_file?: string };
-        for (const conv of data.injected_conventions ?? []) {
-          // 빈 문자열, 확장자만 있는 값(tsx, ts 등) 필터링 — 실제 파일명(.md 등)만 표시
+        const data = JSON.parse(e.raw_data) as {
+          injected_conventions?: string[];
+          injection_bytes?: number[];
+          injection_total_bytes?: number;
+        };
+        const convs = data.injected_conventions ?? [];
+        const bytes = data.injection_bytes ?? [];
+
+        for (let i = 0; i < convs.length; i++) {
+          const conv = convs[i];
           if (conv.length === 0 || !conv.includes(".")) continue;
-          map.set(conv, (map.get(conv) ?? 0) + 1);
+          countMap.set(conv, (countMap.get(conv) ?? 0) + 1);
+          if (bytes[i]) {
+            bytesMap.set(conv, (bytesMap.get(conv) ?? 0) + bytes[i]);
+          }
+        }
+        if (data.injection_total_bytes) {
+          totalBytes += data.injection_total_bytes;
         }
       } catch { /* skip */ }
     }
-    return [...map.entries()].sort((a, b) => b[1] - a[1]);
+
+    const conventions = [...countMap.entries()]
+      .map(([name, count]) => ({ name, count, bytes: bytesMap.get(name) ?? 0 }))
+      .sort((a, b) => b.count - a.count);
+
+    // 첫 1회는 필요한 주입, 나머지는 중복
+    const wasteBytes = conventions.reduce((sum, c) => {
+      const firstBytes = c.count > 0 ? Math.round(c.bytes / c.count) : 0;
+      return sum + Math.max(0, c.bytes - firstBytes);
+    }, 0);
+
+    const estimatedTokens = Math.round(totalBytes / 4);
+    const wasteTokens = Math.round(wasteBytes / 4);
+
+    return {
+      conventions,
+      injectionStats: { totalBytes, wasteBytes, estimatedTokens, wasteTokens },
+    };
   }, [ctx.hooks]);
 
   if (checks.length === 0 && hookSummary.length === 0) return null;
@@ -166,17 +204,31 @@ export function PluginHealth({ events }: PluginHealthProps) {
         </div>
       )}
 
-      {/* 주입된 Convention 목록 */}
+      {/* 주입된 Convention 목록 + 비용 */}
       {conventions.length > 0 && (
         <div>
           <div className="text-[10px] uppercase text-muted-foreground/60 mb-1">주입된 Conventions</div>
           <div className="flex flex-wrap gap-1.5">
-            {conventions.map(([name, count]) => (
-              <Badge key={name} variant="outline" className="text-[10px] text-violet-400 border-violet-500/40">
-                {name} ({count})
+            {conventions.map((c) => (
+              <Badge key={c.name} variant="outline" className="text-[10px] text-violet-400 border-violet-500/40">
+                {c.name} ({c.count}){c.bytes > 0 && ` ~${formatBytes(c.bytes)}`}
               </Badge>
             ))}
           </div>
+          {injectionStats.totalBytes > 0 && (
+            <div className="mt-2 rounded-md border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs">
+              <div className="flex items-center gap-1.5 text-amber-400">
+                <span className="text-sm">⚠</span>
+                <span className="font-medium">Context 주입 비용</span>
+              </div>
+              <div className="mt-1 grid grid-cols-2 gap-x-4 gap-y-0.5 text-[11px] text-muted-foreground">
+                <span>총 주입</span>
+                <span className="text-right">{formatBytes(injectionStats.totalBytes)} (~{injectionStats.estimatedTokens.toLocaleString()} 토큰)</span>
+                <span>중복 낭비</span>
+                <span className="text-right text-amber-400">{formatBytes(injectionStats.wasteBytes)} (~{injectionStats.wasteTokens.toLocaleString()} 토큰)</span>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

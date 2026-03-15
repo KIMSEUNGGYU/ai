@@ -61,6 +61,10 @@ export interface PluginHookEvent extends HookEventBase {
   injected_conventions?: string[];
   /** 매칭된 키워드 */
   matched_keywords?: string[];
+  /** 주입된 컨벤션 파일별 바이트 수 */
+  injection_bytes?: number[];
+  /** 주입된 컨벤션 총 바이트 수 */
+  injection_total_bytes?: number;
   /** 대상 파일 (PostToolUse hook인 경우) */
   target_file?: string;
 }

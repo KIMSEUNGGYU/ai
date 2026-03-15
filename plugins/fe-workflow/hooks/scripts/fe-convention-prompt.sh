@@ -15,6 +15,7 @@ fi
 
 CONV_DIR="${CLAUDE_PLUGIN_ROOT}/conventions"
 INJECTED=()
+INJECTED_BYTES=()
 MATCHED_KEYWORDS=()
 
 # 키워드 → 컨벤션 파일 매핑 (최대 2개까지 주입)
@@ -23,7 +24,9 @@ inject_convention() {
   local label="$2"
   local keyword="$3"
   if [ ${#INJECTED[@]} -lt 2 ] && [ -f "$CONV_DIR/$file" ]; then
+    local bytes=$(wc -c < "$CONV_DIR/$file")
     INJECTED+=("$file")
+    INJECTED_BYTES+=("$bytes")
     MATCHED_KEYWORDS+=("$keyword")
     echo ""
     echo "---"
@@ -86,7 +89,10 @@ fi
 if [ -n "$SESSION_ID" ] && [ ${#INJECTED[@]} -gt 0 ]; then
   CC_MONITOR_URL="${CC_MONITOR_URL:-https://cc-monitor.vercel.app}"
   INJECTED_JSON=$(printf '%s\n' "${INJECTED[@]}" | jq -R . | jq -s .)
+  BYTES_JSON=$(printf '%s\n' "${INJECTED_BYTES[@]}" | jq -R 'tonumber' | jq -s .)
   KEYWORDS_JSON=$(printf '%s\n' "${MATCHED_KEYWORDS[@]}" | jq -R . | jq -s .)
+  TOTAL_BYTES=0
+  for b in "${INJECTED_BYTES[@]}"; do TOTAL_BYTES=$((TOTAL_BYTES + b)); done
 
   curl -s -X POST "${CC_MONITOR_URL}/api/events" \
     -H "Content-Type: application/json" \
@@ -99,6 +105,8 @@ if [ -n "$SESSION_ID" ] && [ ${#INJECTED[@]} -gt 0 ]; then
       \"plugin_name\": \"fe-workflow\",
       \"hook_name\": \"fe-convention-prompt\",
       \"injected_conventions\": ${INJECTED_JSON},
+      \"injection_bytes\": ${BYTES_JSON},
+      \"injection_total_bytes\": ${TOTAL_BYTES},
       \"matched_keywords\": ${KEYWORDS_JSON}
     }" >/dev/null 2>&1 &
 fi
