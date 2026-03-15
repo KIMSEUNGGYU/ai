@@ -1,5 +1,16 @@
 # 작업 이력
 
+## 2026-03-15
+- 세컨드 브레인 시스템 재설계 — rules 구조 개편 + 자가학습 프로세스 변경 ✅
+  - 세션: 16662c09-d48e-43a7-8aa8-dc11d3aae20a (2026-03-15)
+  - 완료: rules/ 8→5개 재구성(identity/decisions/conventions/system/pc-map), /done 자가학습 재설계(트리거 A~D + 암묵적 선호 + 자동 저장), session-wrap 삭제, identity 충돌 해소 우선순위 확정
+  - 자가학습: 7건 반영 (decisions 6건, system 1건)
+
+- cc-monitor 주입 비용 추적 + active task 자동 분류 ✅
+  - 세션: b1bd2f2a-2753-4e8f-9e09-3ebe5c097eb9 (2026-03-13), 42f4f532-9003-47b7-a634-022cf595c58c (2026-03-14), 981e1231-50d7-428c-a9b6-387c542918d6 (2026-03-15)
+  - 완료: fe-workflow hook injection_bytes 전송, PluginHealth 주입 비용 시각화, SessionStart 시 .ai/active/ 기반 task_name 자동 설정
+  - 자가학습: 2건 반영 (decisions, system) — 워크플로우 우선 분류, 플러그인 날짜 불필요
+
 ## 2026-03-14
 - cc-monitor 대시보드 개선 — task 그룹핑 + Plugin Health + fe-workflow hook 데이터 수정 ✅
   - 세션: b1bd2f2a-2753-4e8f-9e09-3ebe5c097eb9 (2026-03-13), 42f4f532-9003-47b7-a634-022cf595c58c (2026-03-14)
