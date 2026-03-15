@@ -44,7 +44,7 @@ useEffect(() => {
 
 ## Form 패턴 (react-hook-form + Zod)
 
-> 상세 사용법은 `references/react-hook-form.md` 참조.
+> 상세 사용법은 프로젝트 `.ai/patterns/react-hook-form.md` 참조.
 
 ### 기본 조합
 
@@ -254,4 +254,4 @@ type Status = (typeof Status)[keyof typeof Status];
 | 2026-03-04 | useEffect 기명함수, Form 패턴, Enum 금지 추가 |
 | 2026-03-04 | 범용 섹션(Immutability, Error Handling, Input Validation) 제거 — 프로젝트 특화 내용만 유지 |
 | 2026-03-04 | A-B-A-B, 분리≠추상화 중복 제거 → code-principles.md 참조로 변경 |
-| 2026-03-15 | Form 섹션 보강 — Zod 필수, register vs Controller, isValid 위임, 서버 동기화 규칙 추가. references/react-hook-form.md 신규 |
+| 2026-03-15 | Form 섹션 보강 — Zod 필수, register vs Controller, isValid 위임, 서버 동기화 규칙 추가 |
