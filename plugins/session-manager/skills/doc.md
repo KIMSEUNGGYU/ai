@@ -55,6 +55,7 @@ tags:
   - {기술 태그}
 date: YYYY-MM-DD
 type: troubleshooting | guide | decision | discussion
+session: {session_id}
 source:
   - {원본 자료 URL 또는 경로}
 aliases:
@@ -65,6 +66,7 @@ aliases:
 - `tags`: 내용에서 핵심 키워드 2~4개 추출 (한글 허용)
 - `date`: 문서 작성일 (오늘 날짜)
 - `type`: 판별된 문서 유형
+- `session`: 문서가 생성된 Claude Code 세션 ID. session-manager의 session_id가 있으면 사용하고, 없으면 생략. 나중에 해당 세션 컨텍스트를 복원하여 추가 질문할 수 있음
 - `source`: 원본 자료의 출처 (슬랙 URL, 노션 URL, 파일 경로 등)
 - `aliases`: 제목의 축약형이나 다른 표현 (Obsidian 검색에 유용)
 
