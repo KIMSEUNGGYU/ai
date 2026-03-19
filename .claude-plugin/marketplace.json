@@ -20,6 +20,11 @@
       "name": "dev",
       "source": "./plugins/dev-workflow",
       "description": "범용 개발 워크플로우 — PR 생성, 커밋 검증, attribution 차단"
+    },
+    {
+      "name": "study",
+      "source": "./plugins/study",
+      "description": "커리큘럼 기반 체계적 학습 — 레포 코드 분석, 누적 학습, 진행 추적"
     }
   ]
 }
