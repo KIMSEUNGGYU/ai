@@ -27,7 +27,10 @@ function SummaryCards({ summary, tokenUsage }: { summary: CostSummary; tokenUsag
       {/* 총 비용 */}
       <div className="col-span-2 flex flex-col items-center gap-1 px-2 py-2.5 bg-green-900/30 border border-green-700 rounded-md">
         <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">Total Cost</span>
-        <span className="text-[28px] font-extrabold text-green-400">{formatCost(summary.totalCost)}</span>
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-[28px] font-extrabold text-green-400">{formatCost(summary.totalCost)}</span>
+          {tokenUsage && <span className="text-[10px] text-muted-foreground">/ {formatTokens(tokenUsage.input_tokens + tokenUsage.output_tokens + tokenUsage.cache_create_tokens + tokenUsage.cache_read_tokens)} tokens</span>}
+        </div>
       </div>
       {/* 세션 / 턴 */}
       <div className="flex flex-col items-center gap-1 px-2 py-2.5 bg-card border border-border rounded-md">

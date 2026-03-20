@@ -1,6 +1,12 @@
 import { formatTokens } from "@/lib/format";
-import { getCacheHitRate } from "@/components/sessions/SessionEfficiency";
 import type { Session } from "@/lib/types";
+
+function getCacheHitRate(session: Session): number | null {
+  const input = session.total_input_tokens;
+  const cacheRead = session.total_cache_read_tokens;
+  if (input == null || cacheRead == null || input === 0) return null;
+  return Math.round((cacheRead / (input + cacheRead)) * 100);
+}
 
 export function TokenCell({ session, maxTokens }: { session: Session; maxTokens: number }) {
   const total = (session.total_input_tokens ?? 0) + (session.total_output_tokens ?? 0);

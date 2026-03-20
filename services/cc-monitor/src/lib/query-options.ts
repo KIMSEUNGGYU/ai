@@ -1,11 +1,9 @@
 import { queryOptions, keepPreviousData } from "@tanstack/react-query";
 import {
   fetchSessions,
-  fetchFeed,
   fetchAnalytics,
   fetchCost,
   fetchSessionEvents,
-  fetchConfig,
 } from "./remotes";
 
 export interface GlobalFilterParams {
@@ -20,17 +18,6 @@ export const sessionsQueryOptions = (params: GlobalFilterParams = {}) =>
   queryOptions({
     queryKey: ["sessions", params],
     queryFn: () => fetchSessions({ status: "all", ...params }),
-    staleTime: 10_000,
-    refetchInterval: 10_000,
-    placeholderData: keepPreviousData,
-  });
-
-// ── feed ──
-
-export const feedQueryOptions = (params: GlobalFilterParams = {}) =>
-  queryOptions({
-    queryKey: ["feed", params],
-    queryFn: () => fetchFeed({ limit: 30, ...params }),
     staleTime: 10_000,
     refetchInterval: 10_000,
     placeholderData: keepPreviousData,
@@ -65,13 +52,4 @@ export const sessionEventsQueryOptions = (sessionId: string) =>
     queryKey: ["sessionEvents", sessionId],
     queryFn: () => fetchSessionEvents(sessionId),
     enabled: !!sessionId,
-  });
-
-// ── config ──
-
-export const configQueryOptions = () =>
-  queryOptions({
-    queryKey: ["config"],
-    queryFn: fetchConfig,
-    staleTime: 60_000,
   });
