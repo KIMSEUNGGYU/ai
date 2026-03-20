@@ -7,7 +7,6 @@ references:
   - conventions/code-principles.md
   - conventions/folder-structure.md
   - conventions/api-layer.md
-  - conventions/error-handling.md
   - conventions/coding-style.md
 ---
 

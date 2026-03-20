@@ -49,7 +49,7 @@ agents가 Read로 읽고 기준으로 적용하는 참조 문서:
 | code-principles.md | SRP, SSOT, 추상화, 네이밍, 인지부하 |
 | folder-structure.md | Page First, 지역성, models/ vs types/ |
 | api-layer.md | httpClient, DTO, React Query, queryOptions |
-| error-handling.md | ErrorBoundary, AppError, AsyncBoundary |
+| error-handling.md | ErrorBoundary, AppError, AsyncBoundary (비활성 — 파일 유지, 참조 제거) |
 | coding-style.md | Form, Zod, 이벤트 핸들러, Boolean Props, @tossteam/is |
 
 ## Hooks

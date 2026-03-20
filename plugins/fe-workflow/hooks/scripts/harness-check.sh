@@ -95,4 +95,30 @@ if [ -n "$VIOLATIONS" ]; then
   echo -e "\n🔴 하네스 검증 실패 — 아래 위반사항을 수정하세요:${VIOLATIONS}" >&2
 fi
 
+# ── cc-monitor 로깅 ──
+
+SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
+
+if [ -n "$SESSION_ID" ]; then
+  VIOLATION_COUNT=0
+  if [ -n "$VIOLATIONS" ]; then
+    VIOLATION_COUNT=$(echo -e "$VIOLATIONS" | grep -c '❌')
+  fi
+
+  CC_MONITOR_URL="${CC_MONITOR_URL:-https://cc-monitor.vercel.app}"
+  curl -s -X POST "${CC_MONITOR_URL}/api/events" \
+    -H "Content-Type: application/json" \
+    -H "X-CC-User: $(whoami)" \
+    --max-time 3 \
+    -d "{
+      \"session_id\": \"${SESSION_ID}\",
+      \"hook_event_name\": \"PluginHook\",
+      \"cwd\": \"${CWD}\",
+      \"plugin_name\": \"fe-workflow\",
+      \"hook_name\": \"harness-check\",
+      \"target_file\": \"${FILE}\",
+      \"violation_count\": ${VIOLATION_COUNT}
+    }" >/dev/null 2>&1 &
+fi
+
 exit 0

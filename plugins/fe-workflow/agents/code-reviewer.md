@@ -7,7 +7,6 @@ references:
   - conventions/code-principles.md
   - conventions/folder-structure.md
   - conventions/api-layer.md
-  - conventions/error-handling.md
   - conventions/coding-style.md
 ---
 
@@ -30,7 +29,6 @@ references로 로드된 컨벤션 기준을 적용한다.
 - `code-principles.md` — 코드 원칙 위반 체크
 - `folder-structure.md` — 폴더 구조/지역성/네이밍 체크
 - `api-layer.md` — API 패턴/타입 체크
-- `error-handling.md` — 에러 처리 패턴 체크
 - `coding-style.md` — 코딩 스타일 체크
 
 conventions 파일의 DO & DON'T 섹션을 특히 주의해서 적용한다.
@@ -55,7 +53,6 @@ conventions 파일의 DO & DON'T 섹션을 특히 주의해서 적용한다.
 | 코드 원칙 | /10 | |
 | 폴더 구조 | /10 | |
 | API 패턴 | /10 | |
-| 에러 처리 | /10 | |
 | 코딩 스타일 | /10 | |
 | **평균** | **/10** | |
 

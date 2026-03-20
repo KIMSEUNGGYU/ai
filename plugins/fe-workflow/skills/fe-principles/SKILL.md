@@ -33,7 +33,6 @@ description: >
 | 폼(react-hook-form, zod) 작성 | `references/coding-style.md` + `references/folder-structure.md` |
 | 새 파일/폴더 생성 | `references/folder-structure.md` |
 | 컴포넌트/훅 작성 | `references/coding-style.md` |
-| 에러 처리 | `references/error-handling.md` |
 | 리팩토링/코드 리뷰 | `references/code-principles.md` |
 
 **여러 작업 유형이 겹치면 해당하는 모든 파일을 읽는다.**
@@ -88,11 +87,6 @@ description: >
 - 패턴: `useForm + zodResolver + handleSubmit + mutateAsync`
 - `form.getValues()` 직접 사용 금지 → `handleSubmit(async (data) => {})` 사용
 
-### 에러 처리
-- Exception vs Error State 구분
-- 구조적 타입 체크 (instanceof 금지)
-- AsyncBoundary = ErrorBoundary + Suspense + QueryErrorResetBoundary
-
 ## References
 
 상세 패턴, 코드 예시, 안티패턴은 아래 파일에 정의되어 있다:
@@ -100,5 +94,4 @@ description: >
 - **`references/api-layer.md`** — Remote, Query, Mutation, DTO 상세 패턴
 - **`references/code-principles.md`** — 코드 철학 상세 + 안티패턴 예시
 - **`references/coding-style.md`** — Form, useEffect, 네이밍, 코딩 스타일 상세
-- **`references/error-handling.md`** — 에러 처리 체계 상세
 - **`references/folder-structure.md`** — 폴더 규칙, 파일 접미사, 배치 규칙 상세

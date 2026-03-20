@@ -67,9 +67,9 @@ if echo "$PROMPT" | grep -qiE '폴더|folder|구조|structure|파일.*생성|새
   inject_convention "folder-structure.md" "폴더 구조 컨벤션" "folder"
 fi
 
-# 5. 에러 처리
-if echo "$PROMPT" | grep -qiE 'error|에러|예외|exception|ErrorBoundary|try.*catch|Suspense|AsyncBoundary'; then
-  inject_convention "error-handling.md" "에러 핸들링 컨벤션" "error"
+# 5. 에러 처리 — 비활성화 (error-handling.md 파일은 유지, 참조만 제거)
+# if echo "$PROMPT" | grep -qiE 'error|에러|예외|exception|ErrorBoundary|try.*catch|Suspense|AsyncBoundary'; then
+#   inject_convention "error-handling.md" "에러 핸들링 컨벤션" "error"
 fi
 
 # 매칭된 컨벤션이 없으면 기존 요약 출력 (일반적인 구현 키워드에 대한 fallback)

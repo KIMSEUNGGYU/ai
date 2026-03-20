@@ -19,6 +19,7 @@
 1. **LLM의 한계** — 컨벤션을 읽고도(Read 로그 확인됨) 안 따름
 2. **정보 과부하** — 1903줄 컨벤션을 한꺼번에 읽으면 세부 규칙 놓침
 3. **자기검증 부실** — 체크리스트가 추상적이라 구체적 위반 못 잡음
+4. **자기 편향** — code-writer가 자기 코드를 자기가 검증 → 같은 편향으로 놓침
 
 ### 검증 완료 사항
 - 컨벤션 문서 품질 → 충분함
@@ -26,85 +27,91 @@
 - 문서 전달 여부 → Read 되고 있음 (세션 로그 확인)
 - **문서를 더 잘 써서 해결할 수 있는 문제가 아님**
 
-## 해결: 하네스 (기계적 검증)
+## 검증 아키텍처 (확정)
 
-### 원리
+### 2단계 검증 구조
 ```
-LLM이 읽고도 안 따름 (LLM 한계)
-     ↓
-"따랐는지"를 기계적으로 검증 (PostToolUse 훅)
-     ↓
-위반 발견 → stderr로 에러 → AI가 보고 자동 수정
+[즉시 검증] harness-check.sh (매 Edit/Write)
+  → grep 기반 9개 규칙 → 위반 시 즉시 ❌ → AI 자동 수정
+  → 비용 0, 1ms
+
+[종합 검증] convention-checker Agent (Phase 완료 후)
+  → conventions 전체(50개+) 기반 → 변경 파일만 체크
+  → 위반 시 code-writer에게 수정 지시 → 재체크 (최대 2회 루프)
+  → 통과 시 사용자 검토
 ```
 
-### 작업
-- [x] 하네스 규칙 목록 정리 (9개)
-- [x] harness-check.sh 구현
-- [x] hooks.json에 PostToolUse 훅 추가
-- [x] 테스트 (7케이스 전부 통과)
-- [x] 커밋 + push (fe-workflow v0.26.0)
-- [ ] 회사 PC에서 `claude plugin update` → 실전 검증
-- [ ] 실전 결과 평가
+### 왜 2단계인가
+- harness: grep 가능한 기본 실수(enum, any, console.log)를 즉시 잡음 → 누적 방지
+- checker Agent: grep 불가능한 규칙(SSOT, SRP, 추상화, A-B-A-B, 응집도 등) → LLM 판단 필요
+- harness 9개로는 conventions 50개+ 중 일부만 커버 → checker Agent가 나머지 담당
 
-### 하네스 규칙 (9개)
-| # | 규칙 | 방법 |
-|---|------|------|
-| 1 | schema.ts → types/ | 파일 경로 |
-| 2 | dto.ts → models/ | 파일 경로 |
-| 3 | query.ts → queries/ | 파일 경로 |
-| 4 | mutation.ts → mutations/ | 파일 경로 |
-| 5 | inline 타입 금지 | grep |
-| 6 | useEffect 기명함수 | grep |
-| 7 | console.log 금지 | grep |
-| 8 | enum 금지 | grep |
-| 9 | any 금지 | grep |
+### implement 워크플로우 (목표)
+```
+Phase N → code-writer Agent (구현)
+  ↓
+harness (매 Edit/Write 즉시 체크, 기본 실수 방지)
+  ↓
+Phase N 완료
+  ↓
+convention-checker Agent (종합 검증, 변경 파일만)
+  ↓
+위반 0건 → 사용자 검토
+위반 N건 → code-writer에게 구체적 수정 지시 → 재체크 (최대 2회)
+  ↓
+2회 후에도 위반 → 위반 목록과 함께 사용자 검토
+```
 
-### 기계적 검증 불가 (사람/LLM 영역)
-- 컴포넌트 설계/추상화, 기존 코드 스타일 불일치 → Phase 2에서 다룸
+## 작업 현황
 
-## Phase 로드맵
+### 완료: 플러그인 구조 개선 (v0.29.0 → v0.31.0)
+- [x] architect agent 제거
+- [x] perf-optimizer agent 제거
+- [x] UserPromptSubmit hook에 FE 프로젝트 감지 조건 추가
+- [x] PostToolUse hooks에 FE 프로젝트 감지 조건 추가
+- [x] Agent 3개에 references 추가 → conventions Read 호출 제거
+- [x] commands 3개에서 conventions 경로 전달 지시 제거
+- [x] code-reviewer ACC 섹션 제거 (code-principles.md와 중복)
+- [x] 방어적 주석 정리, GUIDE.md 제거, README 최신화
 
-| Phase | 주제 | 스펙 | 상태 |
-|-------|------|------|------|
-| 1 | 하네스 (기계적 검증) | `.ai/specs/phase1-패턴전달.md` | 구현 완료, 실전 검증 대기 |
-| 2 | 나머지 원인 해결 | `.ai/specs/phase2-품질개선.md` | Phase 1 이후 |
-| 3 | AI 에이전트 아키텍처 | `.ai/specs/phase3-에이전트-아키텍처.md` | Phase 2 이후 |
-| 4 | 시스템 자동화 | `.ai/specs/phase4-시스템-자동화.md` | Phase 3 이후 |
+### 다음: convention-checker Agent 구현
+- [ ] convention-checker Agent 스펙 작성
+  - references: conventions 5개
+  - 입력: 변경된 파일 목록
+  - 출력: 위반 목록 + 구체적 수정 지시 (code-writer가 읽는 용)
+  - code-reviewer와 다름: 점수/피드백이 아닌 수정 지시 형태
+- [ ] implement command에 checker 루프 통합
+- [ ] post-edit-convention.sh 처리 결정 (checker 구현 후 판단)
+- [ ] fe-principles SKILL.md fallback 규칙 정리
+- [ ] fe-convention-prompt.sh fallback 요약 정리
 
-## 컨벤션 주입 최적화 (2026-03-15)
+### 보류
+- [ ] 회사 PC에서 실전 검증 (하네스 + references 개선)
+- [ ] Hook 전략 재정립 (checker 구현 후 전체 그림 보고 결정)
 
-### 현상 (cc-monitor로 확인)
-- 매 프롬프트마다 convention 전문 주입 → 같은 세션에서 N번 중복
-- ~/dev/ 프로젝트에서도 FE 컨벤션 불필요하게 주입
-- 주입해도 컴포넌트/비즈니스 로직 퀄리티 향상 미미 (API 계층만 효과 있음)
-
-### TODO
-- [ ] 프로젝트 필터: ~/work/ 경로에서만 전문 주입, 나머지는 요약만
-- [ ] 컨벤션 적용 품질 개선 — 주입 자체가 아닌 "적용력" 강화 방향
-  - 체크리스트 형태 변환, AI 자주 실수하는 ❌ 예시 강화
-  - post-edit 하네스 규칙 확대 (Phase 1 실전 검증 후)
-  - 구체적 위반 사례 수집 → 컨벤션 문서에 반영
-- [ ] 세션 내 중복 방지 — 프로젝트 필터 + 효과 검증 후 필요시
-
-### 결정
-- 전문 주입 자체를 빼는 건 기각 — "효과 없으니 빼자"가 아니라 "효과 있게 개선"이 방향
-- API 계층은 효과 확인됨 → 유지
-- 컴포넌트/로직은 하네스(기계적 검증) 방향이 근본 해결
+## 결정사항
+- references vs hooks는 보완 관계 — 메인 대화(Hook) + 서브에이전트(references) 각각 독립 공급
+- Hook 요약본은 이전 시도에서 효과 없음 → 전문 주입 유지
+- harness 9개 현재 유지 — 즉시 피드백 역할, grep 가능한 건 이미 다 포함
+- convention-checker는 새 Agent로 생성 — code-reviewer(리뷰 보고서)와 목적이 다름(수정 지시)
+- checker는 Phase 완료 후 1번, 위반 시 최대 2회 루프 → 무한 루프 방지
 
 ## 논의 과정에서 검증/기각된 것들
 | 접근 | 결론 | 이유 |
 |------|------|------|
 | 패턴 문서 추가 전달 | 기각 | 컨벤션과 대부분 겹침 |
-| 컨벤션 요약본 | 보류 | 줄이면 예시 부족, 늘리면 과부하 — 트레이드오프 |
-| 분리된 AI 리뷰 | 보류 | 같은 모델 편향 |
+| 컨벤션 요약본 | 기각 | 이전 시도에서 효과 없음 확인 |
+| 분리된 AI 리뷰 | → checker Agent | 같은 모델이지만 "다른 Agent"로 편향 회피 |
+| 컨벤션별 에이전트 3개 | 기각 | Agent 3번 = 토큰 3배, checker 1개로 충분 |
+| 하네스 규칙 확대 | 기각 | grep 가능한 건 이미 다 포함, 나머지는 LLM 필요 |
+| 하네스 제거 | 기각 | 즉시 피드백 가치 있음, 비용 0 |
 | Mastra/SDK | 불필요 | 코딩 에이전트는 Claude Code |
-| 전문 주입 제거 | 기각 | 효과 없는 걸 빼는 게 아니라 효과 있게 만드는 게 방향 (2026-03-15) |
+| 전문 주입 제거 | 기각 | 효과 없는 걸 빼는 게 아니라 효과 있게 만드는 게 방향 |
 
 ## 기존 완료 작업
 - [x] fe-spec 강화 (Gap Analysis)
 - [x] implement Phase별 실행
 - [x] /done 자가학습 확장
-- [x] GUIDE.md, phase-execution convention
 - [x] 커밋 + push (session-manager v0.14.0, fe-workflow v0.24.0)
 
 ## 관련 자료
@@ -115,3 +122,4 @@ LLM이 읽고도 안 따름 (LLM 한계)
 - 584fa32a-4698-42a0-b990-3c160894e809 (2026-03-10 20:30)
 - c154b20d-d107-45bd-9bd8-1b2a7798c950 (2026-03-13 22:00)
 - 334c208c-df11-4bb2-beef-38cd813dbde3 (2026-03-15 01:30)
+- 63339ad0-8b56-4c47-a298-aabd0a82fb9b (2026-03-20 23:30)

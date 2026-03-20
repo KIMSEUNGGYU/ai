@@ -6,7 +6,6 @@ references:
   - conventions/code-principles.md
   - conventions/folder-structure.md
   - conventions/api-layer.md
-  - conventions/error-handling.md
   - conventions/coding-style.md
 ---
 
@@ -25,7 +24,7 @@ references:
 | 단계 | 카테고리 | 해당 컨벤션 | 예시 |
 |------|----------|------------|------|
 | 1 | 🏗️ 구조 변경 | folder-structure, code-principles(추상화) | 파일 이동, 컴포넌트/훅 추출, 폴더 재구성 |
-| 2 | 🔧 로직 변경 | api-layer, code-principles(SSOT/SRP/응집도), error-handling | API 패턴 수정, 중복 로직 통합, 에러 처리 |
+| 2 | 🔧 로직 변경 | api-layer, code-principles(SSOT/SRP/응집도) | API 패턴 수정, 중복 로직 통합 |
 | 3 | 🎨 스타일 변경 | coding-style, code-principles(가독성/인지부하) | 네이밍, useEffect 기명함수, enum→as const |
 
 **제외 조건 (이것들은 리팩토링으로 제안하지 않는다):**
