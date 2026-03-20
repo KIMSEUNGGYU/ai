@@ -64,7 +64,7 @@ agents가 Read로 읽고 기준으로 적용하는 참조 문서:
 ```
 fe-workflow/
 ├── .claude-plugin/
-│   └── plugin.json           ← v0.30.0
+│   └── plugin.json           ← v0.31.0
 ├── agents/
 │   ├── code-writer.md
 │   ├── code-reviewer.md

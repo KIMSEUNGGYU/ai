@@ -77,13 +77,6 @@ Task(
   prompt = "
     아래 요구사항을 구현해줘. **이 Phase의 항목만 구현하고 멈춰라.**
 
-    conventions 경로 (반드시 Read로 읽고 기준 적용):
-    - {플러그인 루트}/conventions/code-principles.md
-    - {플러그인 루트}/conventions/folder-structure.md
-    - {플러그인 루트}/conventions/api-layer.md
-    - {플러그인 루트}/conventions/error-handling.md
-    - {플러그인 루트}/conventions/coding-style.md
-
     전체 스펙:
     - {스펙 문서 내용}
 
@@ -119,13 +112,6 @@ Task(
   prompt = "
     아래 요구사항을 구현해줘.
 
-    conventions 경로 (반드시 Read로 읽고 기준 적용):
-    - {플러그인 루트}/conventions/code-principles.md
-    - {플러그인 루트}/conventions/folder-structure.md
-    - {플러그인 루트}/conventions/api-layer.md
-    - {플러그인 루트}/conventions/error-handling.md
-    - {플러그인 루트}/conventions/coding-style.md
-
     요구사항:
     - {수집된 요구사항}
 
@@ -146,10 +132,6 @@ Agent가 반환한 구현 결과를 **그대로** 사용자에게 전달한다.
 
 - 오케스트레이터는 코드를 작성하지 않는다 — 수집 + 위임 + 전달만
 - Agent 호출 시 `plugin:fe-workflow:code-writer` 명시 (내장 에이전트 사용 금지)
-- 컨벤션 적용은 Agent가 conventions/를 직접 읽어서 수행
 - **Phase가 있으면 반드시 Phase별로 끊어서 위임** — 합쳐서 위임 금지
 - Phase 완료 시 결정사항은 active 파일에 기록 — /done 시 자가학습 소스로 사용됨
 
-**conventions 경로 확인:** 플러그인 루트는 이 Command가 로드된 디렉토리의 상위.
-`conventions/` 절대 경로를 Agent 프롬프트에 반드시 포함한다.
-Agent는 독립 인스턴스라 상대 경로를 모른다.

@@ -10,9 +10,20 @@ if [ "$TOOL_NAME" != "Edit" ] && [ "$TOOL_NAME" != "Write" ]; then
 fi
 
 FILE=$(echo "$INPUT" | jq -r '.tool_input.file_path // empty')
+CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 
 # 새로 생성/수정된 파일만 검증
 if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
+  exit 0
+fi
+
+# FE 프로젝트가 아니면 스킵 (package.json에 react 의존성 존재 여부로 판단)
+if [ -n "$CWD" ]; then
+  PKG_JSON="$CWD/package.json"
+else
+  PKG_JSON="$(pwd)/package.json"
+fi
+if [ ! -f "$PKG_JSON" ] || ! grep -q '"react"' "$PKG_JSON" 2>/dev/null; then
   exit 0
 fi
 

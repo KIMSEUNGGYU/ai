@@ -6,6 +6,16 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // empty')
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
 CWD=$(echo "$INPUT" | jq -r '.cwd // empty')
 
+# FE 프로젝트가 아니면 스킵
+if [ -n "$CWD" ]; then
+  PKG_JSON="$CWD/package.json"
+else
+  PKG_JSON="$(pwd)/package.json"
+fi
+if [ ! -f "$PKG_JSON" ] || ! grep -q '"react"' "$PKG_JSON" 2>/dev/null; then
+  exit 0
+fi
+
 CONVENTION_TYPE=""
 CONVENTION_FILE=""
 

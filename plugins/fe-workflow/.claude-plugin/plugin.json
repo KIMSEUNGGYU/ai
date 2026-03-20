@@ -1,5 +1,5 @@
 {
   "name": "fe",
   "description": "FE 전용 플러그인 — 컨벤션, 코드 리뷰, 구현, 리팩토링",
-  "version": "0.30.0"
+  "version": "0.31.0"
 }

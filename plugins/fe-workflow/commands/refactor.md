@@ -37,20 +37,8 @@ $ARGUMENTS
 
 Agent에게 전달할 정보:
 
-1. **conventions 경로** (5개 파일의 절대 경로):
-   - `{플러그인 루트}/conventions/code-principles.md`
-   - `{플러그인 루트}/conventions/folder-structure.md`
-   - `{플러그인 루트}/conventions/api-layer.md`
-   - `{플러그인 루트}/conventions/error-handling.md`
-   - `{플러그인 루트}/conventions/coding-style.md`
-
-2. **변경 파일 목록** — 절대 경로
-
-3. **변경 diff** — 전체 diff 내용
-
-**conventions 경로 확인:** 플러그인 루트는 이 Command가 로드된 디렉토리의 상위.
-`conventions/` 절대 경로를 Agent 프롬프트에 반드시 포함한다.
-Agent는 독립 인스턴스라 상대 경로를 모른다.
+1. **변경 파일 목록** — 절대 경로
+2. **변경 diff** — 전체 diff 내용
 
 **위임 규칙:**
 - Agent에게 파일 경로와 변경 컨텍스트를 충분히 전달
@@ -69,4 +57,3 @@ Agent가 반환한 결과를 **그대로** 사용자에게 전달한다.
 
 - 오케스트레이터는 분석/수정하지 않음 — 수집 + 위임 + 전달만
 - `plugin:fe-workflow:refactorer` 에이전트 사용 (내장 에이전트 사용 금지)
-- 리팩토링 기준은 Agent가 conventions/를 직접 읽어서 적용
