@@ -10,6 +10,7 @@ export interface GlobalFilterParams {
   userId?: string;
   toolName?: string;
   days?: number;
+  minEvents?: number;
 }
 
 // ── sessions ──

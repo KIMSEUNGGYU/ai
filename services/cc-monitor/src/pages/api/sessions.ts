@@ -11,7 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = req.query.userId as string | undefined;
   const toolName = req.query.toolName as string | undefined;
   const days = req.query.days ? Number(req.query.days) : undefined;
-  const sessions = await getSessions(status, { userId, toolName, days });
+  const minEvents = req.query.minEvents ? Number(req.query.minEvents) : undefined;
+  const sessions = await getSessions(status, { userId, toolName, days, minEvents });
 
   return res.status(200).json({ sessions });
 }

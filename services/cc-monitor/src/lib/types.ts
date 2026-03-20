@@ -473,6 +473,7 @@ export interface FilterParams {
   userId?: string;
   toolName?: string;
   days?: number;
+  minEvents?: number;
 }
 
 export interface AdoptionFilterParams {

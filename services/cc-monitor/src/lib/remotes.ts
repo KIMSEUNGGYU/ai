@@ -28,6 +28,7 @@ export interface FetchSessionsParams {
   userId?: string;
   toolName?: string;
   days?: number;
+  minEvents?: number;
 }
 
 export async function fetchSessions(params: FetchSessionsParams = {}): Promise<Session[]> {
@@ -36,6 +37,7 @@ export async function fetchSessions(params: FetchSessionsParams = {}): Promise<S
     userId: params.userId,
     toolName: params.toolName,
     days: params.days,
+    minEvents: params.minEvents,
   });
   const data = await apiClient.get("sessions", { searchParams }).json<{ sessions: Session[] }>();
   return data.sessions;

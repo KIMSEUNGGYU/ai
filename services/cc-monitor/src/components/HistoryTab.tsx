@@ -195,8 +195,17 @@ interface HistoryTabProps {
   filterParams?: { userId?: string; toolName?: string; days?: number };
 }
 
+const MIN_EVENTS_THRESHOLD = 10;
+
 export function HistoryTab({ filterParams }: HistoryTabProps) {
-  const { data: sessions } = useQuery(sessionsQueryOptions(filterParams));
+  const [showShortSessions, setShowShortSessions] = useState(false);
+
+  const queryParams = useMemo(() => ({
+    ...filterParams,
+    minEvents: showShortSessions ? undefined : MIN_EVENTS_THRESHOLD,
+  }), [filterParams, showShortSessions]);
+
+  const { data: sessions } = useQuery(sessionsQueryOptions(queryParams));
   const recentSessions = useMemo(() => (sessions ?? []).slice(0, 50), [sessions]);
   const groups = useMemo(() => buildGroups(recentSessions), [recentSessions]);
   const maxTokens = Math.max(...recentSessions.map(getTokenTotal), 1);
@@ -230,7 +239,17 @@ export function HistoryTab({ filterParams }: HistoryTabProps) {
   return (
     <>
       <div className="flex flex-col gap-4">
-        {/* 세션 그룹 테이블 */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          {!showShortSessions && <span>이벤트 {MIN_EVENTS_THRESHOLD}개 미만 세션 숨김</span>}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs h-6 px-2"
+            onClick={() => setShowShortSessions(!showShortSessions)}
+          >
+            {showShortSessions ? "짧은 세션 숨기기" : "모두 보기"}
+          </Button>
+        </div>
         <Card>
           <CardContent className="!p-0">
             <table className="w-full text-sm">

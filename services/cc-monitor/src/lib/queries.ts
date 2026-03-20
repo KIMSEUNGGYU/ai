@@ -170,6 +170,11 @@ export async function getSessions(status: "active" | "ended" | "all" = "active",
     params.push(filters.userId);
   }
 
+  if (filters?.minEvents) {
+    conditions.push("COALESCE(e.event_count, 0) >= ?");
+    params.push(filters.minEvents);
+  }
+
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
 
   const rows = await prisma.$queryRawUnsafe<Session[]>(`
