@@ -8,8 +8,8 @@ status: 진행 중
 
 ## 경로
 
-- 노트 저장: /Users/gyu/obsidian-note/30_Resources/DB/
-- 참고 자료(txt): /Users/gyu/obsidian-note/30_Resources/DB/reference/db2-기본편-txt/
+- 노트 저장: ~/hq/20_Learn/database/
+- 참고 자료(txt): ~/hq/20_Learn/database/reference/db2-기본편-txt/
 - 강의 링크: https://www.inflearn.com/course/김영한-실전-데이터베이스-기본편
 
 ## 태그

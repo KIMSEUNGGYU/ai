@@ -6,9 +6,11 @@ AI 페어 프로그래밍 context 관리 플러그인. 세션 간 맥락을 `.ai
 
 | 커맨드 | 역할 |
 |--------|------|
+| `/setup` | `.ai/` 폴더 구조 초기화 + INDEX.md 생성 |
 | `/save` | 작업 컨텍스트를 `.ai/active/{task}.md`에 저장 |
-| `/resume` | `.ai/active/` 에서 작업 선택 후 로드 (hook 미작동 시) |
-| `/note` | 세션 지식을 영속 저장소에 저장 (AI 자동 판단) |
+| `/resume` | `.ai/active/` 에서 작업 선택 후 로드 |
+| `/note` | 대화에서 배운 것을 학습 노트로 추출하여 저장 |
+| `/doc` | 대화 내용 + 외부 자료를 구조화된 문서로 정리 |
 | `/done` | 작업 완료 처리 — archive 저장 + 패턴 질문 + active 삭제 |
 
 ## 스킬
@@ -16,19 +18,20 @@ AI 페어 프로그래밍 context 관리 플러그인. 세션 간 맥락을 `.ai
 | 스킬 | 트리거 |
 |------|--------|
 | `note` | "정리해줘", "남겨둬", "노트로 만들어줘" 등 자연어 |
+| `doc` | "문서로 만들어줘", "md로 정리해줘" 등 자연어 |
 
 ## Convention
 
 | 파일 | 역할 |
 |------|------|
 | `context-system.md` | `.ai/` 폴더 운영 규칙 (폴더 구조, 워크플로우, 파일 포맷) |
+| `phase-execution.md` | Phase 기반 실행 규칙 (스펙에 Phases가 있으면 순차 실행) |
 
 ## Hook
 
 | 이벤트 | 동작 |
 |--------|------|
 | SessionStart | `.ai/INDEX.md` + `active/` 목록을 context에 주입 |
-| SessionEnd | `active/*.md` 파일의 last-active 타임스탬프 갱신 |
 
 ## 저장 체계
 
@@ -42,7 +45,7 @@ AI 페어 프로그래밍 context 관리 플러그인. 세션 간 맥락을 `.ai
 영속 저장소:
   ├── .ai/notes/       ← 프로젝트 지식 (설계, 분석, 결정)
   ├── .ai/patterns/    ← 재사용 패턴 (AI 제안 + 사용자 승인)
-  └── ~/obsidian-note/ ← 개인 학습 (TIL, 개념, 트러블슈팅)
+  └── ~/hq/00_Inbox/   ← 개인 학습 (TIL, 개념, 트러블슈팅)
 ```
 
 ## 워크플로우
@@ -69,17 +72,20 @@ session-manager/
 ├── commands/
 │   ├── save.md            ← /save 커맨드
 │   ├── resume.md          ← /resume 커맨드
+│   ├── setup.md           ← /setup 커맨드
 │   ├── note.md            ← /note 커맨드
+│   ├── doc.md             ← /doc 커맨드
 │   └── done.md            ← /done 커맨드
 ├── skills/
-│   └── note.md            ← note 스킬 (자연어 트리거)
+│   ├── note.md            ← note 스킬 (자연어 트리거)
+│   └── doc.md             ← doc 스킬 (문서 작성 트리거)
 ├── conventions/
-│   └── context-system.md  ← .ai/ 운영 규칙
+│   ├── context-system.md  ← .ai/ 운영 규칙
+│   └── phase-execution.md ← Phase 기반 실행 규칙
 ├── hooks/
-│   └── hooks.json         ← SessionStart + SessionEnd hook 등록
+│   └── hooks.json         ← SessionStart hook 등록
 ├── scripts/
-│   ├── session-start.mjs  ← 시작 hook 스크립트
-│   └── session-end.mjs    ← 종료 hook 스크립트
+│   └── session-start.mjs  ← 시작 hook 스크립트
 ├── GUIDE.md
 └── README.md
 ```
