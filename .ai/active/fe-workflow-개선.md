@@ -89,6 +89,12 @@ convention-checker Agent (종합 검증, 변경 파일만)
 - [x] README.md 전체 동기화
 - [x] api-integrate 커맨드 제거 (implement + conventions로 커버)
 
+### 완료: Hook 전략 재점검 (v0.34.1)
+- [x] 컨벤션 전달 경로 5개 전체 분석 (UserPromptSubmit, harness, fe-principles, Agent refs, checker)
+- [x] UserPromptSubmit은 v0.34.0에서 이미 의도적 제거 확인
+- [x] fe-principles fallback / fe-convention-prompt.sh fallback → 이미 해결됨 확인
+- [x] fallback 요약 vs conventions 전문 비교 → fallback 자체가 유의미하지 않음 확인
+
 ### 보류
 - [ ] 스펙 준수 여부 체크 기능 (향후 확장)
 
@@ -121,3 +127,4 @@ convention-checker Agent (종합 검증, 변경 파일만)
 - c154b20d-d107-45bd-9bd8-1b2a7798c950 (2026-03-13 22:00)
 - 334c208c-df11-4bb2-beef-38cd813dbde3 (2026-03-15 01:30)
 - 63339ad0-8b56-4c47-a298-aabd0a82fb9b (2026-03-21 00:30)
+- 17321391-d805-4707-80fb-1bad3762def2 (2026-03-21 01:30)

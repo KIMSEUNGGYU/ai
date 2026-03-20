@@ -1,5 +1,11 @@
 # 작업 이력
 
+## 2026-03-21
+- cc-monitor session_name 지원 — /rename 기반 세션 이름 그룹핑 ✅
+  - 세션: 2903d736-1466-4a02-80e2-01cb56f24b30 (2026-03-21)
+  - 완료: DB session_name 컬럼 추가, transcript에서 /rename 파싱(parseSessionName), Stop/SessionEnd 시 자동 저장, HistoryTab 그룹핑 우선순위 변경(session_name > task_name > project_path), 기존 4개 세션 소급 적용, Vercel 배포
+  - 자가학습: 추출 없음 (기존 규칙과 중복)
+
 ## 2026-03-15
 - .ai/ 폴더 정리 + 프로젝트 구조 정비 ✅
   - 세션: 000bd9f6-9a74-454e-b5e2-bded0e338a58 (2026-03-15)
