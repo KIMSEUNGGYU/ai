@@ -41,7 +41,7 @@ $ARGUMENTS
 
 1. 해당 Phase의 구현 항목만 추출
 2. Agent 위임 (아래 형식)
-3. Agent 결과를 사용자에게 보고
+3. **컨벤션 검증** (아래 "컨벤션 검증 루프" 참조)
 4. 구조화된 검증 보고:
 
 ```
@@ -49,6 +49,8 @@ Phase {N} 완료: {제목}
 
 구현 내용:
 - {완료 항목}
+
+컨벤션 검증: ✅ 통과 / 🔴 위반 N건 (수정 완료/미해결)
 
 검증 결과:
 - {스펙 검증 기준}: {통과/실패 + 근거}
@@ -123,6 +125,53 @@ Task(
   "
 )
 ```
+
+구현 완료 후 **컨벤션 검증 루프**를 동일하게 실행한다.
+
+## 컨벤션 검증 루프
+
+code-writer 구현 완료 후 (Phase 2A의 각 Phase / Phase 2B 완료 후) 실행한다.
+
+**절차:**
+
+1. 변경 파일 목록 수집: `git diff --name-only` (또는 Agent 결과에서 추출)
+2. convention-checker Agent 호출:
+
+```
+Task(
+  subagent_type = "plugin:fe-workflow:convention-checker",
+  prompt = "
+    아래 변경된 파일들의 컨벤션 위반을 검증해줘.
+
+    변경된 파일 목록:
+    - {절대 경로 1}
+    - {절대 경로 2}
+
+    Phase 컨텍스트:
+    - Phase {N}: {제목}
+    - 구현 내용 요약
+  "
+)
+```
+
+3. 결과 판단:
+   - `✅ 통과` → Phase 결과 보고로 진행
+   - `🔴 위반 N건` + loop_count < 2 →
+     a. checker 출력을 code-writer에게 전달:
+     ```
+     Task(
+       subagent_type = "plugin:fe-workflow:code-writer",
+       prompt = "
+         이전 구현에서 컨벤션 위반이 발견되었다. 아래 위반만 수정해라.
+         다른 코드는 건드리지 마라.
+
+         {convention-checker 출력 그대로}
+       "
+     )
+     ```
+     b. convention-checker 재실행
+     c. loop_count++
+   - loop_count >= 2 → 남은 위반 목록을 포함하여 사용자에게 보고
 
 ## Phase 3. 결과 전달 (직접 수행)
 
