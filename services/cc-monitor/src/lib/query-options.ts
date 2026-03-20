@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, keepPreviousData } from "@tanstack/react-query";
 import {
   fetchSessions,
   fetchFeed,
@@ -22,6 +22,7 @@ export const sessionsQueryOptions = (params: GlobalFilterParams = {}) =>
     queryFn: () => fetchSessions({ status: "all", ...params }),
     staleTime: 10_000,
     refetchInterval: 10_000,
+    placeholderData: keepPreviousData,
   });
 
 // ── feed ──
@@ -32,6 +33,7 @@ export const feedQueryOptions = (params: GlobalFilterParams = {}) =>
     queryFn: () => fetchFeed({ limit: 30, ...params }),
     staleTime: 10_000,
     refetchInterval: 10_000,
+    placeholderData: keepPreviousData,
   });
 
 // ── analytics ──
@@ -42,6 +44,7 @@ export const analyticsQueryOptions = (params: GlobalFilterParams = {}) =>
     queryFn: () => fetchAnalytics(params),
     staleTime: 30_000,
     refetchInterval: 30_000,
+    placeholderData: keepPreviousData,
   });
 
 // ── cost ──
@@ -52,6 +55,7 @@ export const costQueryOptions = (params: { userId?: string; days?: number } = {}
     queryFn: () => fetchCost(params),
     staleTime: 30_000,
     refetchInterval: 30_000,
+    placeholderData: keepPreviousData,
   });
 
 // ── session events ──
