@@ -1,6 +1,6 @@
 ---
 description: 컨벤션 기반 자동 리팩토링 — 변경 코드를 분석하고 카테고리별로 수정
-allowed-tools: Read, Grep, Glob, Bash, Agent
+allowed-tools: Read, Grep, Glob, Bash, Task
 argument-hint: [경로|--diff|--staged]
 ---
 
