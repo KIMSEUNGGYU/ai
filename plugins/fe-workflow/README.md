@@ -1,41 +1,44 @@
 # fe-workflow
 
-FE 전용 플러그인 — 컨벤션 기반 설계, 코드 리뷰, 성능 분석.
+FE 전용 플러그인 — 컨벤션 기반 구현, 코드 리뷰, 리팩토링.
 
 ## 워크플로우
 
 ```
-/fe:architecture 기능명      →  설계
+/fe:fe-spec 기능명               →  스펙 작성
        ↓
-대화로 구현 요청              →  개발 (fe conventions 적용)
+/fe:implement                    →  구현 (code-writer Agent)
        ↓
-/fe:review                   →  리뷰
+/fe:review                       →  리뷰 (code-reviewer Agent)
        ↓
-/fe:api-integrate @API경로   →  백엔드 API → FE 코드 생성
+/fe:refactor                     →  리팩토링 (refactorer Agent)
+       ↓
+/fe:api-integrate @API경로       →  백엔드 API → FE 코드 생성
 ```
 
 ## 커맨드
 
 | 커맨드 | 역할 | Agent |
 |--------|------|-------|
-| `/fe:architecture` | 컨벤션 기반 설계 → 구현 지시서 생성 | architect (opus) |
-| `/fe:review` | 컨벤션 기반 코드 리뷰 → 점수/피드백 | code-reviewer (sonnet) |
+| `/fe:fe-spec` | 페이지/기능 단위 FE 스펙 문서 작성 | 없음 |
+| `/fe:implement` | 컨벤션 기반 코드 구현 (Phase별) | code-writer (opus) |
+| `/fe:review` | 컨벤션 기반 코드 리뷰 → 점수/피드백 | code-reviewer (opus) |
+| `/fe:refactor` | 컨벤션 기반 리팩토링 (구조→로직→스타일) | refactorer (opus) |
 | `/fe:api-integrate` | 백엔드 API → FE 코드 자동 생성 | 없음 |
 
 ## Agents
 
 | Agent | 모델 | 역할 |
 |-------|------|------|
-| architect | opus | 컨벤션 기반 아키텍처 설계 (읽기 전용) |
-| code-reviewer | sonnet | 5개 영역 점수 + Must/Should/Nit 피드백 |
-| perf-optimizer | opus | React 렌더링 병목, 훅 최적화, 번들 분석 |
-| refactor-analyzer | opus | 중복, 복잡도, 추상화 기회 분석 |
+| code-writer | opus | 컨벤션 내재화 코드 작성 + 자기검증 |
+| code-reviewer | opus | 5개 영역 점수 + Must/Should/Nit 피드백 (읽기 전용) |
+| refactorer | opus | 구조→로직→스타일 순서 리팩토링 |
 
 ## Skills
 
 | Skill | 역할 |
 |-------|------|
-| fe-principles | 코드 원칙 7개 (변경용이성, SSOT, SRP, 응집도, 선언적, 가독성, 인지부하) |
+| fe-principles | FE 작업 시 워크플로우 안내 + conventions 참조 연결 |
 
 ## Conventions (5개)
 
@@ -47,22 +50,30 @@ agents가 Read로 읽고 기준으로 적용하는 참조 문서:
 | folder-structure.md | Page First, 지역성, models/ vs types/ |
 | api-layer.md | httpClient, DTO, React Query, queryOptions |
 | error-handling.md | ErrorBoundary, AppError, AsyncBoundary |
-| coding-style.md | 불변성, async/await, Zod, 이벤트 핸들러, Boolean Props |
+| coding-style.md | Form, Zod, 이벤트 핸들러, Boolean Props, @tossteam/is |
+
+## Hooks
+
+| 이벤트 | 동작 |
+|--------|------|
+| UserPromptSubmit | FE 프로젝트(react 의존성 존재)에서만 키워드 기반 컨벤션 자동 주입 |
+| PostToolUse (Edit/Write) | 편집 후 harness-check + convention 검사 |
 
 ## 구조
 
 ```
 fe-workflow/
 ├── .claude-plugin/
-│   └── plugin.json           ← v0.10.0
+│   └── plugin.json           ← v0.30.0
 ├── agents/
-│   ├── architect.md
+│   ├── code-writer.md
 │   ├── code-reviewer.md
-│   ├── perf-optimizer.md
-│   └── refactor-analyzer.md
+│   └── refactorer.md
 ├── commands/
-│   ├── architecture.md
+│   ├── fe-spec.md
+│   ├── implement.md
 │   ├── review.md
+│   ├── refactor.md
 │   └── api-integrate.md
 ├── conventions/              ← 5개
 │   ├── code-principles.md
@@ -74,6 +85,7 @@ fe-workflow/
 │   ├── hooks.json
 │   └── scripts/
 │       ├── fe-convention-prompt.sh
+│       ├── harness-check.sh
 │       └── post-edit-convention.sh
 └── skills/
     └── fe-principles/SKILL.md
