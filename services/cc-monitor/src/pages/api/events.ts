@@ -75,6 +75,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ? event.transcript_usage as { input_tokens: number; output_tokens: number; cache_create_tokens: number; cache_read_tokens: number; num_turns: number }
         : null;
 
+      const sessionName = "session_name" in event && typeof event.session_name === "string"
+        ? event.session_name
+        : null;
+
       const sessionUpdate: Record<string, unknown> = {
         session_id: event.session_id,
       };
@@ -84,6 +88,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       if (transcriptPath) sessionUpdate.transcript_path = transcriptPath;
       if (toolSummary) sessionUpdate.tool_summary = JSON.stringify(toolSummary);
+      if (sessionName) sessionUpdate.session_name = sessionName;
 
       await upsertSession(sessionUpdate as Parameters<typeof upsertSession>[0]);
 

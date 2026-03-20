@@ -16,7 +16,7 @@ import {
   incrementCounter,
   readAndClearCounters,
 } from "./tool-counter.ts";
-import { parseTranscriptUsage } from "./transcript-reader.ts";
+import { parseTranscriptUsage, parseSessionName } from "./transcript-reader.ts";
 import { collectConfig } from "./config-reader.ts";
 
 const API_URL = process.env.CC_MONITOR_URL ?? "https://cc-monitor.vercel.app";
@@ -75,9 +75,15 @@ async function main() {
 
     const transcriptPath = event.transcript_path as string | undefined;
     if (transcriptPath) {
-      const usage = await parseTranscriptUsage(transcriptPath);
+      const [usage, sessionName] = await Promise.all([
+        parseTranscriptUsage(transcriptPath),
+        parseSessionName(transcriptPath),
+      ]);
       if (usage) {
         event.transcript_usage = usage;
+      }
+      if (sessionName) {
+        event.session_name = sessionName;
       }
     }
   }

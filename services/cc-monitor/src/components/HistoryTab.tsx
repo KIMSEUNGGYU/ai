@@ -163,7 +163,7 @@ function buildGroups(sessions: Session[]): SessionGroup[] {
   const map = new Map<string, Session[]>();
 
   for (const s of sessions) {
-    const key = s.task_name ?? extractProjectName(s.project_path);
+    const key = s.session_name ?? s.task_name ?? extractProjectName(s.project_path);
     const list = map.get(key);
     if (list) list.push(s);
     else map.set(key, [s]);
@@ -461,9 +461,18 @@ function SessionRow({ session: s, isSelected, maxTokens, onSelect, indent, group
         </Badge>
       </td>
       <td className="px-4 py-3">
-        <div className="text-muted-foreground">{shortPath(s.project_path)}</div>
+        <div className="text-muted-foreground">
+          {s.session_name ? (
+            <span className="font-medium text-foreground/80">{s.session_name}</span>
+          ) : (
+            shortPath(s.project_path)
+          )}
+        </div>
         <div className="flex items-center gap-1.5">
           <span className="text-[10px] font-mono text-muted-foreground/50">{s.session_id.slice(0, 8)}</span>
+          {s.session_name && (
+            <span className="text-[10px] text-muted-foreground/40">{shortPath(s.project_path)}</span>
+          )}
           {groupLabel && (
             <Badge variant="outline" className="text-[9px] text-muted-foreground/60">{groupLabel}</Badge>
           )}

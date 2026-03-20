@@ -119,6 +119,7 @@ export interface Session {
   config: string | null;
   tool_summary: string | null;
   task_name: string | null;
+  session_name: string | null;
   last_event_at: string | null;
 }
 

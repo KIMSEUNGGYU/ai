@@ -66,6 +66,8 @@ model Session {
   tool_summary              String?   // JSON: {"Read": 42, "Edit": 8}
   // v3: task grouping
   task_name                 String?
+  // v4: session name (/rename 명령어로 지정)
+  session_name              String?
 
   events                  Event[]
   prompt_logs             PromptLog[]

@@ -2,6 +2,10 @@ import fs from "node:fs";
 import readline from "node:readline";
 import os from "node:os";
 
+function resolveHomePath(filePath: string): string {
+  return filePath.startsWith("~") ? filePath.replace("~", os.homedir()) : filePath;
+}
+
 export interface TranscriptUsage {
   input_tokens: number;
   output_tokens: number;
@@ -10,12 +14,41 @@ export interface TranscriptUsage {
   num_turns: number;
 }
 
+export async function parseSessionName(
+  transcriptPath: string
+): Promise<string | null> {
+  const resolved = resolveHomePath(transcriptPath);
+  if (!fs.existsSync(resolved)) return null;
+
+  let lastRename: string | null = null;
+  const rl = readline.createInterface({
+    input: fs.createReadStream(resolved, "utf-8"),
+    crlfDelay: Infinity,
+  });
+
+  for await (const line of rl) {
+    if (!line.includes("/rename")) continue;
+    try {
+      const obj = JSON.parse(line);
+      if (obj.type === "system" && obj.subtype === "local_command") {
+        const content = obj.content as string;
+        const match = content.match(/<command-name>\/rename<\/command-name>[\s\S]*?<command-args>(.*?)<\/command-args>/);
+        if (match?.[1]) {
+          lastRename = match[1];
+        }
+      }
+    } catch {
+      // skip
+    }
+  }
+
+  return lastRename;
+}
+
 export async function parseTranscriptUsage(
   transcriptPath: string
 ): Promise<TranscriptUsage | null> {
-  const resolved = transcriptPath.startsWith("~")
-    ? transcriptPath.replace("~", os.homedir())
-    : transcriptPath;
+  const resolved = resolveHomePath(transcriptPath);
 
   if (!fs.existsSync(resolved)) return null;
 
