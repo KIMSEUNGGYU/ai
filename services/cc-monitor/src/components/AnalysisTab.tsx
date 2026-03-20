@@ -16,8 +16,21 @@ interface AnalysisData {
   slashCommands: ToolBreakdown[];
 }
 
-function fetchAnalysisData(): Promise<AnalysisData> {
-  return apiClient.get("analysis").json<AnalysisData>();
+function cleanParams(obj: Record<string, string | number | undefined>): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const [k, v] of Object.entries(obj)) {
+    if (v !== undefined && v !== null) result[k] = String(v);
+  }
+  return result;
+}
+
+function fetchAnalysisData(params: { userId?: string; toolName?: string; days?: number } = {}): Promise<AnalysisData> {
+  const searchParams = cleanParams({
+    userId: params.userId,
+    toolName: params.toolName,
+    days: params.days,
+  });
+  return apiClient.get("analysis", { searchParams }).json<AnalysisData>();
 }
 
 const SECTION_COLORS = {
@@ -80,10 +93,14 @@ function BreakdownSection({
   );
 }
 
-export function AnalysisTab() {
+interface AnalysisTabProps {
+  filterParams?: { userId?: string; toolName?: string; days?: number };
+}
+
+export function AnalysisTab({ filterParams }: AnalysisTabProps) {
   const { data, isLoading } = useQuery({
-    queryKey: ["analysis"],
-    queryFn: fetchAnalysisData,
+    queryKey: ["analysis", filterParams],
+    queryFn: () => fetchAnalysisData(filterParams),
     staleTime: 30_000,
   });
 

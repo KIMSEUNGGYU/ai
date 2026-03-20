@@ -10,7 +10,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const status = (req.query.status as "active" | "ended" | "all") ?? "active";
   const userId = req.query.userId as string | undefined;
   const toolName = req.query.toolName as string | undefined;
-  const sessions = await getSessions(status, { userId, toolName });
+  const days = req.query.days ? Number(req.query.days) : undefined;
+  const sessions = await getSessions(status, { userId, toolName, days });
 
   return res.status(200).json({ sessions });
 }

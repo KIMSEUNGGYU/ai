@@ -15,18 +15,46 @@ interface AnalysisData {
   slashCommands: ToolBreakdown[];
 }
 
+function buildFilterClause(filters: { days?: number; userId?: string }): {
+  sql: string;
+  params: unknown[];
+} {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  if (filters.days) {
+    const since = new Date(Date.now() - filters.days * 24 * 60 * 60 * 1000).toISOString();
+    conditions.push("timestamp >= ?");
+    params.push(since);
+  }
+  if (filters.userId) {
+    conditions.push("user_id = ?");
+    params.push(filters.userId);
+  }
+
+  return {
+    sql: conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "",
+    params,
+  };
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
+  const userId = req.query.userId as string | undefined;
+  const days = req.query.days ? Number(req.query.days) : undefined;
+  const { sql: filterSql, params: filterParams } = buildFilterClause({ days, userId });
+
   // Skill 호출: tool_name = 'Skill', tool_input_summary에서 스킬명 추출
   const skillRows = await prisma.$queryRawUnsafe<Array<{ summary: string | null; cnt: bigint }>>(
     `SELECT tool_input_summary as summary, COUNT(*) as cnt
      FROM events
-     WHERE tool_name = 'Skill' AND event_type = 'PostToolUse' AND tool_input_summary IS NOT NULL
+     WHERE tool_name = 'Skill' AND event_type = 'PostToolUse' AND tool_input_summary IS NOT NULL ${filterSql}
      GROUP BY tool_input_summary
-     ORDER BY cnt DESC`
+     ORDER BY cnt DESC`,
+    ...filterParams
   );
   const skills: ToolBreakdown[] = skillRows.map((r) => ({
     name: (r.summary ?? "").replace(/^skill:\s*/, ""),
@@ -44,9 +72,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        END as agent_type,
        COUNT(*) as cnt
      FROM events
-     WHERE tool_name = 'Agent' AND event_type = 'PostToolUse'
+     WHERE tool_name = 'Agent' AND event_type = 'PostToolUse' ${filterSql}
      GROUP BY agent_type
-     ORDER BY cnt DESC`
+     ORDER BY cnt DESC`,
+    ...filterParams
   );
   const agents: ToolBreakdown[] = agentRows.map((r) => ({
     name: r.agent_type,
@@ -59,9 +88,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        SUBSTR(tool_name, 6, INSTR(SUBSTR(tool_name, 6), '__') - 1) as server,
        COUNT(*) as cnt
      FROM events
-     WHERE tool_name LIKE 'mcp__%' AND event_type = 'PostToolUse'
+     WHERE tool_name LIKE 'mcp__%' AND event_type = 'PostToolUse' ${filterSql}
      GROUP BY server
-     ORDER BY cnt DESC`
+     ORDER BY cnt DESC`,
+    ...filterParams
   );
   const mcpServers: ToolBreakdown[] = mcpRows.map((r) => ({
     name: r.server,
@@ -72,9 +102,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const hookRows = await prisma.$queryRawUnsafe<Array<{ tool_name: string; cnt: bigint }>>(
     `SELECT tool_name, COUNT(*) as cnt
      FROM events
-     WHERE tool_name LIKE '%:%' AND tool_name NOT LIKE 'mcp__%' AND event_type = 'PostToolUse'
+     WHERE tool_name LIKE '%:%' AND tool_name NOT LIKE 'mcp__%' AND event_type = 'PostToolUse' ${filterSql}
      GROUP BY tool_name
-     ORDER BY cnt DESC`
+     ORDER BY cnt DESC`,
+    ...filterParams
   );
   const hooks: ToolBreakdown[] = hookRows.map((r) => ({
     name: r.tool_name,
@@ -89,10 +120,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        AND tool_name NOT IN ('Skill', 'Agent')
        AND tool_name NOT LIKE 'mcp__%'
        AND tool_name NOT LIKE '%:%'
-       AND event_type = 'PostToolUse'
+       AND event_type = 'PostToolUse' ${filterSql}
      GROUP BY tool_name
      ORDER BY cnt DESC
-     LIMIT 20`
+     LIMIT 20`,
+    ...filterParams
   );
   const commands: ToolBreakdown[] = cmdRows.map((r) => ({
     name: r.tool_name,
@@ -113,9 +145,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        AND prompt_text NOT LIKE '/home/%'
        AND prompt_text NOT LIKE '/tmp/%'
        AND prompt_text NOT LIKE '/var/%'
-       AND prompt_text NOT LIKE '/etc/%'
+       AND prompt_text NOT LIKE '/etc/%' ${filterSql}
      GROUP BY cmd
-     ORDER BY cnt DESC`
+     ORDER BY cnt DESC`,
+    ...filterParams
   );
   const slashCommands: ToolBreakdown[] = slashRows.map((r) => ({
     name: r.cmd,

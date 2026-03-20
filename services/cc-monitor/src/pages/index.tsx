@@ -40,6 +40,14 @@ const TABS = [
   { id: "config", label: "Config" },
 ];
 
+const DAYS_OPTIONS = [
+  { value: 7, label: "7일" },
+  { value: 14, label: "14일" },
+  { value: 30, label: "30일" },
+  { value: 90, label: "90일" },
+  { value: 0, label: "전체" },
+];
+
 export const getServerSideProps: GetServerSideProps<{
   initial: DashboardData;
 }> = async () => {
@@ -69,12 +77,14 @@ export default function Dashboard({
   );
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedToolName, setSelectedToolName] = useState("");
+  const [selectedDays, setSelectedDays] = useState(30);
   const [allTools, setAllTools] = useState(initial.tools);
   const [allUsers, setAllUsers] = useState(initial.users);
 
   const filterParams = {
     userId: selectedUserId || undefined,
     toolName: selectedToolName || undefined,
+    days: selectedDays || undefined,
   };
 
   const { data: sessions } = useQuery({
@@ -104,6 +114,8 @@ export default function Dashboard({
       setAllUsers(analytics.users);
     }
   }, [analytics, selectedUserId, selectedToolName]);
+
+  const hasActiveFilter = selectedUserId || selectedToolName || selectedDays !== 30;
 
   return (
     <div className="px-4 py-6 md:px-8">
@@ -148,7 +160,22 @@ export default function Dashboard({
           </select>
           </label>
 
-          {(selectedUserId || selectedToolName) && (
+          <label className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          Period
+          <select
+            value={selectedDays}
+            onChange={(e) => setSelectedDays(Number(e.target.value))}
+            className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground outline-none ring-offset-background focus-visible:ring-1 focus-visible:ring-ring"
+          >
+            {DAYS_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </select>
+          </label>
+
+          {hasActiveFilter && (
             <Button
               type="button"
               variant="ghost"
@@ -157,6 +184,7 @@ export default function Dashboard({
               onClick={() => {
                 setSelectedUserId("");
                 setSelectedToolName("");
+                setSelectedDays(30);
               }}
             >
               초기화
@@ -169,7 +197,7 @@ export default function Dashboard({
 
       {activeTab === "overview" && (
         <div className="flex flex-col gap-8">
-          <CostTracking userId={selectedUserId || undefined} />
+          <CostTracking userId={selectedUserId || undefined} days={selectedDays || undefined} />
           <div className="grid gap-6 lg:grid-cols-2">
             <ToolUsageChart tools={analytics.tools} durations={analytics.toolDurations} />
             <HourlyActivity hourly={analytics.hourly} />
@@ -180,9 +208,9 @@ export default function Dashboard({
 
       {activeTab === "sessions" && <SessionsTab sessions={sessions} events={events} />}
 
-      {activeTab === "history" && <HistoryTab />}
+      {activeTab === "history" && <HistoryTab filterParams={filterParams} />}
 
-      {activeTab === "analysis" && <AnalysisTab />}
+      {activeTab === "analysis" && <AnalysisTab filterParams={filterParams} />}
 
       {activeTab === "config" && <ConfigOverview />}
     </div>

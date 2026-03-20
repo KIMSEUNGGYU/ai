@@ -472,6 +472,7 @@ export interface AdoptionSnapshot {
 export interface FilterParams {
   userId?: string;
   toolName?: string;
+  days?: number;
 }
 
 export interface AdoptionFilterParams {

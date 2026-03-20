@@ -35,6 +35,7 @@ export interface FetchSessionsParams {
   status?: string;
   userId?: string;
   toolName?: string;
+  days?: number;
 }
 
 export async function fetchSessions(params: FetchSessionsParams = {}): Promise<Session[]> {
@@ -42,6 +43,7 @@ export async function fetchSessions(params: FetchSessionsParams = {}): Promise<S
     status: params.status ?? "all",
     userId: params.userId,
     toolName: params.toolName,
+    days: params.days,
   });
   const data = await apiClient.get("sessions", { searchParams }).json<{ sessions: Session[] }>();
   return data.sessions;
@@ -53,6 +55,7 @@ export interface FetchFeedParams {
   limit?: number;
   userId?: string;
   toolName?: string;
+  days?: number;
 }
 
 export async function fetchFeed(params: FetchFeedParams = {}): Promise<StoredEvent[]> {
@@ -60,6 +63,7 @@ export async function fetchFeed(params: FetchFeedParams = {}): Promise<StoredEve
     limit: params.limit ?? 30,
     userId: params.userId,
     toolName: params.toolName,
+    days: params.days,
   });
   const data = await apiClient.get("feed", { searchParams }).json<{ events: StoredEvent[] }>();
   return data.events;
@@ -70,6 +74,7 @@ export async function fetchFeed(params: FetchFeedParams = {}): Promise<StoredEve
 export interface FetchAnalyticsParams {
   userId?: string;
   toolName?: string;
+  days?: number;
 }
 
 export interface AnalyticsResponse {
@@ -84,6 +89,7 @@ export async function fetchAnalytics(params: FetchAnalyticsParams = {}): Promise
   const searchParams = cleanParams({
     userId: params.userId,
     toolName: params.toolName,
+    days: params.days,
   });
   return apiClient.get("analytics", { searchParams }).json<AnalyticsResponse>();
 }

@@ -191,8 +191,12 @@ function buildGroups(sessions: Session[]): SessionGroup[] {
 
 // ── 컴포넌트 ──
 
-export function HistoryTab() {
-  const { data: sessions } = useQuery(sessionsQueryOptions());
+interface HistoryTabProps {
+  filterParams?: { userId?: string; toolName?: string; days?: number };
+}
+
+export function HistoryTab({ filterParams }: HistoryTabProps) {
+  const { data: sessions } = useQuery(sessionsQueryOptions(filterParams));
   const recentSessions = useMemo(() => (sessions ?? []).slice(0, 50), [sessions]);
   const groups = useMemo(() => buildGroups(recentSessions), [recentSessions]);
   const maxTokens = Math.max(...recentSessions.map(getTokenTotal), 1);

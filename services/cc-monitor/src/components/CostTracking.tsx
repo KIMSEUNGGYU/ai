@@ -5,6 +5,7 @@ import type { CostResponse, CostSummary, ModelCostBreakdown, DailyCost } from "@
 
 interface CostTrackingProps {
   userId?: string;
+  days?: number;
 }
 
 function formatCost(amount: number): string {
@@ -161,26 +162,13 @@ function PricingTable({ table }: { table: CostResponse["pricingTable"] }) {
   );
 }
 
-export function CostTracking({ userId }: CostTrackingProps) {
-  const [days, setDays] = useState(30);
-
-  const { data, isLoading, error } = useQuery(costQueryOptions({ userId, days: days || undefined }));
+export function CostTracking({ userId, days }: CostTrackingProps) {
+  const { data, isLoading, error } = useQuery(costQueryOptions({ userId, days }));
 
   return (
     <section>
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-[13px] font-semibold tracking-wide text-muted-foreground">COST TRACKING</h2>
-        <select
-          value={days}
-          onChange={(e) => setDays(Number(e.target.value))}
-          className="bg-background border border-border rounded px-2 py-0.5 text-[11px] text-foreground"
-        >
-          <option value={7}>7일</option>
-          <option value={14}>14일</option>
-          <option value={30}>30일</option>
-          <option value={90}>90일</option>
-          <option value={0}>전체</option>
-        </select>
       </div>
 
       {isLoading && !data && <p className="text-muted-foreground/60 italic text-[13px]">Loading...</p>}

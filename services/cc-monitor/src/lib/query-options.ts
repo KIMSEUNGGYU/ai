@@ -8,9 +8,15 @@ import {
   fetchConfig,
 } from "./remotes";
 
+export interface GlobalFilterParams {
+  userId?: string;
+  toolName?: string;
+  days?: number;
+}
+
 // ── sessions ──
 
-export const sessionsQueryOptions = (params: { userId?: string; toolName?: string } = {}) =>
+export const sessionsQueryOptions = (params: GlobalFilterParams = {}) =>
   queryOptions({
     queryKey: ["sessions", params],
     queryFn: () => fetchSessions({ status: "all", ...params }),
@@ -20,7 +26,7 @@ export const sessionsQueryOptions = (params: { userId?: string; toolName?: strin
 
 // ── feed ──
 
-export const feedQueryOptions = (params: { userId?: string; toolName?: string } = {}) =>
+export const feedQueryOptions = (params: GlobalFilterParams = {}) =>
   queryOptions({
     queryKey: ["feed", params],
     queryFn: () => fetchFeed({ limit: 30, ...params }),
@@ -30,7 +36,7 @@ export const feedQueryOptions = (params: { userId?: string; toolName?: string } 
 
 // ── analytics ──
 
-export const analyticsQueryOptions = (params: { userId?: string; toolName?: string } = {}) =>
+export const analyticsQueryOptions = (params: GlobalFilterParams = {}) =>
   queryOptions({
     queryKey: ["analytics", params],
     queryFn: () => fetchAnalytics(params),

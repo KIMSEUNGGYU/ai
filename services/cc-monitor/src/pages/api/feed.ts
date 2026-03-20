@@ -11,7 +11,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const since = req.query.since as string | undefined;
   const userId = req.query.userId as string | undefined;
   const toolName = req.query.toolName as string | undefined;
-  const filters = { userId, toolName };
+  const days = req.query.days ? Number(req.query.days) : undefined;
+  const filters = { userId, toolName, days };
 
   const events = since
     ? await getEventsSince(since, limit, filters)

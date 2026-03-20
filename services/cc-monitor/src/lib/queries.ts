@@ -32,10 +32,15 @@ export async function insertEvent(event: Omit<StoredEvent, "id">): Promise<void>
 }
 
 export async function getRecentEvents(limit: number = 50, filters?: FilterParams): Promise<StoredEvent[]> {
+  const since = filters?.days
+    ? new Date(Date.now() - filters.days * 24 * 60 * 60 * 1000).toISOString()
+    : undefined;
+
   return await prisma.event.findMany({
     where: {
       ...(filters?.userId && { user_id: filters.userId }),
       ...(filters?.toolName && { tool_name: filters.toolName }),
+      ...(since && { timestamp: { gte: since } }),
     },
     orderBy: { timestamp: "desc" },
     take: limit,
@@ -150,6 +155,11 @@ export async function getSessions(status: "active" | "ended" | "all" = "active",
   }
   // ClaudeProbe health check 세션 제외
   conditions.push("(s.project_path IS NULL OR s.project_path NOT LIKE '%ClaudeProbe%')");
+
+  if (filters?.days) {
+    conditions.push("s.started_at >= datetime('now', '-' || ? || ' days')");
+    params.push(filters.days);
+  }
 
   if (status !== "all") {
     conditions.push("s.status = ?");
@@ -306,6 +316,11 @@ export async function getUserSummaries(filters?: FilterParams): Promise<UserSumm
     conditions.push("e.tool_name = ?");
     params.push(filters.toolName);
   }
+  if (filters?.days) {
+    const since = new Date(Date.now() - filters.days * 24 * 60 * 60 * 1000).toISOString();
+    conditions.push("e.timestamp >= ?");
+    params.push(since);
+  }
 
   const clause = conditions.length > 0 ? `AND ${conditions.join(" AND ")}` : "";
 
@@ -363,6 +378,11 @@ export async function getTokenUsageSummary(filters?: FilterParams): Promise<Toke
   if (filters?.userId) {
     conditions.push("user_id = ?");
     params.push(filters.userId);
+  }
+  if (filters?.days) {
+    const since = new Date(Date.now() - filters.days * 24 * 60 * 60 * 1000).toISOString();
+    conditions.push("started_at >= ?");
+    params.push(since);
   }
 
   const where = `WHERE ${conditions.join(" AND ")}`;

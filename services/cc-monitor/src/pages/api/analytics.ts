@@ -13,10 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const hours = Number(req.query.hours) || 24;
   const userId = req.query.userId as string | undefined;
   const toolName = req.query.toolName as string | undefined;
-  const filters = { userId, toolName };
+  const days = req.query.days ? Number(req.query.days) : undefined;
+  const hours = days ? days * 24 : (Number(req.query.hours) || 24);
+  const filters = { userId, toolName, days };
 
   const [tools, toolDurations, hourly, users, tokenUsage] = await Promise.all([
     getToolUsageStats(hours, filters),
