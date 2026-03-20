@@ -78,18 +78,21 @@ convention-checker Agent (종합 검증, 변경 파일만)
   - Phase 2B에서도 checker 실행 → Yes (implement에 통합됨)
   - /fe:refactor → 안 넣음 (필요 시 /fe:review)
   - cc-monitor 로깅 → 실전 데이터 쌓인 후 판단
-- [ ] 실전 테스트 (회사 PC)
+- [x] 실전 테스트 → convention-checker 로드/동작 확인 완료 (ishopcare-frontend 파일 3개, 6건 감지)
+
+### 완료: Hook 정리 + SKILL 단순화 (v0.34.0)
+- [x] fe-convention-prompt.sh 제거 (skill과 중복, 효과 불분명)
+- [x] hooks.json UserPromptSubmit 제거 (PostToolUse harness만 유지)
+- [x] SKILL.md description 개선 (서술형 + 사용자 발화 트리거)
+- [x] SKILL.md 본문 단순화 (워크플로우 안내 + references 테이블만)
+- [x] refactor.md Agent → Task 통일
+- [x] README.md 전체 동기화
+- [x] api-integrate 커맨드 제거 (implement + conventions로 커버)
 
 ### 보류
-- [x] 회사 PC에서 실전 검증 (하네스 + references 개선) → convention-checker 로드/동작 확인 완료
-- [ ] Hook 전략 재정립 (checker 구현 후 전체 그림 보고 결정)
-- [ ] fe-principles SKILL.md fallback 규칙 정리
-- [ ] fe-convention-prompt.sh fallback 요약 정리
 - [ ] 스펙 준수 여부 체크 기능 (향후 확장)
 
 ## 결정사항
-- references vs hooks는 보완 관계 — 메인 대화(Hook) + 서브에이전트(references) 각각 독립 공급
-- Hook 요약본은 이전 시도에서 효과 없음 → 전문 주입 유지
 - harness 9개 현재 유지 — 즉시 피드백 역할, grep 가능한 건 이미 다 포함
 - convention-checker는 새 Agent로 생성 — code-reviewer(리뷰 보고서)와 목적이 다름(수정 지시)
 - checker는 Phase 완료 후 1번, 위반 시 최대 2회 루프 → 무한 루프 방지
