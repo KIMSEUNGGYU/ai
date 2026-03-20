@@ -58,7 +58,7 @@ export default function Dashboard({
   );
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedToolName, setSelectedToolName] = useState("");
-  const [selectedDays, setSelectedDays] = useState(30);
+  const [selectedDays, setSelectedDays] = useState(7);
   const [allUsers, setAllUsers] = useState(initial.users);
 
   const filterParams = {
@@ -84,7 +84,7 @@ export default function Dashboard({
     }
   }, [analytics, selectedUserId, selectedToolName]);
 
-  const hasActiveFilter = selectedUserId || selectedToolName || selectedDays !== 30;
+  const hasActiveFilter = selectedUserId || selectedToolName || selectedDays !== 7;
 
   return (
     <div className="px-4 py-6 md:px-8">
@@ -137,7 +137,7 @@ export default function Dashboard({
               onClick={() => {
                 setSelectedUserId("");
                 setSelectedToolName("");
-                setSelectedDays(30);
+                setSelectedDays(7);
               }}
             >
               초기화
