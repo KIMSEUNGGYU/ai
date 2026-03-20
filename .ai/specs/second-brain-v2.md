@@ -48,8 +48,31 @@ hq/     지식    "나에 대한 모든 것"                 SessionStart hook +
 hq/
 ├── 00_daily/        /recap 결과물 (하루 기록)
 ├── 10_projects/     프로젝트별 축적 지식
-│   ├── ishopcare/
-│   └── ai/
+│   ├── ishopcare/               공통 (가맹점 타입, VAN, 모두싸인 등)
+│   │   ├── context.md
+│   │   ├── decisions.md
+│   │   ├── policies.md
+│   │   ├── log.md
+│   │   ├── admin/               청약/출고/루키/가맹점/정산
+│   │   │   ├── context.md
+│   │   │   ├── decisions.md
+│   │   │   ├── policies.md
+│   │   │   └── log.md
+│   │   └── partners/            문서 제출 퍼널/배송/추적
+│   │       ├── context.md
+│   │       ├── decisions.md
+│   │       ├── policies.md
+│   │       └── log.md
+│   ├── ishopcare-server/        백엔드
+│   │   ├── context.md
+│   │   ├── decisions.md
+│   │   ├── policies.md
+│   │   └── log.md
+│   └── ai/                      AI 모노레포
+│       ├── context.md
+│       ├── decisions.md
+│       ├── policies.md
+│       └── log.md
 ├── 20_me/           나에 대한 전역 지식
 │   ├── core.md          변하지 않는 나 (가치관, 사고방식, 핵심 원칙)
 │   └── now.md           지금의 나 (현재 관심사, 진행 중 고민, 최근 변화)
@@ -57,9 +80,37 @@ hq/
 └── 90_archive/      완료/비활성
 ```
 
+### 프로젝트 4파일 역할
+
+| 파일 | 담는 것 | 업데이트 | SessionStart 주입 |
+|------|---------|----------|-------------------|
+| context.md | 도메인 + 아키텍처 (변하지 않는 핵심) | 드물게, 수동 | 전문 주입 |
+| decisions.md | 기술 결정 + 근거 | /done 자동 추가 | 전문 주입 |
+| policies.md | 비즈니스 규칙/정책 | 수동 + /done | 전문 주입 |
+| log.md | 시간순 작업 기록 | /done 자동 append | 최신 N개만 |
+
+### SessionStart 프로젝트 매핑
+
+```
+~/work/ishopcare-frontend (루트)
+  → ishopcare/ 공통 4파일
+
+~/work/ishopcare-frontend/services/admin
+  → ishopcare/ 공통 + ishopcare/admin/ 4파일
+
+~/work/ishopcare-frontend/services/partners
+  → ishopcare/ 공통 + ishopcare/partners/ 4파일
+
+~/work/ishopcare-retool-server
+  → ishopcare-server/ 4파일
+
+~/dev/ai
+  → ai/ 4파일
+```
+
 - 번호 접두사 유지 (Obsidian 정렬용)
 - PARA 용어 제거, 이름이 곧 역할
-- 5개 폴더, 단순
+- 5개 최상위 폴더, 프로젝트별 4파일
 
 ---
 
@@ -114,12 +165,20 @@ SessionStart hook
 
 ---
 
+## 확정된 설계
+
+- [x] 3레이어: rules/(지시) + .ai/(작업) + hq/(지식)
+- [x] hq 5개 최상위 폴더: daily, projects, me, learn, archive
+- [x] 20_me/: core.md + now.md (시간축 분리)
+- [x] 10_projects/ 구조: 프로젝트별 4파일 (context, decisions, policies, log)
+- [x] ishopcare 하위에 admin/, partners/ 서비스별 폴더
+- [x] 축적: /done 유지 + hq 확장, /recap은 보너스
+- [x] 활용: me/ 전문 주입, projects/ context+decisions+policies 전문 + log 최신 N개
+
 ## 미정 (추가 논의 필요)
 
-- [ ] hq/20_me/ 세부 구조 — 파일별 내용과 형식
-- [ ] hq/10_projects/ 파일 형태 — 날짜별? 주제별?
-- [ ] 축적 구현 — /done 확장 구체화
+- [ ] 축적 구현 — /done이 프로젝트 4파일에 어떻게 저장하는지 구체화
 - [ ] 활용 구현 — SessionStart hook 수정, 프로젝트 매핑 테이블
 - [ ] 마이그레이션 — 현재 hq → 새 구조로 전환
-- [ ] decisions.md 이동 여부 최종 결정
+- [ ] decisions.md(rules/) 이동 여부 최종 결정
 - [ ] /done 자가학습 퀄리티 개선 방안
