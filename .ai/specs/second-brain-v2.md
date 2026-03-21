@@ -175,10 +175,16 @@ SessionStart hook
 - [x] 축적: /done 유지 + hq 확장, /recap은 보너스
 - [x] 활용: me/ 전문 주입, projects/ context+decisions+policies 전문 + log 최신 N개
 
+## 구현 완료 (2026-03-21)
+
+- [x] 축적 구현 — /done Step 3에 세컨드 브레인 축적 추가 (v0.20.0)
+- [x] 활용 구현 — SessionStart hook에 me/ + projects/ 주입 (v0.19.0)
+- [x] 마이그레이션 — 기존 hq → 90_archive/legacy/, 새 구조 적용
+- [x] pc-map.md 업데이트
+- [x] hq/CLAUDE.md 업데이트
+
 ## 미정 (추가 논의 필요)
 
-- [ ] 축적 구현 — /done이 프로젝트 4파일에 어떻게 저장하는지 구체화
-- [ ] 활용 구현 — SessionStart hook 수정, 프로젝트 매핑 테이블
-- [ ] 마이그레이션 — 현재 hq → 새 구조로 전환
 - [ ] decisions.md(rules/) 이동 여부 최종 결정
 - [ ] /done 자가학습 퀄리티 개선 방안
+- [ ] 실전 검증 — 다음 세션에서 주입/축적이 정상 작동하는지 확인

@@ -34,15 +34,11 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-corrections.mjs" {transcript_path1} 
 **2-A-3.** Agent로 서브에이전트 실행. 프롬프트에 messages와 decisionTurns를 넘기고:
 
 **추출 트리거:**
-- 트리거 A (명시적 거부): 사용자가 AI 제안을 거부하고 다른 방향 선택
-- 트리거 B (이유 설명): 사용자가 "~해서 ~하자" 등 판단 근거를 명시
-- 트리거 C (선택지 결정): 사용자가 두 선택지 중 하나를 선택
-- 트리거 D (반복 교정): AI가 같은 실수를 반복하여 교정됨
+- 트리거 D (반복 교정): AI가 같은 실수를 반복하여 교정됨 — conventions 추출
 
 **분류 기준:**
-- `decisions` — 상황에 따라 달라지는 판단 (맥락 의존적) → `~/.claude/rules/decisions.md`
 - `conventions` — 항상 적용되는 규칙 (맥락 무관) → `~/.claude/rules/conventions.md`
-- `system` — 시스템/도구 운영 방법 → `~/.claude/rules/system.md`
+- decisions/system은 /done에서 추출하지 않음 → /recap이 담당 (세션 단위 시야로는 판단 패턴 추출 품질이 낮음)
 
 **출력 형식:**
 ```json
@@ -77,24 +73,22 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-corrections.mjs" {transcript_path1} 
 
 active 파일이 있을 때 실행.
 
-**2-B-1.** active 파일에서 다음 섹션을 파싱:
-- `## 결정사항` — 구현 중 내린 기술 판단과 근거
-- `## 컨벤션 변경` — 프로젝트 규칙의 변경/추가
-- `## 스펙 변경` — 구현 중 스펙이 달라진 부분과 사유
+**2-B-1.** active 파일에서 `## 컨벤션 변경` 섹션을 파싱.
 
 **2-B-2.** 섹션이 없거나 비어있으면 스킵.
 
 **2-B-3.** Agent로 서브에이전트 실행. 프롬프트:
-- 입력: 파싱된 결정사항/컨벤션 변경/스펙 변경 항목들
-- 기존 rules 파일들 (Read로 읽기: decisions.md, conventions.md, system.md)
+- 입력: 파싱된 컨벤션 변경 항목들
+- 기존 conventions.md (Read로 읽기)
 - 지시:
-  - 분류 기준: decisions(맥락 의존적 판단) / conventions(맥락 무관 규칙) / system(운영 방법)
+  - conventions만 추출 (맥락 무관 규칙)
   - 기존 rules와 중복 체크 — 이미 있는 규칙이면 제외
-  - 일회성 결정은 제외 — 반복 적용 가능한 것만
-- 출력: JSON 배열 `[{ title: string, content: string, category: string }]`
+  - 일회성은 제외 — 반복 적용 가능한 것만
+- 출력: JSON 배열 `[{ title: string, content: string }]`
 - 빈 배열 가능
+- 결정사항/스펙 변경은 /recap이 담당 → 여기서 추출하지 않음
 
-**2-B-4.** 결과 있으면 **자동 저장**. 기존 패턴과 모순 시만 AskUserQuestion.
+**2-B-4.** 결과 있으면 conventions.md에 **자동 저장**. 기존 패턴과 모순 시만 AskUserQuestion.
 
 ### 2-C. 암묵적 선호 포착
 
