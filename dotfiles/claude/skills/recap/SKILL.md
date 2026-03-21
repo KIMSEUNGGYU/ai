@@ -22,7 +22,7 @@ argument-description: "[YYYY-MM-DD] 분석할 날짜 (기본: 어제)"
 스크립트를 실행하여 대상 날짜의 대화 데이터를 추출한다.
 
 ```bash
-node ~/.claude/skills/recap/scripts/extract-transcripts.mjs {YYYY-MM-DD}
+python3 scripts/extract-transcripts.py {YYYY-MM-DD}
 ```
 
 출력이 너무 크면 `/tmp/recap-{date}.txt`에 저장하고 읽는다.
@@ -41,30 +41,8 @@ ls -t ~/hq/00_Inbox/*-recap.md 2>/dev/null | head -7
 
 #### 4-1. 오늘 한 것 (사람용)
 - 프로젝트별로 그룹핑
-- 시간대는 `-`로 표기 (예: `08:30-18:13`). `~` 사용 금지 — 경로의 `~/`와 결합하여 마크다운 취소선 발생
-- **반드시 프로젝트당 3~5줄 이내.** 이 제한을 초과하지 않는다.
-- 각 줄은 "무엇을 왜 했는지"를 한 문장으로. 구체적 파일명, 스크립트명, 설정값은 생략한다.
-- **포함:** 의사결정, 구조 변경, 버그 수정, 새 기능, 방향 확정
-- **제외:** 파일명 나열, 설정 변경 디테일, README 동기화, 버전 올리기 같은 기계적 작업
-
-**나쁜 예 (파일명 나열, 8줄):**
-```
-- architect, perf-optimizer Agent 제거
-- Agent 3개에 references 추가 (Read 4-5번 -> 0번)
-- convention-checker Agent 스펙 작성 + 구현 (v0.33.0)
-- UserPromptSubmit hook(fe-convention-prompt.sh) 제거
-- post-edit-convention.sh 제거
-- error-handling conventions 비활성화
-- api-integrate 커맨드 제거
-- v0.29.0 -> v0.34.0
-```
-
-**좋은 예 (핵심만, 3줄):**
-```
-- 불필요 Agent/Hook/커맨드 대폭 정리 + convention-checker Agent 신규 구현
-- Agent references 직접 포함으로 Read 호출 최적화
-- Hook 전략 재정립 — harness만 유지, 나머지 제거
-```
+- 시간대 포함
+- 핵심 작업만 간결하게
 
 #### 4-2. 판단 기록 (AI 세컨드 브레인용)
 대화에서 **의사결정이 발생한 순간**을 찾아 기록한다.
