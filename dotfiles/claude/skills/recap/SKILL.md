@@ -15,7 +15,7 @@ argument-description: "[YYYY-MM-DD] 분석할 날짜 (기본: 어제)"
 ### Phase 1: 날짜 결정
 - 인자가 있으면 해당 날짜 사용
 - 없으면 어제 날짜 사용 (`date -v-1d +%Y-%m-%d`)
-- 이미 `~/hq/00_Inbox/{date}-recap.md`가 존재하면 덮어쓸지 확인
+- 이미 `~/hq/00_daily/{date}-recap.md`가 존재하면 덮어쓸지 확인
 
 ### Phase 2: Transcript 추출
 
@@ -31,7 +31,7 @@ python3 scripts/extract-transcripts.py {YYYY-MM-DD}
 
 최근 7일간의 recap 파일을 읽는다:
 ```bash
-ls -t ~/hq/00_Inbox/*-recap.md 2>/dev/null | head -7
+ls -t ~/hq/00_daily/*-recap.md 2>/dev/null | head -7
 ```
 파일이 있으면 Read로 읽어서 **반복 주제, 이전 미해결 항목**을 파악한다.
 
@@ -77,7 +77,7 @@ ls -t ~/hq/00_Inbox/*-recap.md 2>/dev/null | head -7
 
 ### Phase 5: 저장
 
-아래 형식으로 `~/hq/00_Inbox/{date}-recap.md`에 저장한다.
+아래 형식으로 `~/hq/00_daily/{date}-recap.md`에 저장한다.
 
 ```markdown
 ---
