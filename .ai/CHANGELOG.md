@@ -1,6 +1,11 @@
 # 작업 이력
 
 ## 2026-03-21
+- /recap 스킬 구현 + cc-monitor 배포 — 세컨드 브레인 일일 리캡 시스템 ✅
+  - 세션: beb59631-7404-4ccb-8b4c-48d1dabd65de (2026-03-20~21)
+  - 완료: cc-monitor Vercel 배포, /recap 전역 스킬 설계+구현(SKILL.md + extract-transcripts.mjs), transcript 파싱 검증, 판단 기록 템플릿 확정, 4회 테스트 반복, conventions에 내장 도구 활용 규칙 추가
+  - 자가학습: 3건 반영 (decisions)
+
 - cc-monitor session_name 지원 — /rename 기반 세션 이름 그룹핑 ✅
   - 세션: 2903d736-1466-4a02-80e2-01cb56f24b30 (2026-03-21)
   - 완료: DB session_name 컬럼 추가, transcript에서 /rename 파싱(parseSessionName), Stop/SessionEnd 시 자동 저장, HistoryTab 그룹핑 우선순위 변경(session_name > task_name > project_path), 기존 4개 세션 소급 적용, Vercel 배포
