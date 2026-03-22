@@ -130,9 +130,7 @@ for (const dir of projectDirs) {
 
     for (const m of messages) {
       const roleIcon = m.role === "user" ? "USER" : "AI";
-      // 응답은 1500자로 제한 (판단 맥락 보존)
-      const text =
-        m.text.length > 1500 ? m.text.slice(0, 1500) + "..." : m.text;
+      const text = m.text;
       const indented = text.replaceAll("\n", "\n  ");
       console.log(`\n[${m.time}] ${roleIcon}:`);
       console.log(`  ${indented}`);

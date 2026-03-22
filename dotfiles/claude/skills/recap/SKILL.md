@@ -22,10 +22,10 @@ argument-description: "[YYYY-MM-DD] 분석할 날짜 (기본: 어제)"
 스크립트를 실행하여 대상 날짜의 대화 데이터를 추출한다.
 
 ```bash
-python3 scripts/extract-transcripts.py {YYYY-MM-DD}
+node scripts/extract-transcripts.mjs {YYYY-MM-DD}
 ```
 
-출력이 너무 크면 `/tmp/recap-{date}.txt`에 저장하고 읽는다.
+
 
 ### Phase 3: 과거 Recap 로드
 
