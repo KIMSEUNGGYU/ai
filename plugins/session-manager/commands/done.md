@@ -29,66 +29,92 @@ node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-corrections.mjs" {transcript_path1} 
 
 `{project-hash}`: cwd를 `-`로 변환. 출력: `{ messages, decisionTurns, stats }`
 
-**2-A-2.** `(correctionHits === 0 && positiveHits === 0)` 또는 `extracted < 3`이면 스킵.
+**2-A-2.** `extracted < 3`이면 스킵.
 
-**2-A-3.** Agent로 서브에이전트 실행. 프롬프트에 messages와 decisionTurns를 넘기고:
+**2-A-3.** Agent로 서브에이전트 실행. 프롬프트에 messages(전체 대화)를 넘기고:
 
-**추출 트리거:**
-- 트리거 D (반복 교정): AI가 같은 실수를 반복하여 교정됨 — conventions 추출
+**추출 대상 2가지:**
 
-**분류 기준:**
-- `conventions` — 항상 적용되는 규칙 (맥락 무관) → `~/.claude/rules/conventions.md`
-- decisions/system은 /done에서 추출하지 않음 → /recap이 담당 (세션 단위 시야로는 판단 패턴 추출 품질이 낮음)
+**(1) 판단 기록** — 대화에서 의사결정이 발생한 순간을 찾아 기록.
+감지 기준:
+- 사용자가 선택지 중 하나를 고른 순간
+- AI 제안을 거부/교정한 순간
+- 방향을 전환한 순간
 
-**출력 형식:**
+각 판단 기록의 형식:
 ```json
-[{
-  "title": "## 제목",
-  "content": "판단 내용 + 이유 2~3줄 자연어. (근거)",
-  "category": "decisions|conventions|system",
-  "trigger": "A|B|C|D"
-}]
+{
+  "type": "decision",
+  "title": "판단 제목",
+  "context": "무엇을 하려다 어떤 갈림길을 만났는지",
+  "options": "A — ... | B — ...",
+  "decision": "선택한 것",
+  "rejected_reason": "왜 다른 선택지를 안 했는지 (핵심)",
+  "generalization": "반복 가능 / 일회성 + 적용 패턴"
+}
+```
+품질 기준:
+- "XXX를 했다"는 판단이 아니다. "A vs B에서 A를 골랐다"가 판단.
+- 사소한 결정(파일명, 변수명 등)은 제외. 아키텍처, 방향, 설계 수준만.
+- rejected_reason이 없으면 판단 기록으로서 가치 없다.
+
+**(2) conventions 후보** — AI가 같은 실수를 반복하여 교정된 경우.
+```json
+{
+  "type": "convention",
+  "title": "규칙 제목",
+  "content": "항상 적용되는 규칙 2~3줄 + 이유"
+}
 ```
 
-교정 없으면 빈 배열.
+교정/판단 없으면 빈 배열.
 
-**2-A-4.** 결과에 대해 **시뮬레이션 검증** 수행:
-- 각 항목에 대해 구체적 시나리오를 만들어 테스트
-- 통과 → 유지
-- 실패 → 내용을 더 구체화하여 1회 재작성
+**2-A-4.** 결과 저장:
 
-**2-A-5.** 기존 rules 파일과 비교:
-- 해당 카테고리 파일(decisions.md/conventions.md/system.md)을 Read로 읽기
-- 이미 비슷한 내용 있으면 → 제외 또는 기존 항목 업데이트
-- 기존 패턴과 **모순** → 사용자에게 AskUserQuestion으로 확인 ("이전엔 A였는데 이번엔 B, 어느 쪽?")
-
-**2-A-6.** 모순이 아닌 항목은 **자동 저장**. 해당 카테고리 파일에 추가. 형식:
+**(1) 판단 기록:**
+- cwd 기반 프로젝트 매핑 (session-start.mjs의 PROJECT_MAP 참조)
+- `~/hq/10_projects/{project}/decisions.md`에 추가:
 ```markdown
 ## {title}
-{content} ({날짜})
+- 맥락: {context}
+- 선택지: {options}
+- 결정: {decision}
+- 버린 이유: {rejected_reason}
+- 일반화: {generalization}
+({날짜})
 ```
+- 서비스 하위 폴더가 매칭되면 해당 서비스에 저장
+
+**(2) conventions 후보:**
+- 기존 `~/.claude/rules/conventions.md`를 Read로 읽기
+- 이미 비슷한 내용 있으면 → 제외
+- 기존 패턴과 **모순** → AskUserQuestion으로 확인
+- 모순 아닌 항목은 conventions.md에 자동 저장
+
 중복 금지.
 
 ### 2-B. Active 파일 기반 학습 (결정사항/컨벤션 추출)
 
 active 파일이 있을 때 실행.
 
-**2-B-1.** active 파일에서 `## 컨벤션 변경` 섹션을 파싱.
+**2-B-1.** active 파일에서 다음 섹션을 파싱:
+- `## 결정사항` — 구현 중 내린 기술 판단과 근거
+- `## 컨벤션 변경` — 프로젝트 규칙의 변경/추가
+- `## 스펙 변경` — 구현 중 스펙이 달라진 부분과 사유
 
 **2-B-2.** 섹션이 없거나 비어있으면 스킵.
 
 **2-B-3.** Agent로 서브에이전트 실행. 프롬프트:
-- 입력: 파싱된 컨벤션 변경 항목들
-- 기존 conventions.md (Read로 읽기)
+- 입력: 파싱된 결정사항/컨벤션 변경/스펙 변경 항목들
+- 기존 rules 파일들 (Read로 읽기: decisions.md, conventions.md, system.md)
 - 지시:
-  - conventions만 추출 (맥락 무관 규칙)
+  - 분류 기준: decisions(맥락 의존적 판단) / conventions(맥락 무관 규칙) / system(운영 방법)
   - 기존 rules와 중복 체크 — 이미 있는 규칙이면 제외
-  - 일회성은 제외 — 반복 적용 가능한 것만
-- 출력: JSON 배열 `[{ title: string, content: string }]`
+  - 일회성 결정은 제외 — 반복 적용 가능한 것만
+- 출력: JSON 배열 `[{ title: string, content: string, category: string }]`
 - 빈 배열 가능
-- 결정사항/스펙 변경은 /recap이 담당 → 여기서 추출하지 않음
 
-**2-B-4.** 결과 있으면 conventions.md에 **자동 저장**. 기존 패턴과 모순 시만 AskUserQuestion.
+**2-B-4.** 결과 있으면 **자동 저장**. 기존 패턴과 모순 시만 AskUserQuestion.
 
 ### 2-C. 암묵적 선호 포착
 
