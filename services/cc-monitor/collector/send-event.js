@@ -1,0 +1,106 @@
+#!/usr/bin/env node
+/**
+ * Claude Code hook에서 호출되는 이벤트 수집 스크립트.
+ * stdin으로 JSON 이벤트를 받아 cc-monitor API 서버로 전송.
+ *
+ * 사용법:
+ *   echo '{"session_id":"...","hook_event_name":"..."}' | node send-event.js
+ *
+ * 환경변수:
+ *   CC_MONITOR_URL  — API 서버 URL (기본: http://localhost:4000)
+ *   CC_MONITOR_USER — 사용자 식별자 (기본: hostname:username)
+ */
+import { hostname, userInfo } from "node:os";
+import {
+  isServerRequired,
+  incrementCounter,
+  readAndClearCounters,
+} from "./tool-counter.js";
+import { parseTranscriptUsage, parseSessionName } from "./transcript-reader.js";
+import { collectConfig } from "./config-reader.js";
+
+const API_URL = process.env.CC_MONITOR_URL ?? "https://cc-monitor.vercel.app";
+const USER_ID =
+  process.env.CC_MONITOR_USER ?? `${hostname()}:${userInfo().username}`;
+
+async function main() {
+  const chunks = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(chunk);
+  }
+
+  const raw = Buffer.concat(chunks).toString("utf-8").trim();
+  if (!raw) process.exit(0);
+
+  let event;
+  try {
+    event = JSON.parse(raw);
+  } catch {
+    process.exit(0);
+  }
+
+  const hookEvent = event.hook_event_name;
+  const toolName = event.tool_name;
+  const sessionId = event.session_id;
+  const cwd = event.cwd;
+
+  // ClaudeProbe (health check) 세션 무시
+  if (cwd?.includes("ClaudeProbe")) process.exit(0);
+
+  // PostToolUse: 일반 도구는 로컬 카운터, 특수 도구만 서버 전송
+  if (hookEvent === "PostToolUse" && toolName) {
+    if (!isServerRequired(toolName)) {
+      if (sessionId) incrementCounter(sessionId, toolName);
+      process.exit(0);
+    }
+  }
+
+  // SessionStart 시 로컬 설정 스냅샷 첨부
+  if (hookEvent === "SessionStart") {
+    const eventCwd = event.cwd;
+    if (eventCwd) {
+      event.config_snapshot = collectConfig(eventCwd);
+    }
+  }
+
+  // Stop/SessionEnd 시 카운터 요약 첨부
+  if (
+    (hookEvent === "Stop" || hookEvent === "SessionEnd") &&
+    sessionId
+  ) {
+    const summary = readAndClearCounters(sessionId);
+    if (summary) {
+      event.tool_summary = summary;
+    }
+
+    const transcriptPath = event.transcript_path;
+    if (transcriptPath) {
+      const [usage, sessionName] = await Promise.all([
+        parseTranscriptUsage(transcriptPath),
+        parseSessionName(transcriptPath),
+      ]);
+      if (usage) {
+        event.transcript_usage = usage;
+      }
+      if (sessionName) {
+        event.session_name = sessionName;
+      }
+    }
+  }
+
+  try {
+    await fetch(`${API_URL}/api/events`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CC-User": USER_ID,
+      },
+      body: JSON.stringify(event),
+      signal: AbortSignal.timeout(4000),
+    });
+  } catch {
+    // 서버 다운 시 silent fail — Claude Code 블로킹 방지
+  }
+}
+
+main();
