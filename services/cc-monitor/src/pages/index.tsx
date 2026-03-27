@@ -7,6 +7,7 @@ import { getUserSummaries, getTokenUsageSummary } from "@/lib/queries";
 import { analyticsQueryOptions } from "@/lib/query-options";
 import { CostTracking } from "@/components/CostTracking";
 import { HistoryTab } from "@/components/HistoryTab";
+import { HarnessTab } from "@/components/HarnessTab";
 import { TabNav } from "@/components/TabNav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,11 +19,12 @@ interface DashboardData {
   tokenUsage: TokenUsageSummary;
 }
 
-const TAB_IDS = ["overview", "history"] as const;
+const TAB_IDS = ["overview", "history", "harness"] as const;
 
 const TABS = [
   { id: "overview", label: "Overview" },
   { id: "history", label: "History" },
+  { id: "harness", label: "Harness" },
 ];
 
 const DAYS_OPTIONS = [
@@ -155,6 +157,8 @@ export default function Dashboard({
       )}
 
       {activeTab === "history" && <HistoryTab filterParams={filterParams} />}
+
+      {activeTab === "harness" && <HarnessTab days={selectedDays || undefined} />}
     </div>
   );
 }

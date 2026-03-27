@@ -4,6 +4,8 @@ import {
   fetchAnalytics,
   fetchCost,
   fetchSessionEvents,
+  fetchHarness,
+  fetchAdoption,
 } from "./remotes";
 
 export interface GlobalFilterParams {
@@ -43,6 +45,27 @@ export const costQueryOptions = (params: { userId?: string; days?: number } = {}
     queryFn: () => fetchCost(params),
     staleTime: 30_000,
     refetchInterval: 30_000,
+    placeholderData: keepPreviousData,
+  });
+
+// ── harness ──
+
+export const harnessQueryOptions = (params: { days?: number } = {}) =>
+  queryOptions({
+    queryKey: ["harness", params],
+    queryFn: () => fetchHarness(params),
+    staleTime: 30_000,
+    refetchInterval: 30_000,
+    placeholderData: keepPreviousData,
+  });
+
+// ── adoption ──
+
+export const adoptionQueryOptions = (params: { period?: string; days?: number } = {}) =>
+  queryOptions({
+    queryKey: ["adoption", params],
+    queryFn: () => fetchAdoption(params),
+    staleTime: 30_000,
     placeholderData: keepPreviousData,
   });
 

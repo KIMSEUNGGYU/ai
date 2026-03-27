@@ -83,6 +83,56 @@ export async function fetchCost(params: FetchCostParams = {}): Promise<CostRespo
   return apiClient.get("cost", { searchParams }).json<CostResponse>();
 }
 
+// ── GET /api/harness ──
+
+export interface FetchHarnessParams {
+  days?: number;
+}
+
+export interface HarnessResponse {
+  skills: {
+    skills: Array<{ name: string; count: number }>;
+    daily: Array<{ date: string; skill: string; count: number }>;
+  };
+  conventions: {
+    conventions: Array<{ name: string; count: number; totalBytes: number; topKeywords: string[] }>;
+    daily: Array<{ date: string; convention: string; count: number }>;
+  };
+  config: {
+    timeline: Array<{ date: string; rulesCount: number; hooksCount: number; mcpCount: number; claudeMdCount: number }>;
+    changes: Array<{ date: string; type: "added" | "removed"; category: string; item: string }>;
+  };
+}
+
+export async function fetchHarness(params: FetchHarnessParams = {}): Promise<HarnessResponse> {
+  const searchParams = cleanParams({ days: params.days });
+  return apiClient.get("harness", { searchParams }).json<HarnessResponse>();
+}
+
+// ── /api/adoption ──
+
+export interface AdoptionTimelineEntry {
+  id: number;
+  snapshot_date: string;
+  period: string;
+  active_users: number;
+  total_sessions: number;
+  total_users: number;
+  avg_session_duration_min: number;
+  avg_sessions_per_user: number;
+  avg_turns_per_session: number;
+  top_tools_json: string;
+}
+
+export async function fetchAdoption(params: { period?: string; days?: number } = {}): Promise<{ timeline: AdoptionTimelineEntry[] }> {
+  const searchParams = cleanParams({ period: params.period, days: params.days });
+  return apiClient.get("adoption", { searchParams }).json<{ timeline: AdoptionTimelineEntry[] }>();
+}
+
+export async function generateAdoptionSnapshot(period: "day" | "week" = "day"): Promise<AdoptionTimelineEntry> {
+  return apiClient.post("adoption", { json: { period } }).json<AdoptionTimelineEntry>();
+}
+
 // ── GET /api/sessions/[id]/events ──
 
 export async function fetchSessionEvents(sessionId: string): Promise<StoredEvent[]> {
