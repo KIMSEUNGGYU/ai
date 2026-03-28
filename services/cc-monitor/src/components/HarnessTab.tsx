@@ -412,6 +412,67 @@ function ConfigChangesTable({ changes }: { changes: HarnessResponse["config"]["c
   );
 }
 
+// ── 데이터 복사 ──
+
+function formatDataForCopy(data: HarnessResponse): string {
+  const lines: string[] = ["## Harness Data (최근 조회 기준)", ""];
+
+  // Skills
+  lines.push("### 스킬 사용");
+  if (data.skills.skills.length === 0) {
+    lines.push("- 데이터 없음");
+  } else {
+    for (const s of data.skills.skills) {
+      lines.push(`- ${s.name}: ${s.count}회`);
+    }
+  }
+  lines.push("");
+
+  // Conventions
+  lines.push("### 컨벤션 주입");
+  if (data.conventions.conventions.length === 0) {
+    lines.push("- 데이터 없음");
+  } else {
+    for (const c of data.conventions.conventions) {
+      lines.push(`- ${c.name}: ${c.count}회, ${c.totalBytes}B${c.topKeywords.length > 0 ? ` (keywords: ${c.topKeywords.join(", ")})` : ""}`);
+    }
+  }
+  lines.push("");
+
+  // Config
+  lines.push("### Config 변화");
+  if (data.config.timeline.length > 0) {
+    const latest = data.config.timeline[data.config.timeline.length - 1];
+    lines.push(`- 현재: rules=${latest.rulesCount}, hooks=${latest.hooksCount}, mcp=${latest.mcpCount}, claude_md=${latest.claudeMdCount}`);
+  }
+  if (data.config.changes.length > 0) {
+    const recent = data.config.changes.slice(-10);
+    lines.push("- 최근 변경:");
+    for (const ch of recent) {
+      lines.push(`  - ${ch.date} ${ch.type === "added" ? "+" : "-"} ${ch.category}: ${ch.item}`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
+function CopyDataButton({ data }: { data: HarnessResponse }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    const text = formatDataForCopy(data);
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <Button size="sm" variant="outline" onClick={handleCopy}>
+      {copied ? "Copied!" : "데이터 복사"}
+    </Button>
+  );
+}
+
 // ── 메인 컴포넌트 ──
 
 export function HarnessTab({ days = 30 }: HarnessTabProps) {
@@ -424,6 +485,11 @@ export function HarnessTab({ days = 30 }: HarnessTabProps) {
 
       {data && (
         <>
+          {/* 상단 액션 */}
+          <div className="flex items-center justify-end">
+            <CopyDataButton data={data} />
+          </div>
+
           {/* 섹션 1: Skills */}
           <section className={isFetching ? "opacity-70 transition-opacity" : ""}>
             <h2 className="text-[13px] font-semibold tracking-wide text-muted-foreground mb-3 uppercase">Skill Usage</h2>
