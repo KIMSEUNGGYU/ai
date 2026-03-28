@@ -18,7 +18,6 @@ plans/
 plugins/
 homunculus/
 oh-my-claude/
-agents/
 .DS_Store
 .claude/
 .gyu/

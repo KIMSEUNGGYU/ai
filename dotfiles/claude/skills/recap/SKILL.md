@@ -1,6 +1,6 @@
 ---
 description: "일일 리캡 — 오늘 한 것 요약 + 세컨드 브레인 데이터 축적. 매일 오전 실행 권장. '어제 뭐 했지?', '하루 정리', '일일 회고', '리캡', 'recap' 등으로도 트리거."
-allowed-tools: Bash, Read, Write, Glob, Grep
+allowed-tools: Bash, Read, Write, Glob, Grep, Agent
 argument-description: '[YYYY-MM-DD] 분석할 날짜 (기본: 어제)'
 ---
 
@@ -11,6 +11,8 @@ argument-description: '[YYYY-MM-DD] 분석할 날짜 (기본: 어제)'
 
 1. **사람용**: 어제(또는 지정일) 뭘 했는지 요약
 2. **AI용**: 세컨드 브레인 구축 — 판단 패턴, 사고 흐름, 관심사 축적
+3. **학습용**: 배운 것 / 몰랐던 것 추출
+4. **이력서용**: 이력서에 쓸만한 성과 탐지
 
 ## 실행 순서
 
@@ -18,7 +20,7 @@ argument-description: '[YYYY-MM-DD] 분석할 날짜 (기본: 어제)'
 
 - 인자가 있으면 해당 날짜 사용
 - 없으면 어제 날짜 사용 (`date -v-1d +%Y-%m-%d`)
-- 이미 `~/hq/00_daily/{date}-recap.md`가 존재하면 덮어쓸지 확인
+- 이미 `~/hq/00_daily/{date}/recap.md`가 존재하면 덮어쓸지 확인
 
 ### Phase 2: Transcript 추출
 
@@ -28,104 +30,64 @@ argument-description: '[YYYY-MM-DD] 분석할 날짜 (기본: 어제)'
 node scripts/extract-transcripts.mjs {YYYY-MM-DD}
 ```
 
+추출된 transcript를 변수에 저장해둔다 (Phase 4에서 각 agent에 전달).
+
 ### Phase 3: 과거 Recap 로드
 
 최근 7일간의 recap 파일을 읽는다:
 
 ```bash
-ls -t ~/hq/00_daily/*-recap.md 2>/dev/null | head -7
+ls -dt ~/hq/00_daily/*/recap.md 2>/dev/null | head -7
 ```
 
 파일이 있으면 Read로 읽어서 **반복 주제, 이전 미해결 항목**을 파악한다.
 
-### Phase 4: 분석
+### Phase 4: 분석 — 3개 Agent 병렬 실행
 
-추출된 transcript를 아래 관점으로 분석한다.
+추출된 transcript를 3개 agent에 **동시에** 전달한다. 반드시 병렬로 실행할 것.
 
-#### 4-1. 오늘 한 것 (사람용)
+#### Agent 1: daily-recap
 
-- 프로젝트별로 그룹핑
-- 시간대 포함
-- 핵심 작업만 간결하게
-
-#### 4-2. 판단 기록 (AI 세컨드 브레인용)
-
-대화에서 **의사결정이 발생한 순간**을 찾아 기록한다.
-
-- 사용자가 선택지 중 하나를 고른 순간
-- AI 제안을 거부/교정한 순간
-- 방향을 전환한 순간
-
-각 판단 기록의 형식:
-
-```
-#### {판단 제목}
-- 맥락: (무엇을 하려다 어떤 갈림길을 만났는지)
-- 선택지: A — 장단점 | B — 장단점
-- 결정:
-- 버린 이유: (왜 다른 선택지를 안 했는지 — 이게 핵심)
-- 일반화: 반복 가능 / 일회성 + 적용 패턴
-```
-
-**판단 기록 품질 기준:**
-
-- "XXX를 했다"는 판단이 아니다. "A vs B에서 A를 골랐다"가 판단이다.
-- 사소한 결정(파일명, 변수명 등)은 제외. 아키텍처, 방향, 설계 수준의 판단만.
-- 버린 이유가 없으면 판단 기록으로서 가치가 없다.
-
-#### 4-3. 관심사
-
-- 깊게 파고든 주제 vs 간단히 넘긴 주제
-- 여러 세션에 걸쳐 반복된 주제
-- 과거 recap과 비교하여 지속되는 관심사
-
-#### 4-4. 미해결
-
-- 결론 없이 끝난 논의
-- "나중에 하자" 한 것
+- transcript + 과거 7일 recap을 전달
+- "오늘 한 것, 판단 기록, 관심사, 미해결 과제"를 정리
 - 과거 recap의 미해결 중 해결된 것이 있으면 표시
 
-### Phase 5: 저장
+#### Agent 2: learning-extractor
 
-아래 형식으로 `~/hq/00_daily/{date}-recap.md`에 저장한다.
+- transcript를 전달
+- "기술적 학습, 도메인 학습, 실수에서 배운 것, 재확인한 것"을 추출
+- **파일 저장하지 않고 결과만 반환하도록 지시**
+
+#### Agent 3: resume-detector
+
+- transcript를 전달
+- "이력서에 쓸만한 성과"를 상/중/하 등급으로 탐지
+- 현재 이력서 내용도 함께 전달하면 대조 가능 (선택)
+- **파일 저장하지 않고 결과만 반환하도록 지시**
+
+### Phase 5: 저장 — 파일 분리
+
+각 agent의 결과를 **별도 파일**로 저장한다. agent 결과를 요약/축소하지 않고 그대로 저장.
+
+```
+~/hq/00_daily/{date}/
+├── recap.md       ← daily-recap 결과
+├── learning.md    ← learning-extractor 결과
+└── resume.md      ← resume-detector 결과
+```
+
+각 파일의 frontmatter:
 
 ```markdown
 ---
-date: { YYYY-MM-DD }
-projects: [{ 프로젝트 목록 }]
+date: {YYYY-MM-DD}
+type: {recap | learning | resume}
+projects: [{프로젝트 목록}]
 tags: [recap]
 ---
-
-# {YYYY-MM-DD}
-
-## 오늘 한 것
-
-### {프로젝트 경로} ({시간대})
-
-- 작업 내용
-
----
-
-## 세컨드 브레인
-
-### 판단 기록
-
-#### {판단 제목}
-
-- 맥락:
-- 선택지: A — ... | B — ...
-- 결정:
-- 버린 이유:
-- 일반화:
-
-### 관심사
-
-- 주제 — 설명
-
-### 미해결
-
-- 항목
 ```
+
+**중요**: learning과 resume 파일은 내용이 없을 수 있음 (루틴 작업만 한 날). 내용이 없으면 파일을 생성하지 않는다.
 
 ### Phase 6: 완료 보고
 
@@ -133,5 +95,7 @@ tags: [recap]
 
 - 분석한 세션 수
 - 추출한 판단 기록 수
+- 새로 배운 것 수 (learning-extractor)
+- 이력서 성과 탐지 수 (resume-detector) — 있으면 상/중/하 개수
 - 새로 발견된 미해결 항목
 - 과거 대비 해결된 항목 (있으면)
