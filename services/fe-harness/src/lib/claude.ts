@@ -1,33 +1,29 @@
-import { execSync } from 'node:child_process';
+import { query } from '@anthropic-ai/claude-agent-sdk';
 
 interface ClaudeOptions {
   model?: 'opus' | 'sonnet';
-  timeout?: number;
-  cwd?: string;
+  systemPrompt?: string;
 }
 
-export function callClaude(prompt: string, options: ClaudeOptions = {}): string {
-  const { model = 'sonnet', timeout = 300000, cwd } = options;
+export async function callClaude(prompt: string, options: ClaudeOptions = {}): Promise<string> {
+  const { model = 'sonnet', systemPrompt } = options;
 
-  const escapedPrompt = prompt.replace(/'/g, "'\\''");
+  let result = '';
 
-  const result = execSync(
-    `claude -p --model ${model} '${escapedPrompt}'`,
-    { timeout, cwd, stdio: 'pipe', maxBuffer: 10 * 1024 * 1024 },
-  );
+  for await (const message of query({
+    prompt,
+    options: {
+      model: model as 'opus' | 'sonnet',
+      permissionMode: 'bypassPermissions' as const,
+      allowDangerouslySkipPermissions: true,
+      ...(systemPrompt ? { systemPrompt } : {}),
+    },
+  })) {
+    const msg = message as Record<string, unknown>;
+    if (msg.type === 'result') {
+      result = (msg.result as string) ?? '';
+    }
+  }
 
-  return result.toString('utf-8').trim();
-}
-
-export function callClaudeWithFiles(
-  prompt: string,
-  files: Record<string, string>,
-  options: ClaudeOptions = {},
-): string {
-  const fileContext = Object.entries(files)
-    .map(([name, content]) => `--- ${name} ---\n${content}\n--- end ${name} ---`)
-    .join('\n\n');
-
-  const fullPrompt = `${fileContext}\n\n${prompt}`;
-  return callClaude(fullPrompt, options);
+  return result.trim();
 }

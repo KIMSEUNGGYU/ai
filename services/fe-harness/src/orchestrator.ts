@@ -59,7 +59,7 @@ export async function orchestrate(options: OrchestrateOptions): Promise<void> {
   // Phase 1: Planning
   console.log('--- Phase 1: Planning ---');
   const domainContext = files.read(files.domainContextPath);
-  const spec = runPlanner(input, targetDir, domainContext, config);
+  const spec = await runPlanner(input, targetDir, domainContext, config);
   files.write(files.specPath, spec);
   console.log(`spec 생성: ${files.specPath}`);
 
@@ -87,7 +87,7 @@ contract 형식:
 - 참조할 기존 코드`;
 
     // TODO: Planner 초안 → Evaluator 검토 루프
-    const contract = runGenerator(spec, contractPrompt, null, '', config, targetDir);
+    const contract = await runGenerator(spec, contractPrompt, null, '', config);
     files.write(files.contractPath(sprint.number), contract);
 
     // 2-2 ~ 2-4: Generate + Gate + Eval 루프
@@ -101,7 +101,7 @@ contract 형식:
       console.log(`  Round ${round}:`);
 
       // Generate
-      const code = runGenerator(spec, contract, lastFeedback, '', config, targetDir);
+      const code = await runGenerator(spec, contract, lastFeedback, '', config);
       console.log(`    Generator 완료`);
 
       // Static Gate
@@ -118,7 +118,7 @@ contract 형식:
       console.log(`    Static Gate 통과`);
 
       // Evaluate
-      const evalOutput = runEvaluator(contract, code, '', config, targetDir);
+      const evalOutput = await runEvaluator(contract, code, '', config);
       const evalResult = parseEvalLog(evalOutput);
       evalHistory.push(evalResult);
 

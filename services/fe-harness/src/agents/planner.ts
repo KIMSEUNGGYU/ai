@@ -2,12 +2,12 @@ import { readFileSync } from 'node:fs';
 import { callClaude } from '../lib/claude.js';
 import type { HarnessConfig } from '../types.js';
 
-export function runPlanner(
+export async function runPlanner(
   input: string,
   targetDir: string,
   domainContext: string | null,
   config: HarnessConfig,
-): string {
+): Promise<string> {
   const conventionContents = config.conventions
     .map(path => {
       try { return `--- ${path} ---\n${readFileSync(path, 'utf-8')}\n--- end ---`; }
@@ -16,7 +16,7 @@ export function runPlanner(
     .filter(Boolean)
     .join('\n\n');
 
-  const prompt = `너는 FE 하네스의 Planner다.
+  const systemPrompt = `너는 FE 하네스의 Planner다.
 
 ## 역할
 사용자의 요구사항을 전체 제품 스펙으로 확장하고 Sprint으로 분해.
@@ -30,6 +30,11 @@ ${conventionContents}
 
 ## 도메인 컨텍스트
 ${domainContext ?? '(없음 — 이 도메인의 첫 페이지)'}
+
+## 작업 디렉토리
+${targetDir}`;
+
+  const prompt = `아래 요구사항으로 스펙을 작성해.
 
 ## 요구사항
 ${input}
@@ -51,5 +56,5 @@ ${input}
 
 스펙만 출력. 다른 말 하지 마.`;
 
-  return callClaude(prompt, { model: 'opus', cwd: targetDir });
+  return callClaude(prompt, { model: 'opus', systemPrompt });
 }

@@ -2,13 +2,12 @@ import { readFileSync } from 'node:fs';
 import { callClaude } from '../lib/claude.js';
 import type { HarnessConfig } from '../types.js';
 
-export function runEvaluator(
+export async function runEvaluator(
   contract: string,
   generatedCode: string,
   referenceCode: string,
   config: HarnessConfig,
-  cwd: string,
-): string {
+): Promise<string> {
   const conventionContents = config.conventions
     .map(path => {
       try { return `--- ${path} ---\n${readFileSync(path, 'utf-8')}\n--- end ---`; }
@@ -19,13 +18,19 @@ export function runEvaluator(
 
   const { scoring } = config;
 
-  const prompt = `너는 FE 하네스의 Evaluator다.
+  const systemPrompt = `너는 FE 하네스의 Evaluator다.
 Generator의 사고 과정을 모른다. 코드와 contract만 보고 판단한다.
 
 ## 컨벤션
 ${conventionContents}
 
-## Contract (평가 기준)
+## 점수 산출
+품질 점수 = (Contract 통과율 × ${scoring.contractWeight}) + (열린 평가 × ${scoring.openEvalWeight}) + (Contrarian × ${scoring.contrarianWeight})
+
+## 통과 판정
+Sprint 통과 = Contract 전부 pass AND 품질 점수 ≥ ${scoring.qualityThreshold}`;
+
+  const prompt = `## Contract (평가 기준)
 ${contract}
 
 ## 생성된 코드
@@ -49,12 +54,6 @@ contract의 "코드 품질" 항목을 하나씩 검증. 각 항목에 pass/fail 
 - "이 코드의 가장 약한 점은?"
 - "6개월 후 문제될 부분은?"
 약점에 심각도: 중간(0.6), 경미(0.8)
-
-## 점수 산출
-품질 점수 = (Contract 통과율 × ${scoring.contractWeight}) + (열린 평가 × ${scoring.openEvalWeight}) + (Contrarian × ${scoring.contrarianWeight})
-
-## 통과 판정
-Sprint 통과 = Contract 전부 pass AND 품질 점수 ≥ ${scoring.qualityThreshold}
 
 ## 출력 형식 (반드시 이 형식으로)
 
@@ -88,5 +87,5 @@ FAIL이면 추가로 feedback도 출력:
 ## 수정 필요
 ## 검토 권장`;
 
-  return callClaude(prompt, { model: 'opus', cwd });
+  return callClaude(prompt, { model: 'opus', systemPrompt });
 }
