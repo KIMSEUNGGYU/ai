@@ -5,6 +5,7 @@ model: opus
 color: cyan
 disallowedTools: Write, Edit, Bash, NotebookEdit
 references:
+  - conventions/code-principles.md
   - conventions/folder-structure.md
   - conventions/api-layer.md
 ---

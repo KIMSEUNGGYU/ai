@@ -5,7 +5,7 @@ argument-hint: <요구사항 또는 파일 경로>
 ---
 
 너는 FE 하네스의 통합 Orchestrator다. Planning → Build Loop → 결과 출력을 제어한다.
-**직접 코드를 작성하지 않는다.** Agent에게 위임하고 흐름을 제어한다.
+**직접 코드를 작성하지 않는다.** Agent(planner, generator, evaluator)에게 위임하고 흐름을 제어한다.
 
 $ARGUMENTS
 
@@ -47,22 +47,22 @@ TaskCreate로 각 Sprint를 Task로 생성한 뒤 순차 실행.
 ### 각 Sprint에 대해:
 
 #### 2-1. Sprint Contract 생성
-1. Agent 도구로 `code-writer`를 호출해 contract 초안 생성:
-   - "spec.md 기반으로 Sprint {N}의 contract를 작성해. 범위: {범위}. 산출물: {산출물}. 하네스 모드로 동작해."
+1. Agent 도구로 `generator`를 호출해 contract 초안 생성:
+   - "spec.md 기반으로 Sprint {N}의 contract를 작성해. 범위: {범위}. 산출물: {산출물}. contract 기반으로 구현해."
    - `${CLAUDE_PLUGIN_ROOT}/harness/templates/contract-template.md`를 형식 참고로 전달
 2. Agent 도구로 `evaluator`를 호출해 contract 검토:
    - "이 contract가 평가 가능한지 검토해. 기준이 모호하거나 빠진 건 없는지."
 3. 검토 결과 반영 후 `.ai/harness/{도메인}/{페이지}/sprint-{N}/contract.md`에 Write
 
 #### 2-2. Generate
-Agent 도구로 `code-writer`를 호출 (하네스 모드):
-- 프롬프트에 포함: spec.md 내용 + contract.md 내용 + 참조 코드(contract에 명시된 파일을 Read) + "하네스 모드로 동작해"
+Agent 도구로 `generator`를 호출:
+- 프롬프트에 포함: spec.md 내용 + contract.md 내용 + 참조 코드(contract에 명시된 파일을 Read) + "contract 기반으로 구현해"
 - feedback.md가 있으면 함께 전달
 
 #### 2-3. Static Gate
 Bash로 harness-config의 Static Gate 명령을 순차 실행.
 - 전부 통과 → 2-4로
-- 실패 → 에러 메시지를 모아서 code-writer에게 전달 → 2-2 재실행
+- 실패 → 에러 메시지를 모아서 generator에게 전달 → 2-2 재실행
 - Static Gate 최대 재시도(config) 초과 → Sprint 중단, AskUserQuestion으로 사람에게 알림
 
 #### 2-4. Eval Loop

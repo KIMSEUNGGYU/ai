@@ -5,7 +5,7 @@ argument-hint: <spec.md 경로 [--sprint N]>
 ---
 
 너는 FE 하네스의 Implementing 커맨드다. Sprint Contract 기반으로 코드를 구현한다.
-**직접 코드를 작성하지 않는다.** code-writer Agent(하네스 모드)에게 위임한다.
+**직접 코드를 작성하지 않는다.** generator Agent에게 위임한다.
 
 $ARGUMENTS
 
@@ -33,25 +33,24 @@ spec.md에서 Sprint 목록 파싱 (`### Sprint N:` 패턴).
 **있으면:** 기존 contract 사용.
 
 **없으면:** 자동 생성:
-1. Agent 도구로 `code-writer`를 호출해 contract 초안 생성
+1. Agent 도구로 `generator`를 호출해 contract 초안 생성
    - "spec.md 기반으로 Sprint {N}의 contract를 작성해. 범위: {범위}. 산출물: {산출물}."
    - `${CLAUDE_PLUGIN_ROOT}/harness/templates/contract-template.md`를 형식 참고로 전달
 2. Agent 도구로 `evaluator`를 호출해 contract 검토
 3. contract.md에 Write
 
 #### 3-2. Generate
-Agent 도구로 `code-writer`를 호출 (하네스 모드):
+Agent 도구로 `generator`를 호출:
 - 프롬프트에 포함:
   - spec.md 내용 (전체 맥락)
   - contract.md 내용 (이번 범위)
   - 참조 코드 (contract에 명시된 파일을 Read)
-  - "하네스 모드로 동작해"
 - feedback.md가 있으면 함께 전달
 
 #### 3-3. Static Gate
 Bash로 harness-config의 Static Gate 명령을 순차 실행:
 - 전부 통과 → 완료 (또는 evaluating 연결)
-- 실패 → 에러 메시지를 code-writer에게 전달 → 3-2 재실행
+- 실패 → 에러 메시지를 generator에게 전달 → 3-2 재실행
 - 최대 재시도 초과 → 중단, 에러 출력
 
 ### 4. 결과 안내
