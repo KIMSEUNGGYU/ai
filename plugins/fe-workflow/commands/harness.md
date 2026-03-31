@@ -47,9 +47,10 @@ TaskCreate로 각 Sprint를 Task로 생성한 뒤 순차 실행.
 ### 각 Sprint에 대해:
 
 #### 2-1. Sprint Contract 생성
-1. Agent 도구로 `generator`를 호출해 contract 초안 생성:
-   - "spec.md 기반으로 Sprint {N}의 contract를 작성해. 범위: {범위}. 산출물: {산출물}. contract 기반으로 구현해."
+1. Agent 도구로 `planner`를 호출해 contract 초안 생성:
+   - "spec.md의 Sprint {N}에 대한 contract를 작성해. 범위: {범위}. 산출물: {산출물}."
    - `${CLAUDE_PLUGIN_ROOT}/harness/templates/contract-template.md`를 형식 참고로 전달
+   - spec.md 전체 내용도 함께 전달
 2. Agent 도구로 `evaluator`를 호출해 contract 검토:
    - "이 contract가 평가 가능한지 검토해. 기준이 모호하거나 빠진 건 없는지."
 3. 검토 결과 반영 후 `.ai/harness/{도메인}/{페이지}/sprint-{N}/contract.md`에 Write

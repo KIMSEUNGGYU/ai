@@ -33,9 +33,10 @@ spec.md에서 Sprint 목록 파싱 (`### Sprint N:` 패턴).
 **있으면:** 기존 contract 사용.
 
 **없으면:** 자동 생성:
-1. Agent 도구로 `generator`를 호출해 contract 초안 생성
-   - "spec.md 기반으로 Sprint {N}의 contract를 작성해. 범위: {범위}. 산출물: {산출물}."
+1. Agent 도구로 `planner`를 호출해 contract 초안 생성
+   - "spec.md의 Sprint {N}에 대한 contract를 작성해. 범위: {범위}. 산출물: {산출물}."
    - `${CLAUDE_PLUGIN_ROOT}/harness/templates/contract-template.md`를 형식 참고로 전달
+   - spec.md 전체 내용도 함께 전달
 2. Agent 도구로 `evaluator`를 호출해 contract 검토
 3. contract.md에 Write
 
