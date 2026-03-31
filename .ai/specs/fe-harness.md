@@ -176,7 +176,7 @@ Generator와 Evaluator가 코드 작성 전에 완료 기준 합의.
 "뭘 만드는지"와 "뭘 기준으로 평가하는지"를 명확히 해서 양쪽 모두 기준이 같게.
 
 ### 생성 과정
-Generator가 초안 → Evaluator가 검토/보완 → 합의 → contract.md
+Planner가 초안 → Evaluator가 검토/보완 → 합의 → contract.md
 
 ### 출력: contract.md
 
