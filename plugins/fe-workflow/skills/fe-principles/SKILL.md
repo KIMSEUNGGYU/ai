@@ -13,12 +13,14 @@ description: >
 
 | 시점 | 액션 |
 |------|------|
-| **코드 구현** | `/fe:implement` 실행 — code-writer + convention-checker 자동 검증 |
-| **코드 리뷰** | `/fe:review` 실행 — 컨벤션 기반 리뷰 보고서 |
+| **전체 자동화** | `/fe:harness` 실행 — Planning → Build Loop → Summary |
+| **스펙 생성** | `/fe:planning` 실행 — 소크라테스식 질문 + 모호성 체크 |
+| **코드 구현** | `/fe:implementing` 실행 — Contract 기반 구현 + Static Gate |
+| **코드 평가** | `/fe:evaluating` 실행 — Contract + 열린 평가 + Contrarian |
 
 ## 직접 코드 작성 시
 
-`/fe:implement` 없이 직접 코드를 작성할 때는, **작업에 해당하는 references 파일을 먼저 읽어라.**
+`/fe:implementing` 없이 직접 코드를 작성할 때는, **작업에 해당하는 references 파일을 먼저 읽어라.**
 
 | 작업 유형 | 필수 읽기 |
 |-----------|-----------|

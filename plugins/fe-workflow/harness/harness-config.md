@@ -9,7 +9,7 @@
 ## Static Gate 명령
 - tsc --noEmit
 - biome check
-- harness-check.sh
+- ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/harness-check.sh
 
 ## 평가 설정
 - 품질 점수 임계값: 8.0
