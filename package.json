@@ -8,7 +8,8 @@
     "cc-monitor": "pnpm --filter cc-monitor run dev",
     "cc-monitor:deploy": "cd services/cc-monitor && npx vercel --prod",
     "cc-monitor:install-hooks": "pnpm --filter cc-monitor exec node scripts/install-hooks.ts",
-    "fe-agent": "unset CLAUDECODE && pnpm --filter fe-agent run start --"
+    "fe-agent": "unset CLAUDECODE && pnpm --filter fe-agent run start --",
+    "fe-harness": "unset CLAUDECODE && pnpm --filter @agents/fe-harness run start --"
   },
   "devDependencies": {
     "@types/node": "^25.3.3",
