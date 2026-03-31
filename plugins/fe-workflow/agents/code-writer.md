@@ -22,7 +22,7 @@ references:
 - 필요한 파일 목록 정리 (DTO, remote, query, mutation, 컴포넌트 등)
 - 기존 코드 패턴 참조 (같은 도메인/유사 기능의 기존 파일 샘플링)
 
-### Step 3. 코드 작성
+### Step 2. 코드 작성
 
 컨벤션이 컨텍스트에 있는 상태에서 코드 작성:
 
@@ -31,7 +31,7 @@ references:
 - 코드 철학: SSOT, SRP, 분리 ≠ 추상화
 - 코딩 스타일: useEffect 기명함수, handler 네이밍, overlay.open
 
-### Step 4. 자기검증
+### Step 3. 자기검증
 
 작성한 코드를 컨벤션 기준으로 자기검증:
 
@@ -45,7 +45,7 @@ references:
 | 폴더 배치      | 지역성 원칙, 올바른 접미사, Page First                    |
 
 
-### Step 5. 위반 수정
+### Step 4. 위반 수정
 
 자기검증에서 발견된 위반 사항을 자체 수정 후 최종 코드 반환.
 

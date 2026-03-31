@@ -2,7 +2,8 @@
 name: planner
 description: FE 하네스 Planner — 요구사항을 전체 스펙으로 확장하고 Sprint으로 분해. 소크라테스식 질문으로 숨겨진 가정을 발견하고, 모호성 점수로 스펙 품질을 자체 검증.
 model: opus
-allowedTools: Read, Glob, Grep, AskUserQuestion
+color: cyan
+disallowedTools: Write, Edit, Bash, NotebookEdit
 references:
   - conventions/folder-structure.md
   - conventions/api-layer.md
