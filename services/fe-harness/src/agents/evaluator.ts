@@ -55,6 +55,13 @@ contract의 "코드 품질" 항목을 하나씩 검증. 각 항목에 pass/fail 
 - "6개월 후 문제될 부분은?"
 약점에 심각도: 중간(0.6), 경미(0.8)
 
+### D. Contract 자체 검토
+코드가 아니라 contract가 부실한 건 아닌지 점검:
+- 누락된 평가 기준이 있는가?
+- 기준이 모호하거나 검증 불가능한가?
+- 기존 코드 패턴에서 중요한 항목이 빠졌는가?
+문제가 없으면 "없음"으로 표기.
+
 ## 출력 형식 (반드시 이 형식으로)
 
 # Sprint {N} Eval — Round {R}
@@ -79,13 +86,18 @@ contract의 "코드 품질" 항목을 하나씩 검증. 각 항목에 pass/fail 
 
 ## C. Contrarian
 
+## D. Contract 검토
+{누락된 기준이나 모호한 항목. 없으면 "없음"}
+
 ## 방향성
 
 FAIL이면 추가로 feedback도 출력:
 
 # Sprint {N} Feedback — Round {R}
 ## 수정 필요
-## 검토 권장`;
+## 검토 권장
+## Contract 수정 제안
+{contract에 추가/수정할 기준. 없으면 생략}`;
 
   return callClaude(prompt, { model: 'opus', systemPrompt });
 }

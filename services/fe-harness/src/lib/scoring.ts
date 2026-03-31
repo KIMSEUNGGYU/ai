@@ -35,6 +35,11 @@ export function parseEvalLog(content: string): EvalResult {
   const feedbackMatch = content.match(/# Sprint \d+ Feedback[\s\S]*/);
   const feedback = feedbackMatch?.[0];
 
+  // contract 수정 제안 파싱
+  const contractFeedbackMatch = content.match(/## Contract 수정 제안\n([\s\S]*?)(?=\n## |\n# |$)/);
+  const contractFeedback = contractFeedbackMatch?.[1]?.trim();
+  const hasContractFeedback = contractFeedback && !contractFeedback.includes('없음') && contractFeedback.length > 0;
+
   return {
     passed,
     qualityScore,
@@ -44,6 +49,7 @@ export function parseEvalLog(content: string): EvalResult {
     contractDetails,
     direction,
     feedback,
+    contractFeedback: hasContractFeedback ? contractFeedback : undefined,
   };
 }
 

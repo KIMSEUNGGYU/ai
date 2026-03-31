@@ -21,11 +21,14 @@
 - [x] Contract 초안 생성을 Generator → Planner로 변경
 - [x] Plugin 검증 2차 — Critical(_backup 이동), Major(README/SKILL), Minor(경로 명시)
 - [x] 기존 커맨드/에이전트 backup 처리 (.ai/backup/fe-workflow/)
-- [ ] Part 3: Service 구현 (fe-harness 독립 서비스)
+- [x] Part 3: Service 구현 (fe-harness 독립 서비스)
+- [x] SDK 마이그레이션: claude -p → @anthropic-ai/claude-agent-sdk
+- [x] 루프 개선: Evaluator D단계(Contract 검토) 추가 — Plugin + Service 양쪽
+- [x] 문서화: Claude 모델 호출 방식 비교 + decisions 기록
 - [ ] Part 4: 프롬프트 튜닝 + A/B 비교
 
 ## 현재 컨텍스트
-Part 2 완료 + 검증 2회 통과. 다음은 Part 3 (독립 서비스).
+Part 3 완료. SDK 마이그레이션 + 루프 개선(Ouroboros 영감) 적용. 다음은 Part 4 (실전 테스트 + 프롬프트 튜닝).
 
 ## 결정사항
 - 3-에이전트 구조: Planner(Opus) + Generator(Sonnet) + Evaluator(Opus) — GAN 영감, Self-Evaluation Bias 해결
@@ -49,6 +52,8 @@ Part 2 완료 + 검증 2회 통과. 다음은 Part 3 (독립 서비스).
 - Contract 초안 생성 = Planner — spec을 만든 에이전트가 contract도 가장 잘 정의. Generator(Sonnet, 구현 전용)는 contract 작성에 부적합
 - implementing 개별 호출 시 Eval Loop 미포함 — harness가 Build Loop를 소유. 개별 호출 시 /fe:evaluating을 따로 실행
 - _backup은 플러그인 밖으로 — .ai/backup/fe-workflow/. 플러그인 자동 탐색에 잡히지 않도록
+- 독립 서비스(B) 호출: claude -p 대신 Claude Agent SDK — 구독 과금 + 스트리밍/세션 resume. morning-brief와 동일 패턴
+- 루프 개선: Evaluator가 contract 자체 부실 여부도 판단 — Ouroboros의 Wonder/Reflect에서 영감. 코드가 아닌 기준이 문제일 때 감지
 
 ## 기각된 대안
 - Playwright 테스트 (지금 단계) → 기각: 정적 검증 + 코드 패턴 일관성으로 현재 문제의 대부분 해결 가능. 환경 셋업 복잡. 나중에 추가 가능

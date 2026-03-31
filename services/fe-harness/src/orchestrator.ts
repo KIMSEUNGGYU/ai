@@ -95,13 +95,14 @@ contract 형식:
     let round = 0;
     let lastFeedback: string | null = null;
     let sprintPassed = false;
+    let currentContract = contract;
 
     while (round < config.limits.evalLoopRetries) {
       round++;
       console.log(`  Round ${round}:`);
 
       // Generate
-      const code = await runGenerator(spec, contract, lastFeedback, '', config);
+      const code = await runGenerator(spec, currentContract, lastFeedback, '', config);
       console.log(`    Generator 완료`);
 
       // Static Gate
@@ -118,7 +119,7 @@ contract 형식:
       console.log(`    Static Gate 통과`);
 
       // Evaluate
-      const evalOutput = await runEvaluator(contract, code, '', config);
+      const evalOutput = await runEvaluator(currentContract, code, '', config);
       const evalResult = parseEvalLog(evalOutput);
       evalHistory.push(evalResult);
 
@@ -143,6 +144,13 @@ contract 형식:
       if (convergence.action === 'stop') {
         console.log(`    중단: ${convergence.reason}`);
         break;
+      }
+
+      // contract 수정 제안이 있으면 contract 업데이트
+      if (evalResult.contractFeedback) {
+        currentContract = `${currentContract}\n\n## 보완 기준 (Round ${round}에서 추가)\n${evalResult.contractFeedback}`;
+        files.write(files.contractPath(sprint.number), currentContract);
+        console.log(`    Contract 보완됨`);
       }
 
       // feedback 저장 + 다음 라운드 준비

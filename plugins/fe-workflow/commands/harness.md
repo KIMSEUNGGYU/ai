@@ -77,6 +77,7 @@ eval-log에서 "통과 판정: PASS" 또는 "FAIL"을 확인.
 - **PASS** → TaskUpdate 완료, 다음 Sprint
 - **FAIL**:
   - eval-log에서 feedback 섹션을 추출 → `feedback-r{R}.md`에 Write
+  - eval-log에 "Contract 수정 제안" 섹션이 있으면 → contract.md에 "보완 기준 (Round {R}에서 추가)" 섹션으로 append
   - 이전 라운드 eval-log와 비교:
     - 개선 중 (fail 수 감소 or 점수 상승) → feedback 전달 후 2-2 재실행
     - 3회 연속 동일 점수 → 현재 상태 수용 (정체). 사람에게 알림.

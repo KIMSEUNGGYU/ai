@@ -33,6 +33,7 @@ export interface EvalResult {
   }>;
   direction: 'pass' | 'retry' | 'pivot' | 'stop';
   feedback?: string;
+  contractFeedback?: string;
 }
 
 export interface SprintResult {
