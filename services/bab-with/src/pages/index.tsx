@@ -84,7 +84,7 @@ export default function Home() {
   }
 
   return (
-    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
+    <Layout activeTab={activeTab} userId={userId} onTabChange={setActiveTab}>
       {activeTab === "register" && <RegisterTab userId={userId} />}
       {activeTab === "history" && (
         <HistoryTab userId={userId} onEdit={setEditingRecord} />
