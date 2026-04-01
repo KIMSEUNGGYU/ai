@@ -64,10 +64,10 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
             {meal.label}
           </span>
         </div>
-        <div className="flex items-start text-sm text-gray-500">
+        <div className="flex text-sm text-gray-500">
           <button
             onClick={handleCopy}
-            className={`flex-shrink-0 mr-1.5 transition-colors ${
+            className={`flex-shrink-0 mr-1.5 mt-[3px] transition-colors ${
               copied ? "text-green-500" : "text-gray-400 hover:text-gray-600 active:text-blue-600"
             }`}
             title="이름 복사"
@@ -83,7 +83,7 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
               </svg>
             )}
           </button>
-          <span>{copied ? "복사 완료!" : names}</span>
+          <span style={{ wordBreak: "keep-all" }}>{copied ? "복사 완료!" : names}</span>
         </div>
       </div>
       <span className="text-gray-300 text-lg ml-2 flex-shrink-0">›</span>
