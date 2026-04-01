@@ -31,7 +31,7 @@ export default function Layout({ children, activeTab, userId, onTabChange }: Lay
   return (
     <div className="h-dvh bg-white">
     <div className="flex flex-col h-full bg-white max-w-[430px] mx-auto shadow-xl">
-      <div className="bg-blue-600 text-white text-center text-sm py-2 font-medium">
+      <div className="bg-blue-50 text-blue-600 text-center text-sm py-2 font-medium">
         {userName}님 안녕하세요
       </div>
       <main className="flex-1 overflow-y-auto">{children}</main>
