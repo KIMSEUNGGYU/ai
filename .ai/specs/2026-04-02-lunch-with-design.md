@@ -1,10 +1,10 @@
 ---
-title: 점심 With — 식사 동행 기록 서비스
+title: bab-with — 식사 동행 기록 서비스
 date: 2026-04-02
 status: in-progress
 ---
 
-# 점심 With — 설계 문서
+# bab-with — 설계 문서
 
 ## 개요
 
@@ -22,25 +22,36 @@ bizfest 법인카드 사용 시 매일 등록해야 하는 "누구와 함께 식
 
 ```prisma
 model User {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  team      String   // "product" | "data"
+  id        String             @id @default(cuid())
+  name      String             @unique
+  team      String             // "product" | "data"
   records   Record[]
+  companions RecordCompanion[] @relation("companions")
 }
 
 model Record {
-  id         String   @id @default(cuid())
+  id         String             @id @default(cuid())
   userId     String
-  user       User     @relation(fields: [userId], references: [id])
-  date       String   // "2026-04-02"
-  mealType   String   // "lunch" | "dinner" | "other"
-  companions String   // JSON array: ["cuid1", "cuid2"]
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  user       User               @relation(fields: [userId], references: [id])
+  date       String             // "2026-04-02"
+  mealType   String             // "lunch" | "dinner" | "other"
+  companions RecordCompanion[]
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+}
+
+model RecordCompanion {
+  id       String @id @default(cuid())
+  recordId String
+  record   Record @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation("companions", fields: [userId], references: [id])
+
+  @@unique([recordId, userId])
 }
 ```
 
-- `companions`: JSON string으로 동행자 ID 저장. 14명 규모에서 관계 테이블은 오버엔지니어링.
+- `RecordCompanion`: 관계 테이블로 동행자 관리. 쿼리 자유도, DB 무결성 보장.
 - `date`: String. SQLite에서 문자열 비교가 직관적.
 - User 테이블에 시드 데이터 14명.
 
@@ -92,8 +103,12 @@ model Record {
 - 등록 탭과 동일한 폼에 기존 데이터 채워진 상태
 - [수정] + [삭제] 버튼
 
+### 5. 설정 탭
+- 로그아웃 (localStorage 초기화 → 온보딩으로 복귀)
+- 향후 팀원 추가 등 확장 가능
+
 ### 하단 탭바
-- 📝 등록 | 📋 히스토리
+- 📝 등록 | 📋 히스토리 | ⚙️ 설정
 - 페이지 전환 방식 (등록에 집중 / 조회에 집중)
 
 ## 디자인 원칙
@@ -108,8 +123,8 @@ model Record {
 
 - 인증 없음
 - 최초 1회 이름 선택 → localStorage 저장
-- 변경은 설정에서만 가능 (실수 방지)
+- 설정 탭에서 로그아웃 → localStorage 초기화 → 온보딩으로 복귀
 
 ## 서비스 위치
 
-`services/lunch-with/` — pnpm workspace 멤버
+`services/bab-with/` — pnpm workspace 멤버
