@@ -24,7 +24,10 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
   const [copied, setCopied] = useState(false);
   const { date, day } = formatCardDate(record.date);
   const meal = mealTypeLabels[record.mealType] ?? mealTypeLabels.other;
-  const names = record.companions.map((c) => c.user.name).join(", ");
+  const names = record.companions
+    .map((c) => c.user.name)
+    .sort((a, b) => a.localeCompare(b, "ko"))
+    .join(", ");
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
