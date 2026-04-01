@@ -102,10 +102,9 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
         )}
 
         <div className="mt-4">
-          <div className="text-xs text-gray-400 font-semibold tracking-wide mb-1">
+          <div className="text-xs text-gray-400 font-semibold tracking-wide mb-2">
             기타 참석자
           </div>
-          <p className="text-[11px] text-gray-300 mb-2">랜덤런치 등 등록되지 않은 분과 식사했을 때</p>
           <input
             type="text"
             value={extraCompanions}
@@ -113,6 +112,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
             placeholder="예: 홍길동, 김철수"
             className="w-full px-4 py-2 rounded-xl text-sm border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-blue-300"
           />
+          <p className="text-[11px] text-gray-300 mt-1">쉼표로 구분하여 입력해주세요</p>
         </div>
       </div>
 
