@@ -83,7 +83,7 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
               </svg>
             )}
           </button>
-          <span style={{ wordBreak: "keep-all" }}>{copied ? "복사 완료!" : names}</span>
+          <span style={{ wordBreak: "keep-all" }}>{names}</span>
         </div>
       </div>
       <span className="text-gray-300 text-lg ml-2 flex-shrink-0">›</span>
