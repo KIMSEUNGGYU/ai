@@ -29,7 +29,7 @@ export default function SettingsTab({ userId, userName, onLogout, onSwitchToTest
   const isAdmin = currentUser?.role === "admin";
 
   const handleLogout = () => {
-    if (confirm("다른 사람으로 변경하시겠어요?")) {
+    if (confirm("로그아웃 하시겠어요?")) {
       onLogout();
     }
   };
@@ -51,7 +51,7 @@ export default function SettingsTab({ userId, userName, onLogout, onSwitchToTest
           onClick={handleLogout}
           className="w-full text-left px-4 py-3 bg-gray-50 rounded-xl text-red-500 font-medium border border-gray-100"
         >
-          다른 사람으로 변경
+          로그아웃
         </button>
       </div>
     </div>
