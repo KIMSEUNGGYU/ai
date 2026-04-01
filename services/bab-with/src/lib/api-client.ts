@@ -16,6 +16,7 @@ interface MealRecord {
   userId: string;
   date: string;
   mealType: string;
+  extraCompanions: string;
   companions: RecordCompanion[];
   createdAt: string;
   updatedAt: string;
@@ -45,6 +46,7 @@ interface CreateRecordBody {
   date: string;
   mealType: string;
   companionIds: string[];
+  extraCompanions: string;
 }
 
 export async function createRecord(body: CreateRecordBody): Promise<MealRecord> {

@@ -23,14 +23,14 @@ export default async function handler(
   }
 
   if (req.method === "POST") {
-    const { userId, date, mealType, companionIds } = req.body;
+    const { userId, date, mealType, companionIds, extraCompanions } = req.body;
 
     if (!userId || !date || !mealType || !companionIds?.length) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     try {
-      const record = await createRecord({ userId, date, mealType, companionIds });
+      const record = await createRecord({ userId, date, mealType, companionIds, extraCompanions: extraCompanions ?? "" });
       return res.status(201).json(record);
     } catch (err) {
       console.error("[/api/records POST] Error:", err);

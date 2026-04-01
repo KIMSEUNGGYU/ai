@@ -11,6 +11,7 @@ interface CreateRecordInput {
   date: string;
   mealType: string;
   companionIds: string[];
+  extraCompanions: string;
 }
 
 export async function createRecord(input: CreateRecordInput) {
@@ -19,6 +20,7 @@ export async function createRecord(input: CreateRecordInput) {
       userId: input.userId,
       date: input.date,
       mealType: input.mealType,
+      extraCompanions: input.extraCompanions,
       companions: {
         create: input.companionIds.map((userId) => ({ userId })),
       },
@@ -52,6 +54,7 @@ interface UpdateRecordInput {
   date: string;
   mealType: string;
   companionIds: string[];
+  extraCompanions: string;
 }
 
 export async function updateRecord(input: UpdateRecordInput) {
@@ -64,6 +67,7 @@ export async function updateRecord(input: UpdateRecordInput) {
     data: {
       date: input.date,
       mealType: input.mealType,
+      extraCompanions: input.extraCompanions,
       companions: {
         create: input.companionIds.map((userId) => ({ userId })),
       },

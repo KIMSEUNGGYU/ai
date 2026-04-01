@@ -21,8 +21,9 @@ model Record {
   userId     String
   user       User              @relation(fields: [userId], references: [id])
   date       String
-  mealType   String
-  companions RecordCompanion[]
+  mealType        String
+  extraCompanions String            @default("")
+  companions      RecordCompanion[]
   createdAt  DateTime          @default(now())
   updatedAt  DateTime          @updatedAt
 

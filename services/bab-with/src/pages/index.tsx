@@ -112,6 +112,7 @@ function EditRecordView({ record, userId, onClose }: EditRecordViewProps) {
   const [selectedCompanions, setSelectedCompanions] = useState<Set<string>>(
     new Set(record.companions.map((c) => c.userId))
   );
+  const [extraCompanions, setExtraCompanions] = useState(record.extraCompanions ?? "");
 
   const queryClient = useQueryClient();
   const { data: users } = useQuery({
@@ -125,6 +126,7 @@ function EditRecordView({ record, userId, onClose }: EditRecordViewProps) {
         date: record.date,
         mealType,
         companionIds: Array.from(selectedCompanions),
+        extraCompanions: extraCompanions.trim(),
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["records"] });
@@ -185,6 +187,19 @@ function EditRecordView({ record, userId, onClose }: EditRecordViewProps) {
             onToggle={handleToggle}
           />
         )}
+
+        <div className="mt-4">
+          <div className="text-xs text-gray-400 font-semibold tracking-wide mb-2">
+            기타 참석자
+          </div>
+          <input
+            type="text"
+            value={extraCompanions}
+            onChange={(e) => setExtraCompanions(e.target.value)}
+            placeholder="예: 홍길동, 김철수"
+            className="w-full px-4 py-2 rounded-xl text-sm border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-blue-300"
+          />
+        </div>
       </div>
 
       <div className="px-5 pb-8 pt-4 space-y-2">

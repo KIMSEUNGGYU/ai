@@ -8,14 +8,14 @@ export default async function handler(
   const id = req.query.id as string;
 
   if (req.method === "PUT") {
-    const { date, mealType, companionIds } = req.body;
+    const { date, mealType, companionIds, extraCompanions } = req.body;
 
     if (!date || !mealType || !companionIds?.length) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
     try {
-      const record = await updateRecord({ id, date, mealType, companionIds });
+      const record = await updateRecord({ id, date, mealType, companionIds, extraCompanions: extraCompanions ?? "" });
       return res.status(200).json(record);
     } catch (err) {
       console.error("[/api/records PUT] Error:", err);
