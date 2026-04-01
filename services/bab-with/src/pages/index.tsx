@@ -17,6 +17,7 @@ import type { Tab } from "@/components/Layout";
 
 export default function Home() {
   const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
   const [activeTab, setActiveTab] = useState<Tab>("register");
   const [isLoaded, setIsLoaded] = useState(false);
   const [editingRecord, setEditingRecord] = useState<MealRecord | null>(null);
@@ -37,7 +38,9 @@ export default function Home() {
       return;
     }
     const stored = localStorage.getItem("bab-with-user-id");
+    const storedName = localStorage.getItem("bab-with-user-name");
     if (stored) setUserId(stored);
+    if (storedName) setUserName(storedName);
     setIsLoaded(true);
   }, []);
 
@@ -46,9 +49,11 @@ export default function Home() {
   if (!userId) {
     return (
       <Onboarding
-        onComplete={(id) => {
+        onComplete={(id, name) => {
           localStorage.setItem("bab-with-user-id", id);
+          localStorage.setItem("bab-with-user-name", name);
           setUserId(id);
+          setUserName(name);
         }}
       />
     );
@@ -56,7 +61,9 @@ export default function Home() {
 
   const handleLogout = () => {
     localStorage.removeItem("bab-with-user-id");
+    localStorage.removeItem("bab-with-user-name");
     setUserId(null);
+    setUserName("");
     setActiveTab("register");
   };
 
@@ -84,7 +91,7 @@ export default function Home() {
   }
 
   return (
-    <Layout activeTab={activeTab} userId={userId} onTabChange={setActiveTab}>
+    <Layout activeTab={activeTab} userName={userName} onTabChange={setActiveTab}>
       {activeTab === "register" && <RegisterTab userId={userId} />}
       {activeTab === "history" && (
         <HistoryTab userId={userId} onEdit={setEditingRecord} />

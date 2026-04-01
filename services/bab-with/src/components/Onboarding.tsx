@@ -4,7 +4,7 @@ import { fetchUsers } from "@/lib/api-client";
 import type { User } from "@/lib/api-client";
 
 interface OnboardingProps {
-  onComplete: (userId: string) => void;
+  onComplete: (userId: string, name: string) => void;
 }
 
 function MobileFrame({ children }: { children: React.ReactNode }) {
@@ -45,7 +45,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             설정에서 언제든 변경할 수 있어요
           </p>
           <button
-            onClick={() => onComplete(selectedUser.id)}
+            onClick={() => onComplete(selectedUser.id, selectedUser.name)}
             className="w-full bg-blue-600 text-white py-4 rounded-xl text-base font-semibold"
           >
             확인

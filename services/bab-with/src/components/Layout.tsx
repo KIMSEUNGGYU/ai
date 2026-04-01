@@ -1,27 +1,17 @@
 import { type ReactNode } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { fetchUsers } from "@/lib/api-client";
 
 type Tab = "register" | "history" | "settings";
 
 interface LayoutProps {
   children: ReactNode;
   activeTab: Tab;
-  userId: string;
+  userName: string;
   onTabChange: (tab: Tab) => void;
 }
 
 export type { Tab };
 
-export default function Layout({ children, activeTab, userId, onTabChange }: LayoutProps) {
-  const { data: users } = useQuery({
-    queryKey: ["users"],
-    queryFn: fetchUsers,
-  });
-
-  const currentUser = users?.find((u) => u.id === userId);
-  const userName = currentUser?.name ?? "";
-
+export default function Layout({ children, activeTab, userName, onTabChange }: LayoutProps) {
   const tabs: Array<{ key: Tab; icon: string; label: string }> = [
     { key: "register", icon: "📝", label: "등록" },
     { key: "history", icon: "📋", label: "히스토리" },
