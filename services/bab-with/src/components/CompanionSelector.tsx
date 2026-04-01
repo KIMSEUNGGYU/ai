@@ -65,7 +65,6 @@ function TeamGroup({ label, users, selected, onToggle }: TeamGroupProps) {
               }`}
             >
               {user.name}
-              {isSelected && " ✓"}
             </button>
           );
         })}

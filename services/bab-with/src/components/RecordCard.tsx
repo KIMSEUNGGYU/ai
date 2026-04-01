@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { MealRecord } from "@/lib/api-client";
 
 interface RecordCardProps {
@@ -20,6 +21,7 @@ function formatCardDate(dateStr: string): { date: string; day: string } {
 }
 
 export default function RecordCard({ record, onEdit }: RecordCardProps) {
+  const [copied, setCopied] = useState(false);
   const { date, day } = formatCardDate(record.date);
   const meal = mealTypeLabels[record.mealType] ?? mealTypeLabels.other;
   const names = record.companions.map((c) => c.user.name).join(", ");
@@ -27,6 +29,8 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
     await navigator.clipboard.writeText(names);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
@@ -48,24 +52,23 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
         <div className="flex items-center text-sm text-gray-500">
           <button
             onClick={handleCopy}
-            className="flex-shrink-0 mr-1.5 text-gray-400 hover:text-gray-600 active:text-blue-600"
+            className={`flex-shrink-0 mr-1.5 transition-colors ${
+              copied ? "text-green-500" : "text-gray-400 hover:text-gray-600 active:text-blue-600"
+            }`}
             title="이름 복사"
           >
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <rect x="8" y="8" width="14" height="14" rx="2" />
-              <path d="M4 16V4a2 2 0 0 1 2-2h12" />
-            </svg>
+            {copied ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5" />
+              </svg>
+            ) : (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="8" y="8" width="14" height="14" rx="2" />
+                <path d="M4 16V4a2 2 0 0 1 2-2h12" />
+              </svg>
+            )}
           </button>
-          <span className="truncate">{names}</span>
+          <span className="truncate">{copied ? "복사 완료!" : names}</span>
         </div>
       </div>
       <span className="text-gray-300 text-lg ml-2 flex-shrink-0">›</span>
