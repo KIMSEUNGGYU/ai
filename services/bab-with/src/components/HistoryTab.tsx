@@ -46,7 +46,7 @@ export default function HistoryTab({ userId, onEdit }: HistoryTabProps) {
   };
 
   return (
-    <div className="px-5 pt-6 pb-4">
+    <div className="px-5 pt-12 pb-4">
       <div className="flex items-center justify-center gap-5 mb-6">
         <button onClick={handlePrev} className="text-gray-400 text-2xl">
           ‹
