@@ -73,8 +73,8 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
   };
 
   return (
-    <div className="px-5 pt-12 pb-4 flex flex-col h-full">
-      <div className="text-center mb-5">
+    <div className="px-5 pt-6 pb-4 flex flex-col h-full">
+      <div className="text-center mb-3">
         <h1 className="text-xl font-bold text-gray-900">식사 등록</h1>
         <label className="inline-flex items-center gap-1 text-sm text-gray-400 mt-1 cursor-pointer">
           <input
@@ -86,7 +86,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
         </label>
       </div>
 
-      <div className="mb-6">
+      <div className="mb-4">
         <MealTypeSelector value={mealType} onChange={setMealType} />
       </div>
 
