@@ -112,7 +112,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
             placeholder="예: 홍길동, 김철수"
             className="w-full px-4 py-2 rounded-xl text-sm border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-blue-300"
           />
-          <p className="text-[11px] text-gray-300 mt-1">쉼표로 구분하여 입력해주세요</p>
+          <p className="text-[11px] text-gray-400 mt-1">예: 홍길동, 김철수</p>
         </div>
       </div>
 
