@@ -7,6 +7,7 @@
     "dev": "prisma generate && next dev -p 4001",
     "build": "prisma generate && next build",
     "start": "next start",
+    "deploy": "npx vercel --prod --scope kimseunggyus-projects",
     "postinstall": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts"

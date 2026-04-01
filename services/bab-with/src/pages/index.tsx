@@ -20,6 +20,7 @@ export default function Home() {
   const [userName, setUserName] = useState<string>("");
   const [activeTab, setActiveTab] = useState<Tab>("register");
   const [isLoaded, setIsLoaded] = useState(false);
+  const [showSplash, setShowSplash] = useState(true);
   const [editingRecord, setEditingRecord] = useState<MealRecord | null>(null);
 
   useEffect(() => {
@@ -42,9 +43,24 @@ export default function Home() {
     if (stored) setUserId(stored);
     if (storedName) setUserName(storedName);
     setIsLoaded(true);
+    const timer = setTimeout(() => setShowSplash(false), 1500);
+    return () => clearTimeout(timer);
   }, []);
 
-  if (!isLoaded) return null;
+  if (!isLoaded || showSplash) {
+    return (
+      <div className="h-dvh flex flex-col items-center justify-center" style={{ backgroundColor: "#f5e1a4" }}>
+        <img
+          src="/splash.png"
+          alt="bab-with"
+          className="w-64 h-64 object-contain"
+        />
+        <p className="mt-4 text-lg font-bold" style={{ color: "#8b7355" }}>
+          bab-with
+        </p>
+      </div>
+    );
+  }
 
   if (!userId) {
     return (
