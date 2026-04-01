@@ -74,9 +74,9 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
 
   return (
     <div className="px-5 pt-6 pb-4 flex flex-col h-full">
-      <div className="text-center mb-3">
+      <div className="text-center mb-2">
         <h1 className="text-xl font-bold text-gray-900">식사 등록</h1>
-        <label className="inline-flex items-center gap-1 text-sm text-gray-400 mt-1 cursor-pointer">
+        <label className="inline-flex items-center gap-1 text-sm text-gray-400 cursor-pointer">
           <input
             type="date"
             value={selectedDate}
