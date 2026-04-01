@@ -200,7 +200,15 @@ function EditRecordView({ record, userId, onClose }: EditRecordViewProps) {
               type="text"
               value={extraInput}
               onChange={(e) => setExtraInput(e.target.value)}
-placeholder="이름 입력"
+              onKeyDown={(e) => {
+                if (e.nativeEvent.isComposing) return;
+                if (e.key === "Enter" && extraInput.trim()) {
+                  e.preventDefault();
+                  setExtraCompanions((prev) => [...prev, extraInput.trim()]);
+                  setExtraInput("");
+                }
+              }}
+              placeholder="이름 입력"
               className="flex-1 px-4 py-2 rounded-xl text-sm border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-blue-300"
             />
             <button
