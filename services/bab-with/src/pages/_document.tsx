@@ -13,6 +13,8 @@ export default function Document() {
         <meta name="apple-mobile-web-app-title" content="bab-with" />
         <meta name="theme-color" content="#ffffff" />
         <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
       </Head>
       <body>
         <Main />
