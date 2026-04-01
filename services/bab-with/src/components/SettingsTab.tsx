@@ -4,11 +4,10 @@ import { fetchUsers } from "@/lib/api-client";
 
 const greetings = [
   (name: string) => `${name}님 안녕하세요 👋`,
-  (name: string) => `${name}님, 오늘도 맛있는 식사하세요 🍚`,
-  (name: string) => `${name}님, 오늘 누구랑 먹었어요?`,
-  (name: string) => `${name}님, 밥은 먹고 다니세요? 🍽️`,
-  (name: string) => `${name}님, 오늘도 화이팅!`,
   (name: string) => `${name}님, 맛점하세요 😋`,
+  (name: string) => `${name}님, 오늘도 화이팅!`,
+  (name: string) => `${name}님, 오늘도 맛있는 식사하세요 🍚`,
+  (name: string) => `${name}님, 밥은 먹고 다니세요? 🍽️`,
 ];
 
 interface SettingsTabProps {
