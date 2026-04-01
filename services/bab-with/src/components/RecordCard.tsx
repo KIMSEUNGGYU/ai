@@ -64,10 +64,10 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
             {meal.label}
           </span>
         </div>
-        <div className="flex items-center text-sm text-gray-500">
+        <div className="flex items-start text-sm text-gray-500">
           <button
             onClick={handleCopy}
-            className={`flex-shrink-0 mr-1.5 transition-colors ${
+            className={`flex-shrink-0 mr-1.5 mt-[3px] transition-colors ${
               copied ? "text-green-500" : "text-gray-400 hover:text-gray-600 active:text-blue-600"
             }`}
             title="이름 복사"
