@@ -28,9 +28,24 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
 
   const handleCopy = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    await navigator.clipboard.writeText(names);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(names);
+      } else {
+        const textarea = document.createElement("textarea");
+        textarea.value = names;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // 복사 실패 시 무시
+    }
   };
 
   return (
