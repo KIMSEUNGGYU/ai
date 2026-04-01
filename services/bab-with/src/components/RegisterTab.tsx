@@ -80,7 +80,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
   };
 
   return (
-    <div className="px-5 pt-12 pb-4 flex flex-col h-full">
+    <div className="px-5 pt-12 pb-8 flex flex-col h-full">
       <div className="text-center mb-5">
         <h1 className="text-xl font-bold text-gray-900">식사 등록</h1>
         <input
