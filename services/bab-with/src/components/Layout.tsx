@@ -21,9 +21,6 @@ export default function Layout({ children, activeTab, userName, onTabChange }: L
   return (
     <div className="h-dvh bg-white">
     <div className="flex flex-col h-full bg-white max-w-[430px] mx-auto shadow-xl">
-      <div className="bg-blue-50 text-blue-600 text-center text-sm py-2 font-medium">
-        {userName}님 안녕하세요
-      </div>
       <main className="flex-1 overflow-y-auto">{children}</main>
       <nav className="flex border-t border-gray-200 pb-5 pt-2 bg-white">
         {tabs.map((tab) => (

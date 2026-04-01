@@ -3,11 +3,12 @@ import { fetchUsers } from "@/lib/api-client";
 
 interface SettingsTabProps {
   userId: string;
+  userName: string;
   onLogout: () => void;
   onSwitchToTest: () => void;
 }
 
-export default function SettingsTab({ userId, onLogout, onSwitchToTest }: SettingsTabProps) {
+export default function SettingsTab({ userId, userName, onLogout, onSwitchToTest }: SettingsTabProps) {
   const { data: users } = useQuery({
     queryKey: ["users"],
     queryFn: fetchUsers,
@@ -24,7 +25,8 @@ export default function SettingsTab({ userId, onLogout, onSwitchToTest }: Settin
 
   return (
     <div className="px-5 pt-12">
-      <h1 className="text-xl font-bold text-gray-900 mb-6">설정</h1>
+      <h1 className="text-xl font-bold text-gray-900 mb-2">설정</h1>
+      <p className="text-sm text-gray-400 mb-6">현재 사용자: {userName}</p>
       <div className="space-y-3">
         {isAdmin && (
           <button

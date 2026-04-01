@@ -96,7 +96,7 @@ export default function Home() {
       {activeTab === "history" && (
         <HistoryTab userId={userId} onEdit={setEditingRecord} />
       )}
-      {activeTab === "settings" && <SettingsTab userId={userId} onLogout={handleLogout} onSwitchToTest={handleSwitchToTest} />}
+      {activeTab === "settings" && <SettingsTab userId={userId} userName={userName} onLogout={handleLogout} onSwitchToTest={handleSwitchToTest} />}
     </Layout>
   );
 }
