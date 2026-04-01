@@ -44,6 +44,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
   const { data: users } = useQuery({
     queryKey: ["users"],
     queryFn: fetchUsers,
+    staleTime: Infinity,
   });
 
   const mutation = useMutation({

@@ -22,6 +22,7 @@ export default function SettingsTab({ userId, userName, onLogout, onSwitchToTest
   const { data: users } = useQuery({
     queryKey: ["users"],
     queryFn: fetchUsers,
+    staleTime: Infinity,
   });
 
   const currentUser = users?.find((u) => u.id === userId);

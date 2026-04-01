@@ -22,6 +22,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   const { data: users, isLoading } = useQuery({
     queryKey: ["users"],
     queryFn: fetchUsers,
+    staleTime: Infinity,
   });
 
   if (isLoading) {

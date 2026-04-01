@@ -121,6 +121,7 @@ function EditRecordView({ record, userId, onClose }: EditRecordViewProps) {
   const { data: users } = useQuery({
     queryKey: ["users"],
     queryFn: fetchUsers,
+    staleTime: Infinity,
   });
 
   const updateMutation = useMutation({
