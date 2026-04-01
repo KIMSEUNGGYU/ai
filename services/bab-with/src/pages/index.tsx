@@ -189,9 +189,10 @@ function EditRecordView({ record, userId, onClose }: EditRecordViewProps) {
         )}
 
         <div className="mt-4">
-          <div className="text-xs text-gray-400 font-semibold tracking-wide mb-2">
+          <div className="text-xs text-gray-400 font-semibold tracking-wide mb-1">
             기타 참석자
           </div>
+          <p className="text-[11px] text-gray-300 mb-2">랜덤런치 등 등록되지 않은 분과 식사했을 때</p>
           <input
             type="text"
             value={extraCompanions}
