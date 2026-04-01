@@ -95,7 +95,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
         <MealTypeSelector value={mealType} onChange={setMealType} />
       </div>
 
-      <div className="flex-1">
+      <div>
         {users && (
           <CompanionSelector
             users={users}
