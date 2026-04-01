@@ -33,7 +33,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
   const [selectedDate, setSelectedDate] = useState(() => formatDate(new Date()));
   const [mealType, setMealType] = useState(getDefaultMealType);
   const [selectedCompanions, setSelectedCompanions] = useState<Set<string>>(
-    new Set()
+    new Set([userId])
   );
   const [saveSuccess, setSaveSuccess] = useState(false);
 
@@ -47,7 +47,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
     mutationFn: createRecord,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["records"] });
-      setSelectedCompanions(new Set());
+      setSelectedCompanions(new Set([userId]));
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
     },

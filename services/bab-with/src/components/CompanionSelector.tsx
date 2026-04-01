@@ -13,12 +13,8 @@ export default function CompanionSelector({
   currentUserId,
   onToggle,
 }: CompanionSelectorProps) {
-  const productTeam = users.filter(
-    (u) => u.team === "product" && u.id !== currentUserId
-  );
-  const dataTeam = users.filter(
-    (u) => u.team === "data" && u.id !== currentUserId
-  );
+  const productTeam = users.filter((u) => u.team === "product");
+  const dataTeam = users.filter((u) => u.team === "data");
 
   return (
     <div className="space-y-4">
