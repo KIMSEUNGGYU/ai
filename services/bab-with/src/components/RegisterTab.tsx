@@ -37,6 +37,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
   );
   const [extraCompanions, setExtraCompanions] = useState<string[]>([]);
   const [extraInput, setExtraInput] = useState("");
+  const [showExtraInput, setShowExtraInput] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   const queryClient = useQueryClient();
@@ -52,6 +53,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
       setSelectedCompanions(new Set([userId]));
       setExtraCompanions([]);
       setExtraInput("");
+      setShowExtraInput(false);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
     },
@@ -104,57 +106,68 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
         )}
 
         <div className="mt-4">
-          <div className="text-xs text-gray-400 font-semibold tracking-wide mb-2">
-            참석자 추가
-          </div>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={extraInput}
-              onChange={(e) => setExtraInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.nativeEvent.isComposing) return;
-                if (e.key === "Enter" && extraInput.trim()) {
-                  e.preventDefault();
-                  setExtraCompanions((prev) => [...prev, extraInput.trim()]);
-                  setExtraInput("");
-                }
-              }}
-              placeholder="이름 입력"
-              className="flex-1 px-4 py-2 rounded-xl text-sm border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-blue-300"
-            />
+          {!showExtraInput && extraCompanions.length === 0 ? (
             <button
-              type="button"
-              onClick={() => {
-                if (extraInput.trim()) {
-                  setExtraCompanions((prev) => [...prev, extraInput.trim()]);
-                  setExtraInput("");
-                }
-              }}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white active:bg-blue-700"
+              onClick={() => setShowExtraInput(true)}
+              className="text-xs text-blue-500 font-medium"
             >
-              +
+              + 참석자 추가
             </button>
-          </div>
-          {extraCompanions.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {extraCompanions.map((name, i) => (
-                <span
-                  key={i}
-                  className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700"
-                >
-                  {name}
-                  <button
-                    onClick={() =>
-                      setExtraCompanions((prev) => prev.filter((_, j) => j !== i))
+          ) : (
+            <>
+              <div className="text-xs text-gray-400 font-semibold tracking-wide mb-2">
+                참석자 추가
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={extraInput}
+                  onChange={(e) => setExtraInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.nativeEvent.isComposing) return;
+                    if (e.key === "Enter" && extraInput.trim()) {
+                      e.preventDefault();
+                      setExtraCompanions((prev) => [...prev, extraInput.trim()]);
+                      setExtraInput("");
                     }
-                    className="text-gray-400 hover:text-gray-600 text-xs ml-0.5"
-                  >
-                    ✕
-                  </button>
-                </span>
-              ))}
-            </div>
+                  }}
+                  placeholder="이름 입력"
+                  className="flex-1 px-4 py-2 rounded-xl text-sm border border-gray-200 bg-gray-50 text-gray-700 focus:outline-none focus:border-blue-300"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (extraInput.trim()) {
+                      setExtraCompanions((prev) => [...prev, extraInput.trim()]);
+                      setExtraInput("");
+                    }
+                  }}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-blue-600 text-white active:bg-blue-700"
+                >
+                  +
+                </button>
+              </div>
+              {extraCompanions.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {extraCompanions.map((name, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-700"
+                    >
+                      {name}
+                      <button
+                        onClick={() =>
+                          setExtraCompanions((prev) => prev.filter((_, j) => j !== i))
+                        }
+                        className="text-gray-400 hover:text-gray-600 text-xs ml-0.5"
+                      >
+                        ✕
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
