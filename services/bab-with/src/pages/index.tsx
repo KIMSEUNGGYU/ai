@@ -60,6 +60,19 @@ export default function Home() {
     setActiveTab("register");
   };
 
+  const handleSwitchToTest = () => {
+    fetch("/api/users")
+      .then((res) => res.json())
+      .then((users: Array<{ id: string; team: string }>) => {
+        const testUser = users.find((u) => u.team === "admin");
+        if (testUser) {
+          localStorage.setItem("bab-with-user-id", testUser.id);
+          setUserId(testUser.id);
+          setActiveTab("register");
+        }
+      });
+  };
+
   if (editingRecord) {
     return (
       <EditRecordView
@@ -76,7 +89,7 @@ export default function Home() {
       {activeTab === "history" && (
         <HistoryTab userId={userId} onEdit={setEditingRecord} />
       )}
-      {activeTab === "settings" && <SettingsTab onLogout={handleLogout} />}
+      {activeTab === "settings" && <SettingsTab userId={userId} onLogout={handleLogout} onSwitchToTest={handleSwitchToTest} />}
     </Layout>
   );
 }

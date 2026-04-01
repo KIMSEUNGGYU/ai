@@ -1,8 +1,21 @@
+import { useQuery } from "@tanstack/react-query";
+import { fetchUsers } from "@/lib/api-client";
+
 interface SettingsTabProps {
+  userId: string;
   onLogout: () => void;
+  onSwitchToTest: () => void;
 }
 
-export default function SettingsTab({ onLogout }: SettingsTabProps) {
+export default function SettingsTab({ userId, onLogout, onSwitchToTest }: SettingsTabProps) {
+  const { data: users } = useQuery({
+    queryKey: ["users"],
+    queryFn: fetchUsers,
+  });
+
+  const currentUser = users?.find((u) => u.id === userId);
+  const isAdmin = currentUser?.role === "admin";
+
   const handleLogout = () => {
     if (confirm("다른 사람으로 변경하시겠어요?")) {
       onLogout();
@@ -12,12 +25,22 @@ export default function SettingsTab({ onLogout }: SettingsTabProps) {
   return (
     <div className="px-5 pt-12">
       <h1 className="text-xl font-bold text-gray-900 mb-6">설정</h1>
-      <button
-        onClick={handleLogout}
-        className="w-full text-left px-4 py-3 bg-gray-50 rounded-xl text-red-500 font-medium border border-gray-100"
-      >
-        다른 사람으로 변경
-      </button>
+      <div className="space-y-3">
+        {isAdmin && (
+          <button
+            onClick={onSwitchToTest}
+            className="w-full text-left px-4 py-3 bg-gray-50 rounded-xl text-blue-600 font-medium border border-gray-100"
+          >
+            테스트 모드로 전환
+          </button>
+        )}
+        <button
+          onClick={handleLogout}
+          className="w-full text-left px-4 py-3 bg-gray-50 rounded-xl text-red-500 font-medium border border-gray-100"
+        >
+          다른 사람으로 변경
+        </button>
+      </div>
     </div>
   );
 }

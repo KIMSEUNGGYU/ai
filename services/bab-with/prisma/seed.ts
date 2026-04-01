@@ -11,7 +11,7 @@ const prisma = new PrismaClient({ adapter });
 
 const users = [
   { name: "김수민", team: "product" },
-  { name: "김승규", team: "product" },
+  { name: "김승규", team: "product", role: "admin" as const },
   { name: "박지윤", team: "product" },
   { name: "손혜정", team: "product" },
   { name: "신상호", team: "product" },
@@ -31,7 +31,7 @@ async function main() {
   for (const user of users) {
     await prisma.user.upsert({
       where: { name: user.name },
-      update: { team: user.team },
+      update: { team: user.team, role: user.role ?? "user" },
       create: user,
     });
   }

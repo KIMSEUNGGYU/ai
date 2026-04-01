@@ -2,6 +2,7 @@ interface User {
   id: string;
   name: string;
   team: string;
+  role: string;
 }
 
 interface RecordCompanion {
