@@ -64,7 +64,7 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
             {meal.label}
           </span>
         </div>
-        <div className="flex items-center text-sm text-gray-500">
+        <div className="flex items-start text-sm text-gray-500">
           <button
             onClick={handleCopy}
             className={`flex-shrink-0 mr-1.5 transition-colors ${
@@ -83,7 +83,7 @@ export default function RecordCard({ record, onEdit }: RecordCardProps) {
               </svg>
             )}
           </button>
-          <span className="truncate">{copied ? "복사 완료!" : names}</span>
+          <span>{copied ? "복사 완료!" : names}</span>
         </div>
       </div>
       <span className="text-gray-300 text-lg ml-2 flex-shrink-0">›</span>
