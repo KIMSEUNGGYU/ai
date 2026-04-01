@@ -18,7 +18,8 @@ export default function Layout({ children, activeTab, onTabChange }: LayoutProps
   ];
 
   return (
-    <div className="flex flex-col h-dvh bg-white max-w-[430px] mx-auto">
+    <div className="h-dvh bg-white">
+    <div className="flex flex-col h-full bg-white max-w-[430px] mx-auto shadow-xl">
       <main className="flex-1 overflow-y-auto">{children}</main>
       <nav className="flex border-t border-gray-200 pb-5 pt-2 bg-white">
         {tabs.map((tab) => (
@@ -36,6 +37,7 @@ export default function Layout({ children, activeTab, onTabChange }: LayoutProps
           </button>
         ))}
       </nav>
+    </div>
     </div>
   );
 }

@@ -126,7 +126,7 @@ function EditRecordView({ record, userId, onClose }: EditRecordViewProps) {
   const displayDate = `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${days[d.getDay()]})`;
 
   return (
-    <div className="flex flex-col h-dvh bg-white max-w-[430px] mx-auto">
+    <div className="flex flex-col h-dvh bg-white max-w-[430px] mx-auto shadow-xl">
       <div className="flex items-center px-5 pt-12 mb-4">
         <button onClick={onClose} className="text-gray-400 text-lg mr-3">
           ← 뒤로

@@ -30,7 +30,7 @@ function formatDisplayDate(date: Date): string {
 }
 
 export default function RegisterTab({ userId }: RegisterTabProps) {
-  const today = new Date();
+  const [selectedDate, setSelectedDate] = useState(() => formatDate(new Date()));
   const [mealType, setMealType] = useState(getDefaultMealType);
   const [selectedCompanions, setSelectedCompanions] = useState<Set<string>>(
     new Set()
@@ -66,7 +66,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
     if (selectedCompanions.size === 0) return;
     mutation.mutate({
       userId,
-      date: formatDate(today),
+      date: selectedDate,
       mealType,
       companionIds: Array.from(selectedCompanions),
     });
@@ -75,10 +75,15 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
   return (
     <div className="px-5 pt-12 pb-4 flex flex-col h-full">
       <div className="text-center mb-5">
-        <h1 className="text-xl font-bold text-gray-900">오늘의 식사</h1>
-        <p className="text-sm text-gray-400 mt-1">
-          {formatDisplayDate(today)}
-        </p>
+        <h1 className="text-xl font-bold text-gray-900">식사 등록</h1>
+        <label className="inline-flex items-center gap-1 text-sm text-gray-400 mt-1 cursor-pointer">
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="bg-transparent border-none text-sm text-gray-500 text-center cursor-pointer focus:outline-none"
+          />
+        </label>
       </div>
 
       <div className="mb-6">
