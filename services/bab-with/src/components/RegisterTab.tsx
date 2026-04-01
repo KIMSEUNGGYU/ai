@@ -191,6 +191,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
             : "저장"}
       </button>
       </div>
+      <div className="h-6 flex-shrink-0" />
     </div>
   );
 }
