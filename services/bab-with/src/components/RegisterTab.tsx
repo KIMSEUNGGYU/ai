@@ -172,6 +172,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
         </div>
       </div>
 
+      <div className="pt-4">
       <button
         onClick={handleSave}
         disabled={selectedCompanions.size === 0 || mutation.isPending}
@@ -189,6 +190,7 @@ export default function RegisterTab({ userId }: RegisterTabProps) {
             ? "저장 완료 ✓"
             : "저장"}
       </button>
+      </div>
     </div>
   );
 }
