@@ -22,6 +22,20 @@ export default function Home() {
   const [editingRecord, setEditingRecord] = useState<MealRecord | null>(null);
 
   useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("mode") === "admin") {
+      fetch("/api/users")
+        .then((res) => res.json())
+        .then((users: Array<{ id: string; team: string }>) => {
+          const adminUser = users.find((u) => u.team === "admin");
+          if (adminUser) {
+            localStorage.setItem("bab-with-user-id", adminUser.id);
+            setUserId(adminUser.id);
+          }
+          setIsLoaded(true);
+        });
+      return;
+    }
     const stored = localStorage.getItem("bab-with-user-id");
     if (stored) setUserId(stored);
     setIsLoaded(true);

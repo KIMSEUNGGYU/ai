@@ -24,6 +24,7 @@ const users = [
   { name: "정민주", team: "data" },
   { name: "조범규", team: "data" },
   { name: "최기호", team: "data" },
+  { name: "테스트", team: "admin" },
 ];
 
 async function main() {
