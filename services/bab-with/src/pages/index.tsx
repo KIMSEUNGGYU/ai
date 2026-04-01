@@ -190,7 +190,7 @@ function EditRecordView({ record, userId, onClose }: EditRecordViewProps) {
 
         <div className="mt-4">
           <div className="text-xs text-gray-400 font-semibold tracking-wide mb-0.5">
-            기타 참석자
+            참석자 추가
           </div>
           <p className="text-[11px] text-gray-400 mb-2">예: 홍길동, 김철수</p>
           <input
