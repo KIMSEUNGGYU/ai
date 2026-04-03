@@ -1,5 +1,5 @@
 {
   "name": "session-manager",
   "description": "AI 페어 프로그래밍 context 관리 — 세션 간 맥락 유지 + 지식 영속 저장",
-  "version": "0.23.0"
+  "version": "0.24.0"
 }
