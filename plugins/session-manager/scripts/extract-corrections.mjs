@@ -79,14 +79,20 @@ function extractFromFile(filePath) {
     if (d.type === 'user') {
       const content = d.message?.content;
 
-      // string content: <command-message> 패턴 감지
+      // string content 처리
       if (typeof content === 'string') {
         const cmd = parseCommandMessage(content);
         if (cmd) {
           skipNextUserText = true;
           const argsText = cmd.args ? ` ${cmd.args}` : '';
           messages.push({ role: 'user', text: `[/${cmd.skillName}]${argsText}` });
+          continue;
         }
+        // 노이즈 필터
+        if (NOISE_PREFIXES.some((p) => content.startsWith(p))) continue;
+        if (SKIP_TEXTS.includes(content.trim())) continue;
+        // 일반 텍스트 user 메시지
+        messages.push({ role: 'user', text: content });
         continue;
       }
 
