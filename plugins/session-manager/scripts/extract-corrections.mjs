@@ -1,89 +1,146 @@
+#!/usr/bin/env node
+
 /**
- * extract-corrections.mjs
- *
- * transcript JSONL에서 user/assistant 대화를 추출.
- * 노이즈(system-reminder, hook, command 등) 제거 후 전체 대화 반환.
+ * transcript JSONL에서 user/assistant 메시지를 추출한다.
+ * recap의 extract-transcripts.mjs 기반 — 파일 경로 입력 방식으로 변경.
  *
  * Usage: node extract-corrections.mjs <transcript-path> [<transcript-path2> ...]
- * Output: JSON { messages: Array<{role, text}>, stats: { total, extracted } }
+ * Output: 세션별 USER/AI 대화 텍스트 (stdout)
  */
 
-import { createReadStream } from 'node:fs';
-import { createInterface } from 'node:readline';
+import { readFileSync } from 'fs';
+import { basename } from 'path';
 
-const NOISE_PATTERNS = [
-  /<system-reminder>[\s\S]*?<\/system-reminder>/g,
-  /<local-command-caveat>[\s\S]*?<\/local-command-caveat>/g,
-  /<command-name>[\s\S]*?<\/command-name>/g,
-  /<command-message>[\s\S]*?<\/command-message>/g,
-  /<command-args>[\s\S]*?<\/command-args>/g,
-  /<local-command-stdout>[\s\S]*?<\/local-command-stdout>/g,
-  /<skill-suggestion>[\s\S]*?<\/skill-suggestion>/g,
+const NOISE_PREFIXES = [
+  '<command-',
+  '<system-reminder>',
+  'SessionStart',
+  '<local-command',
 ];
+const SKIP_TEXTS = ['', '[Request interrupted by user]'];
 
-const ASSISTANT_MAX_LEN = 800;
-
-function cleanText(raw) {
-  if (!raw) return null;
-  let text = raw;
-  for (const pattern of NOISE_PATTERNS) {
-    text = text.replace(pattern, '');
-  }
-  text = text.trim();
-  return text.length < 2 ? null : text;
+// 스킬 프롬프트 감지: <command-message>에서 스킬명과 args를 추출
+function parseCommandMessage(content) {
+  if (typeof content !== 'string') return null;
+  const nameMatch = content.match(/<command-name>\/?(.*?)<\/command-name>/);
+  const argsMatch = content.match(/<command-args>([\s\S]*?)<\/command-args>/);
+  if (!nameMatch) return null;
+  return {
+    skillName: nameMatch[1],
+    args: argsMatch ? argsMatch[1].trim() : '',
+  };
 }
 
-function extractContent(content, maxLen = 0) {
-  if (!content) return null;
-
-  let text;
-  if (typeof content === 'string') {
-    text = cleanText(content);
-  } else if (Array.isArray(content)) {
-    const texts = content
-      .filter(item => item?.type === 'text')
-      .map(item => cleanText(item.text))
-      .filter(Boolean);
-    text = texts.join('\n') || null;
-  } else {
-    return null;
+// tool_result에서 "Launching skill: xxx" 감지
+function parseLaunchingSkill(content) {
+  if (!Array.isArray(content)) return null;
+  for (const c of content) {
+    if (c.type === 'tool_result') {
+      const text =
+        typeof c.content === 'string'
+          ? c.content
+          : Array.isArray(c.content)
+            ? c.content.map((x) => x.text || '').join('')
+            : '';
+      const match = text.match(/Launching skill:\s*(.+)/);
+      if (match) return match[1].trim();
+    }
   }
-
-  if (!text) return null;
-  if (maxLen > 0 && text.length > maxLen) {
-    return text.slice(0, maxLen) + '...';
-  }
-  return text;
+  return null;
 }
 
-async function extractMessages(transcriptPath) {
+// 스킬 프롬프트 본문 감지 (Base directory for this skill:)
+function isSkillBody(text) {
+  return text.startsWith('Base directory for this skill:');
+}
+
+function extractFromFile(filePath) {
+  const sessionId = basename(filePath).replace('.jsonl', '').slice(0, 8);
+
+  let lines;
+  try {
+    lines = readFileSync(filePath, 'utf-8').split('\n').filter(Boolean);
+  } catch (err) {
+    console.error(`Warning: ${filePath} 읽기 실패 - ${err.message}`);
+    return [];
+  }
+
   const messages = [];
+  let skipNextUserText = false;
 
-  const rl = createInterface({
-    input: createReadStream(transcriptPath, 'utf-8'),
-    crlfDelay: Infinity,
-  });
-
-  for await (const line of rl) {
-    if (!line.trim()) continue;
-
-    let obj;
+  for (const line of lines) {
+    let d;
     try {
-      obj = JSON.parse(line);
+      d = JSON.parse(line);
     } catch {
       continue;
     }
 
-    if (obj.type === 'user') {
-      const text = extractContent(obj.message?.content);
-      if (text) messages.push({ role: 'user', text });
-    } else if (obj.type === 'assistant') {
-      const text = extractContent(obj.message?.content, ASSISTANT_MAX_LEN);
-      if (text) messages.push({ role: 'assistant', text });
+    if (d.type === 'user') {
+      const content = d.message?.content;
+
+      // string content: <command-message> 패턴 감지
+      if (typeof content === 'string') {
+        const cmd = parseCommandMessage(content);
+        if (cmd) {
+          skipNextUserText = true;
+          const argsText = cmd.args ? ` ${cmd.args}` : '';
+          messages.push({ role: 'user', text: `[/${cmd.skillName}]${argsText}` });
+        }
+        continue;
+      }
+
+      if (!Array.isArray(content)) continue;
+
+      // tool_result에서 "Launching skill" 감지
+      const launchedSkill = parseLaunchingSkill(content);
+      if (launchedSkill) {
+        skipNextUserText = true;
+        continue;
+      }
+
+      for (const c of content) {
+        if (c?.type !== 'text') continue;
+        const text = c.text;
+        if (NOISE_PREFIXES.some((p) => text.startsWith(p))) continue;
+        if (SKIP_TEXTS.includes(text.trim())) continue;
+
+        // 스킬 본문 스킵
+        if (skipNextUserText) {
+          skipNextUserText = false;
+          if (isSkillBody(text) || text.length > 1000) {
+            const argsMatch = text.match(/\nARGUMENTS:\s*(.+)/);
+            if (argsMatch) {
+              messages.push({ role: 'user', text: `  args: ${argsMatch[1].trim()}` });
+            }
+            continue;
+          }
+        }
+
+        // "Base directory for this skill:" 단독 감지
+        if (isSkillBody(text)) {
+          const nameMatch = text.match(/^Base directory for this skill:.*?skills\/([^/\n]+)/);
+          const skillName = nameMatch ? nameMatch[1] : 'unknown';
+          const argsMatch = text.match(/\nARGUMENTS:\s*(.+)/);
+          const argsText = argsMatch ? ` ${argsMatch[1].trim()}` : '';
+          messages.push({ role: 'user', text: `[/${skillName}]${argsText}` });
+          continue;
+        }
+
+        messages.push({ role: 'user', text });
+      }
+    } else if (d.type === 'assistant') {
+      skipNextUserText = false;
+      const content = d.message?.content;
+      if (!Array.isArray(content)) continue;
+      for (const c of content) {
+        if (c?.type !== 'text') continue;
+        messages.push({ role: 'assistant', text: c.text });
+      }
     }
   }
 
-  return messages;
+  return { sessionId, messages };
 }
 
 // --- main ---
@@ -95,23 +152,18 @@ if (transcriptPaths.length === 0) {
   process.exit(1);
 }
 
-let allMessages = [];
-
 for (const path of transcriptPaths) {
-  try {
-    const messages = await extractMessages(path);
-    allMessages.push(...messages);
-  } catch (err) {
-    console.error(`Warning: ${path} 읽기 실패 - ${err.message}`);
+  const result = extractFromFile(path);
+  if (!result.messages || result.messages.length === 0) continue;
+
+  console.log(`\n${'='.repeat(60)}`);
+  console.log(`SESSION: ${result.sessionId}`);
+  console.log('='.repeat(60));
+
+  for (const m of result.messages) {
+    const roleIcon = m.role === 'user' ? 'USER' : 'AI';
+    const indented = m.text.replaceAll('\n', '\n  ');
+    console.log(`\n${roleIcon}:`);
+    console.log(`  ${indented}`);
   }
 }
-
-const output = {
-  messages: allMessages,
-  stats: {
-    total: allMessages.length,
-    extracted: allMessages.length,
-  },
-};
-
-console.log(JSON.stringify(output, null, 2));

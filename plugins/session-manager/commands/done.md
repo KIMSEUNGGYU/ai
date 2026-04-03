@@ -27,9 +27,9 @@ argument-hint: [작업 파일명 (선택)]
 node "${CLAUDE_PLUGIN_ROOT}/scripts/extract-corrections.mjs" {transcript_path1} [{transcript_path2} ...]
 ```
 
-`{project-hash}`: cwd를 `-`로 변환. 출력: `{ messages, decisionTurns, stats }`
+`{project-hash}`: cwd를 `-`로 변환. 출력: 세션별 USER/AI 대화 텍스트 (스킬 프롬프트는 한 줄로 치환, 글자 제한 없음).
 
-**2-A-2.** `extracted < 3`이면 스킵.
+**2-A-2.** 메시지가 3개 미만이면 스킵.
 
 **2-A-3.** Agent로 서브에이전트 실행. 프롬프트에 messages(전체 대화)를 넘기고:
 
