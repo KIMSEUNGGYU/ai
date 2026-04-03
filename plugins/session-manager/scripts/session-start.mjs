@@ -43,13 +43,15 @@ function parseContextFromFrontmatter(content) {
   return arrMatch[1].split(',').map(s => s.trim()).filter(Boolean);
 }
 
-// 프로젝트 폴더 내 전체 .md 로드
+// 프로젝트 폴더 내 전체 .md 로드 (log.md 제외 — 필요 시 /recap에서 읽음)
+const SKIP_FILES = new Set(['log.md']);
+
 async function loadProjectFiles(projectName) {
   const projectPath = join(hqRoot, '10_projects', projectName);
   const parts = [];
   try {
     const entries = await readdir(projectPath, { withFileTypes: true });
-    const mdFiles = entries.filter(e => e.isFile() && e.name.endsWith('.md'));
+    const mdFiles = entries.filter(e => e.isFile() && e.name.endsWith('.md') && !SKIP_FILES.has(e.name));
     for (const file of mdFiles) {
       try {
         const content = await readFile(join(projectPath, file.name), 'utf-8');
