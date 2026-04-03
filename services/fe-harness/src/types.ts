@@ -49,4 +49,5 @@ export interface OrchestrateOptions {
   domain: string;
   page: string;
   targetDir: string;
+  service?: string;
 }

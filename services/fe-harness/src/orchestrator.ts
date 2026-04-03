@@ -7,7 +7,11 @@ import { runGenerator } from './agents/generator.js';
 import { runEvaluator } from './agents/evaluator.js';
 import type { OrchestrateOptions, HarnessConfig, EvalResult, SprintResult, SprintPlan } from './types.js';
 
-function loadConfig(conventionsDir: string): HarnessConfig {
+function loadConfig(conventionsDir: string, service?: string): HarnessConfig {
+  const typecheckCmd = service
+    ? `pnpm --filter @services/${service} run typecheck`
+    : 'tsc --noEmit';
+
   return {
     conventions: [
       join(conventionsDir, 'code-principles.md'),
@@ -15,7 +19,7 @@ function loadConfig(conventionsDir: string): HarnessConfig {
       join(conventionsDir, 'api-layer.md'),
       join(conventionsDir, 'coding-style.md'),
     ],
-    staticGate: ['tsc --noEmit', 'biome check'],
+    staticGate: [typecheckCmd, 'pnpm run check'],
     scoring: {
       qualityThreshold: 8.0,
       contractWeight: 0.6,
@@ -45,12 +49,12 @@ function parseSprintsFromSpec(spec: string): SprintPlan[] {
 }
 
 export async function orchestrate(options: OrchestrateOptions): Promise<void> {
-  const { input, domain, page, targetDir } = options;
+  const { input, domain, page, targetDir, service } = options;
   const files = new HarnessFiles(targetDir, domain, page);
 
   // TODO: conventionsDir를 설정 파일에서 읽도록
   const conventionsDir = join(process.env.HOME ?? '', 'dev/ai/plugins/fe-workflow/conventions');
-  const config = loadConfig(conventionsDir);
+  const config = loadConfig(conventionsDir, service);
 
   console.log(`\n=== FE 하네스 시작 ===`);
   console.log(`도메인: ${domain}, 페이지: ${page}`);
@@ -141,7 +145,7 @@ contract 형식:
           finalScore: 0,
           result: 'stopped',
         });
-        break;
+        break; // for 루프의 sprintResults.push는 아래 조건문으로 스킵됨
       }
       console.log(`    Static Gate 통과`);
 
@@ -191,13 +195,17 @@ contract 형식:
       }
     }
 
-    sprintResults.push({
-      sprintNumber: sprint.number,
-      name: sprint.name,
-      rounds: round,
-      finalScore: evalHistory[evalHistory.length - 1]?.qualityScore ?? 0,
-      result: sprintPassed ? 'pass' : (lastConvergence?.action === 'pivot' ? 'pivot' : lastConvergence?.action === 'accept' ? 'accept' : 'stopped'),
-    });
+    // Static Gate 실패로 이미 push된 경우 스킵
+    const alreadyPushed = sprintResults.some(r => r.sprintNumber === sprint.number);
+    if (!alreadyPushed) {
+      sprintResults.push({
+        sprintNumber: sprint.number,
+        name: sprint.name,
+        rounds: round,
+        finalScore: evalHistory[evalHistory.length - 1]?.qualityScore ?? 0,
+        result: sprintPassed ? 'pass' : (lastConvergence?.action === 'pivot' ? 'pivot' : lastConvergence?.action === 'accept' ? 'accept' : 'stopped'),
+      });
+    }
   }
 
   // Phase 3: Summary

@@ -7,8 +7,9 @@
 - conventions/coding-style.md
 
 ## Static Gate 명령
-- tsc --noEmit
-- biome check
+- 모노레포: `pnpm --filter @services/{service} run typecheck` (service는 사용자에게 확인)
+- 단일 프로젝트: `tsc --noEmit`
+- `pnpm run check` (biome)
 - ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/harness-check.sh
 
 ## 평가 설정

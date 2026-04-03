@@ -8,13 +8,14 @@ const { values, positionals } = parseArgs({
     domain: { type: 'string', short: 'd' },
     page: { type: 'string', short: 'p' },
     target: { type: 'string', short: 't' },
+    service: { type: 'string' },
   },
   allowPositionals: true,
 });
 
 const input = values.spec ?? positionals.join(' ');
 if (!input) {
-  console.error('Usage: pnpm fe-harness "요구사항" --domain order --page detail --target ~/work/project');
+  console.error('Usage: pnpm fe-harness "요구사항" --domain order --page detail --target ~/work/project --service ishopcare');
   process.exit(1);
 }
 
@@ -23,4 +24,5 @@ await orchestrate({
   domain: values.domain ?? 'default',
   page: values.page ?? 'default',
   targetDir: values.target ?? process.cwd(),
+  service: values.service,
 });

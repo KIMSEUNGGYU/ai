@@ -29,12 +29,15 @@
 - [x] 에이전트 개념 학습: 퀴즈 16문 + 보강 6건 (docs/harness/2026-03-31-fe-harness-quiz.md)
 - [x] 문서 정리: docs/harness/ 구조화 + 옛 문서 3개 삭제 + 전체 정리 문서 작성
 - [x] 실행 테스트: Phase 1 성공, Phase 2에서 문제 발견 (cwd + Static Gate + 검증 프로세스)
-- [ ] cwd 수정 반영 후 재테스트
+- [x] cwd 수정 반영 후 재테스트 — Generator가 target(ishopcare-frontend)에 파일 11개 정상 생성 확인
+- [x] Static Gate 설정 — 모노레포 서비스별 typecheck + --service CLI 옵션 + biome PATH 수정
+- [ ] 에러 피드백 길이 제한 — 3749줄 프롬프트 → SDK 크래시 방지
+- [x] summary 중복 행 버그 — alreadyPushed 체크로 수정
 - [ ] 검증 스크립트 (verify-harness.sh) — AI 작업물을 기계적으로 검증
 - [ ] Part 4: 프롬프트 튜닝 + A/B 비교
 
 ## 현재 컨텍스트
-Part 3 완료 + 정합성 검증 13건 수정 + 실행 테스트에서 문제 4건 발견 (cwd, Static Gate, 에러 피드백 길이, AI 검증 품질). cwd는 SDK 공식 옵션으로 수정 완료(미테스트). 다음: cwd 재테스트 → 나머지 문제 순차 해결 → Part 4.
+Static Gate 수정 완료. 원인: 모노레포 root tsc가 서비스별 baseUrl 미적용 → 서비스별 typecheck으로 변경 + --service CLI 옵션 추가. summary 중복 push 버그도 수정. 다음: 에러 피드백 길이 제한 → 재테스트.
 
 ## 결정사항
 - 3-에이전트 구조: Planner(Opus) + Generator(Opus) + Evaluator(Opus) — GAN 영감, Self-Evaluation Bias 해결
