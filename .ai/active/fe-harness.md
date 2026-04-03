@@ -25,10 +25,16 @@
 - [x] SDK 마이그레이션: claude -p → @anthropic-ai/claude-agent-sdk
 - [x] 루프 개선: Evaluator D단계(Contract 검토) 추가 — Plugin + Service 양쪽
 - [x] 문서화: Claude 모델 호출 방식 비교 + decisions 기록
+- [x] 전체 정합성 검증: 문서/Plugin/서비스 13건 불일치 수정 + Generator Opus 통일
+- [x] 에이전트 개념 학습: 퀴즈 16문 + 보강 6건 (docs/harness/2026-03-31-fe-harness-quiz.md)
+- [x] 문서 정리: docs/harness/ 구조화 + 옛 문서 3개 삭제 + 전체 정리 문서 작성
+- [x] 실행 테스트: Phase 1 성공, Phase 2에서 문제 발견 (cwd + Static Gate + 검증 프로세스)
+- [ ] cwd 수정 반영 후 재테스트
+- [ ] 검증 스크립트 (verify-harness.sh) — AI 작업물을 기계적으로 검증
 - [ ] Part 4: 프롬프트 튜닝 + A/B 비교
 
 ## 현재 컨텍스트
-Part 3 완료. SDK 마이그레이션 + 루프 개선(Ouroboros 영감) 적용. 다음은 Part 4 (실전 테스트 + 프롬프트 튜닝).
+Part 3 완료 + 정합성 검증 13건 수정 + 실행 테스트에서 문제 4건 발견 (cwd, Static Gate, 에러 피드백 길이, AI 검증 품질). cwd는 SDK 공식 옵션으로 수정 완료(미테스트). 다음: cwd 재테스트 → 나머지 문제 순차 해결 → Part 4.
 
 ## 결정사항
 - 3-에이전트 구조: Planner(Opus) + Generator(Opus) + Evaluator(Opus) — GAN 영감, Self-Evaluation Bias 해결
@@ -54,6 +60,9 @@ Part 3 완료. SDK 마이그레이션 + 루프 개선(Ouroboros 영감) 적용. 
 - _backup은 플러그인 밖으로 — .ai/backup/fe-workflow/. 플러그인 자동 탐색에 잡히지 않도록
 - 독립 서비스(B) 호출: claude -p 대신 Claude Agent SDK — 구독 과금 + 스트리밍/세션 resume. morning-brief와 동일 패턴
 - 루프 개선: Evaluator가 contract 자체 부실 여부도 판단 — Ouroboros의 Wonder/Reflect에서 영감. 코드가 아닌 기준이 문제일 때 감지
+- Generator 모델 Opus로 변경 — 구독이라 비용 동일, 품질 우선. rate limit 문제 시 Sonnet 전환
+- 수렴 감지 단순화 — 패턴 분류(정체/진동/악화) 대신 개선폭(delta) 기반. 모든 케이스 커버
+- 표준/공식 API 최우선 — SDK 타입에 없는 옵션(json-schema 등)은 우회하지 않음
 
 ## 기각된 대안
 - Playwright 테스트 (지금 단계) → 기각: 정적 검증 + 코드 패턴 일관성으로 현재 문제의 대부분 해결 가능. 환경 셋업 복잡. 나중에 추가 가능
@@ -65,9 +74,16 @@ Part 3 완료. SDK 마이그레이션 + 루프 개선(Ouroboros 영감) 적용. 
 - code-writer 확장(하네스 모드 추가) → 기각: 기존 code-writer가 문제의 원인(35% 패턴 불일치). 같은 프롬프트에 모드 추가는 근본 해결이 아님. 하네스 전용 generator 신규 작성
 - implementing에 Eval Loop 통합 → 기각: harness가 Build Loop를 소유하는 게 설계 의도. implementing에 넣으면 harness와 로직 중복
 
+## 미해결 — 테스트에서 발견된 문제
+1. **Generator가 엉뚱한 경로에 파일 생성** — SDK cwd 미지정. cwd 옵션 추가로 수정했지만 미테스트
+2. **Static Gate가 프로젝트 기존 에러에 걸림** — tsc --noEmit이 전체 검사. 프로젝트별 명령 설정 필요
+3. **SDK 연속 호출 크래시** — Static Gate 에러 3749줄을 프롬프트에 넣어서 발생. 에러 피드백 길이 제한 필요
+4. **AI 검증 품질** — "완료" 선언 후 재확인하면 누락 발견 반복. 검증 스크립트(verify-harness.sh)로 기계적 강제 필요
+
 ## 메모
 - plugin update 후 새 세션에서 반영됨
 - git push 필요: `gh auth switch --user KIMSEUNGGYU` 확인
 
 ## 세션 이력
 - e20327cc-3241-44c8-a7ff-5edfb54884d5 (2026-03-31 22:30)
+- aeedd63a-ee03-4f8d-b261-c320d424f857 (2026-04-03 23:00)

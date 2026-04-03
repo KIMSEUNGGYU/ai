@@ -7,6 +7,7 @@ export async function runEvaluator(
   generatedCode: string,
   referenceCode: string,
   config: HarnessConfig,
+  cwd: string,
 ): Promise<string> {
   const conventionContents = config.conventions
     .map(path => {
@@ -33,8 +34,10 @@ Sprint 통과 = Contract 전부 pass AND 품질 점수 ≥ ${scoring.qualityThre
   const prompt = `## Contract (평가 기준)
 ${contract}
 
-## 생성된 코드
+## 생성된 파일 목록
 ${generatedCode}
+
+위 파일들을 Read 도구로 직접 읽고 평가해.
 
 ## 참조 코드 (패턴 비교용)
 ${referenceCode}
@@ -99,5 +102,5 @@ FAIL이면 추가로 feedback도 출력:
 ## Contract 수정 제안
 {contract에 추가/수정할 기준. 없으면 생략}`;
 
-  return callClaude(prompt, { model: 'opus', systemPrompt });
+  return callClaude(prompt, { model: 'opus', systemPrompt, cwd });
 }

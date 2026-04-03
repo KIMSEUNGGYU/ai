@@ -8,6 +8,7 @@ export async function runGenerator(
   feedback: string | null,
   referenceCode: string,
   config: HarnessConfig,
+  cwd: string,
 ): Promise<string> {
   const conventionContents = config.conventions
     .map(path => {
@@ -43,7 +44,8 @@ ${feedbackSection}
 
 ## 지시
 contract의 "이번 Sprint에서 만드는 것" 항목을 구현해.
-코드만 출력. 파일 경로와 전체 내용을 포함해.`;
+Write 도구를 사용해서 실제 파일을 생성해. 텍스트로 출력하지 말고 파일을 직접 만들어.
+완료 후 생성한 파일 목록만 출력해.`;
 
-  return callClaude(prompt, { model: 'opus', systemPrompt });
+  return callClaude(prompt, { model: 'opus', systemPrompt, cwd });
 }

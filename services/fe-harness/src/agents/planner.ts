@@ -56,5 +56,5 @@ ${input}
 
 스펙만 출력. 다른 말 하지 마.`;
 
-  return callClaude(prompt, { model: 'opus', systemPrompt });
+  return callClaude(prompt, { model: 'opus', systemPrompt, cwd: targetDir });
 }

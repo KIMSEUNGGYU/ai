@@ -92,7 +92,7 @@ contract 형식:
     );
 
     // Evaluator가 contract 검토: "이 기준으로 평가 가능한가?"
-    const reviewOutput = await runEvaluator(contractDraft, '', '', config);
+    const reviewOutput = await runEvaluator(contractDraft, '', '', config, targetDir);
     const reviewResult = parseEvalLog(reviewOutput);
 
     // 검토에서 contract 수정 제안이 있으면 반영
@@ -114,7 +114,7 @@ contract 형식:
       console.log(`  Round ${round}:`);
 
       // Generate
-      const code = await runGenerator(spec, currentContract, lastFeedback, '', config);
+      const code = await runGenerator(spec, currentContract, lastFeedback, '', config, targetDir);
       console.log(`    Generator 완료`);
 
       // Static Gate (재시도 포함)
@@ -124,7 +124,12 @@ contract 형식:
         gateRetry++;
         console.log(`    Static Gate FAIL (${gateRetry}/${config.limits.staticGateRetries}): ${gateResult.errors.length}개 에러`);
         const errorFeedback = `Static Gate 에러를 수정해:\n${gateResult.errors.join('\n')}`;
-        await runGenerator(spec, currentContract, errorFeedback, '', config);
+        try {
+          await runGenerator(spec, currentContract, errorFeedback, '', config, targetDir);
+        } catch {
+          console.log(`    Generator 재호출 실패 → Static Gate 재시도 중단`);
+          break;
+        }
         gateResult = runStaticGate(targetDir, config.staticGate);
       }
       if (!gateResult.passed) {
@@ -141,7 +146,7 @@ contract 형식:
       console.log(`    Static Gate 통과`);
 
       // Evaluate
-      const evalOutput = await runEvaluator(currentContract, code, '', config);
+      const evalOutput = await runEvaluator(currentContract, code, '', config, targetDir);
       const evalResult = parseEvalLog(evalOutput);
       evalHistory.push(evalResult);
 
