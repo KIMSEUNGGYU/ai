@@ -75,8 +75,9 @@ export async function orchestrate(options: OrchestrateOptions): Promise<void> {
   for (const sprint of sprints) {
     console.log(`\n=== Sprint ${sprint.number}: ${sprint.name} ===`);
 
-    // 2-1: Contract 생성
-    const contractPrompt = `spec.md 기반으로 Sprint ${sprint.number} (${sprint.name})의 contract를 생성해.
+    // 2-1: Contract 생성 (Planner 초안 → Evaluator 검토)
+    const contractDraft = await runPlanner(
+      `spec.md 기반으로 Sprint ${sprint.number} (${sprint.name})의 contract를 생성해.
 범위: ${sprint.scope}
 산출물: ${sprint.deliverables}
 
@@ -84,10 +85,20 @@ contract 형식:
 - 이번 Sprint에서 만드는 것
 - 하지 말아야 할 것
 - 완료 기준 (정적 게이트 + 코드 품질)
-- 참조할 기존 코드`;
+- 참조할 기존 코드`,
+      targetDir,
+      spec,
+      config,
+    );
 
-    // TODO: Planner 초안 → Evaluator 검토 루프
-    const contract = await runGenerator(spec, contractPrompt, null, '', config);
+    // Evaluator가 contract 검토: "이 기준으로 평가 가능한가?"
+    const reviewOutput = await runEvaluator(contractDraft, '', '', config);
+    const reviewResult = parseEvalLog(reviewOutput);
+
+    // 검토에서 contract 수정 제안이 있으면 반영
+    const contract = reviewResult.contractFeedback
+      ? `${contractDraft}\n\n## Evaluator 검토에서 보완\n${reviewResult.contractFeedback}`
+      : contractDraft;
     files.write(files.contractPath(sprint.number), contract);
 
     // 2-2 ~ 2-4: Generate + Gate + Eval 루프
@@ -96,6 +107,7 @@ contract 형식:
     let lastFeedback: string | null = null;
     let sprintPassed = false;
     let currentContract = contract;
+    let lastConvergence: ReturnType<typeof checkConvergence> | null = null;
 
     while (round < config.limits.evalLoopRetries) {
       round++;
@@ -144,19 +156,19 @@ contract 형식:
       }
 
       // 수렴 감지
-      const convergence = checkConvergence(evalHistory);
-      console.log(`    수렴 체크: ${convergence.action} (${convergence.reason})`);
+      lastConvergence = checkConvergence(evalHistory);
+      console.log(`    수렴 체크: ${lastConvergence.action} (${lastConvergence.reason})`);
 
-      if (convergence.action === 'accept') {
-        console.log(`    수용: ${convergence.reason}`);
+      if (lastConvergence.action === 'accept') {
+        console.log(`    수용: ${lastConvergence.reason}`);
         break;
       }
-      if (convergence.action === 'pivot') {
-        console.log(`    방향 전환: ${convergence.reason}`);
+      if (lastConvergence.action === 'pivot') {
+        console.log(`    방향 전환: ${lastConvergence.reason}`);
         break;
       }
-      if (convergence.action === 'stop') {
-        console.log(`    중단: ${convergence.reason}`);
+      if (lastConvergence.action === 'stop') {
+        console.log(`    중단: ${lastConvergence.reason}`);
         break;
       }
 
@@ -179,12 +191,7 @@ contract 형식:
       name: sprint.name,
       rounds: round,
       finalScore: evalHistory[evalHistory.length - 1]?.qualityScore ?? 0,
-      result: sprintPassed ? 'pass' : (() => {
-        const convergence = checkConvergence(evalHistory);
-        if (convergence.action === 'pivot') return 'pivot';
-        if (convergence.action === 'accept') return 'accept';
-        return 'stopped';
-      })(),
+      result: sprintPassed ? 'pass' : (lastConvergence?.action === 'pivot' ? 'pivot' : lastConvergence?.action === 'accept' ? 'accept' : 'stopped'),
     });
   }
 

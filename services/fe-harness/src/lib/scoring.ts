@@ -22,10 +22,10 @@ export function parseEvalLog(content: string): EvalResult {
   }
 
   // B. 열린 평가 점수 파싱 — 가장 심각한 이슈의 값 적용
-  const openEvalScore = parseSeverityScore(content, /## B\. 열린 평가\n([\s\S]*?)(?=\n## [C-Z])/);
+  const openEvalScore = parseSeverityScore(content, /## B\. 열린 평가\n([\s\S]*?)(?=\n## [C-Z])/, 'openEval');
 
   // C. Contrarian 점수 파싱 — 가장 심각한 약점의 값 적용
-  const contrarianScore = parseSeverityScore(content, /## C\. Contrarian\n([\s\S]*?)(?=\n## [D-Z])/);
+  const contrarianScore = parseSeverityScore(content, /## C\. Contrarian\n([\s\S]*?)(?=\n## [D-Z])/, 'contrarian');
 
   const passed = passedMatch?.[1] === 'PASS';
   const qualityScore = parseFloat(scoreMatch?.[1] ?? '0');
@@ -61,25 +61,28 @@ export function parseEvalLog(content: string): EvalResult {
 
 /**
  * 섹션에서 심각도를 파싱하여 가장 심각한 값을 반환.
- * 심각(0.5), 중간(0.7/0.6), 경미(0.85/0.8) 패턴을 찾음.
+ * B(열린 평가): 심각(0.5), 중간(0.7), 경미(0.85)
+ * C(Contrarian): 심각(0.5), 중간(0.6), 경미(0.8)
  * 이슈가 없으면 1.0 반환.
  */
-function parseSeverityScore(content: string, sectionRegex: RegExp): number {
+function parseSeverityScore(content: string, sectionRegex: RegExp, type: 'openEval' | 'contrarian'): number {
   const section = content.match(sectionRegex);
   if (!section) return 1.0;
 
   const sectionText = section[1];
   const severityPattern = /\[(심각|중간|경미)\]/g;
-  const severityMap: Record<string, number> = {
-    '심각': 0.5,
-    '중간': 0.65, // B의 0.7과 C의 0.6 평균 — 실제로는 섹션별로 다르지만 파싱 시점에 충분
-    '경미': 0.825,
-  };
+
+  const severityMaps = {
+    openEval: { '심각': 0.5, '중간': 0.7, '경미': 0.85 },
+    contrarian: { '심각': 0.5, '중간': 0.6, '경미': 0.8 },
+  } as const;
+
+  const severityMap = severityMaps[type];
 
   let worstScore = 1.0;
   let match;
   while ((match = severityPattern.exec(sectionText)) !== null) {
-    const score = severityMap[match[1]] ?? 1.0;
+    const score = severityMap[match[1] as keyof typeof severityMap] ?? 1.0;
     if (score < worstScore) worstScore = score;
   }
 

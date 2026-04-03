@@ -1,6 +1,6 @@
 ---
-description: "FE 하네스 Evaluating — 3단계 코드 품질 평가 (Contract + 열린 + Contrarian). '하네스 평가', 'evaluating', '코드 평가' 등으로 트리거."
-allowed-tools: Read, Write, Glob, Grep, Agent
+description: "FE 하네스 Evaluating — 4단계 코드 품질 평가 (Contract + 열린 + Contrarian + Contract 검토). '하네스 평가', 'evaluating', '코드 평가' 등으로 트리거."
+allowed-tools: Read, Write, Glob, Grep, Bash, Agent
 argument-hint: "[contract.md 경로] 또는 [코드 경로]"
 ---
 
@@ -18,7 +18,7 @@ $ARGUMENTS
 
 ### 1. 입력 확인 + 모드 결정
 
-**contract 기반 평가 (전체 3단계):**
+**contract 기반 평가 (전체 4단계):**
 - 인자에 contract.md 경로가 있거나
 - `.ai/harness/.../sprint-{N}/contract.md`가 존재하면
 → A(Contract) + B(열린) + C(Contrarian) 전체 수행

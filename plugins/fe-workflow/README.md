@@ -10,7 +10,7 @@ FE 전용 플러그인 — 하네스 기반 자동 구현 + 품질 평가.
 개별 호출:
 /fe:planning "요구사항"         →  스펙 생성 (소크라테스식 질문 + 모호성 체크)
 /fe:implementing spec.md       →  구현 (Contract → Generate → Static Gate)
-/fe:evaluating                 →  평가 (Contract + 열린 + Contrarian 3단계)
+/fe:evaluating                 →  평가 (Contract + 열린 + Contrarian + Contract 검토 4단계)
 ```
 
 ## 커맨드
@@ -19,16 +19,16 @@ FE 전용 플러그인 — 하네스 기반 자동 구현 + 품질 평가.
 |--------|------|-------|
 | `/fe:harness` | 통합 오케스트레이터 — Planning → Build Loop → Summary | planner + generator + evaluator |
 | `/fe:planning` | 요구사항 → 스펙 확장 + Sprint 분해 | planner (opus) |
-| `/fe:implementing` | Sprint Contract 기반 코드 구현 + Static Gate | generator (sonnet) + planner (contract) |
-| `/fe:evaluating` | 3단계 코드 품질 평가 | evaluator (opus) |
+| `/fe:implementing` | Sprint Contract 기반 코드 구현 + Static Gate | generator (opus) + planner (contract) |
+| `/fe:evaluating` | 4단계 코드 품질 평가 | evaluator (opus) |
 
 ## Agents
 
 | Agent | 모델 | 역할 |
 |-------|------|------|
 | planner | opus | 스펙 확장 + Sprint 분해 + 소크라테스식 질문 + 모호성 체크 + Contract 초안 |
-| generator | sonnet | Sprint Contract 기반 코드 구현. 참조 패턴 따르기. 자기검증 안 함. |
-| evaluator | opus | Contract 기준(닫힌) + 열린 평가 + Contrarian(반대 관점) 3단계 평가 |
+| generator | opus | Sprint Contract 기반 코드 구현. 참조 패턴 따르기. 자기검증 안 함. |
+| evaluator | opus | Contract 기준(닫힌) + 열린 평가 + Contrarian(반대 관점) + Contract 검토 4단계 평가 |
 
 ## Skills
 

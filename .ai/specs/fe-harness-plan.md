@@ -10,7 +10,7 @@ status: draft
 
 **Goal:** 앤트로픽 하네스 패턴(Planner/Generator/Evaluator + Sprint Contract)을 FE 개발에 적용하는 시스템을 2가지 방식으로 구현하여 비교
 
-**Architecture:** 3-에이전트(Planner Opus, Generator Sonnet, Evaluator Opus) + Sprint Contract + 파일 기반 통신. 동일 설계를 Plugin(A)과 독립 서비스(B)로 각각 구현.
+**Architecture:** 3-에이전트(Planner Opus, Generator Opus, Evaluator Opus) + Sprint Contract + 파일 기반 통신. 동일 설계를 Plugin(A)과 독립 서비스(B)로 각각 구현.
 
 **Tech Stack:** TypeScript ESM, Claude Code Plugin (A), `claude -p` CLI (B), pnpm workspace
 
@@ -69,7 +69,7 @@ references:
 - 한 번에 하나씩, 구체적으로
 - 입력이 충분하면 이 단계를 줄이거나 건너뜀
 
-### 3단계: 스펙 확장
+### 4단계: 스펙 확장
 아래 **필수 항목**을 모두 포함하는 spec.md를 생성:
 - **기능 목록** — 구체적. "등등", "기타" 금지
 - **UI 구조** — 섹션/모달/드로어 레벨
@@ -122,7 +122,7 @@ Generator와 분리된 독립 평가자. Self-Evaluation Bias 해결의 핵심.
 ```markdown
 ---
 model: opus
-description: FE 하네스 Evaluator — Contract 기준 + 열린 평가 + Contrarian 3단계로 코드 품질 검증. Generator의 코드를 독립적으로 평가하고 구체적 피드백 생성.
+description: FE 하네스 Evaluator — Contract 기준 + 열린 평가 + Contrarian 4단계로 코드 품질 검증. Generator의 코드를 독립적으로 평가하고 구체적 피드백 생성.
 tools:
   - Read
   - Glob
@@ -200,7 +200,7 @@ eval-log-rN.md를 아래 형식으로 생성:
 
 ## 메타
 - 시각: {timestamp}
-- Generator 모델: sonnet
+- Generator 모델: opus
 - Evaluator 모델: opus
 
 ## 통과 판정: {PASS | FAIL (사유)}
@@ -617,7 +617,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/hooks/scripts/harness-check.sh 2>&1
 
 ```markdown
 ---
-description: "FE 하네스 Evaluating — 3단계 코드 품질 평가 (Contract + 열린 + Contrarian). '하네스 평가', 'evaluating', '코드 평가' 등으로 트리거."
+description: "FE 하네스 Evaluating — 4단계 코드 품질 평가 (Contract + 열린 + Contrarian). '하네스 평가', 'evaluating', '코드 평가' 등으로 트리거."
 allowed_tools:
   - Read
   - Write
@@ -697,7 +697,7 @@ claude plugin update "fe@gyu-plugins"
 - [ ] Sprint Contract가 생성되는가
 - [ ] Generator가 contract 범위만 구현하는가
 - [ ] Static Gate가 동작하는가
-- [ ] Evaluator가 3단계 평가를 수행하는가
+- [ ] Evaluator가 4단계 평가를 수행하는가
 - [ ] eval-log 형식이 올바른가
 - [ ] 품질 점수가 산출되는가
 - [ ] summary.md가 생성되는가
@@ -1447,8 +1447,12 @@ contract 형식:
 - 완료 기준 (정적 게이트 + 코드 품질)
 - 참조할 기존 코드`;
 
-    // TODO: Generator 초안 → Evaluator 검토 루프
-    const contract = runGenerator(spec, contractPrompt, null, '', config, targetDir);
+    // Planner 초안 → Evaluator 검토
+    const contractDraft = runPlanner(spec, contractPrompt, null, config, targetDir);
+    const reviewResult = runEvaluator(contractDraft, '', '', config, targetDir);
+    const contract = reviewResult.contractFeedback
+      ? `${contractDraft}\n\n## Evaluator 검토에서 보완\n${reviewResult.contractFeedback}`
+      : contractDraft;
     files.write(files.contractPath(sprint.number), contract);
 
     // 2-2 ~ 2-4: Generate + Gate + Eval 루프

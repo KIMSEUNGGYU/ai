@@ -46,7 +46,7 @@ FE 개발 품질을 높이기 위한 하네스 시스템. 앤트로픽의 $9 vs 
   → Sprint Contract (Generator ↔ Evaluator 합의)
   → Generator 구현
   → Static Gate (tsc + biome + harness-check)
-  → Evaluator 3단계 평가
+  → Evaluator 4단계 평가
   → 점수 추이 기반 방향 결정
   → 통과 시 다음 Sprint
 
@@ -62,8 +62,8 @@ FE 개발 품질을 높이기 위한 하네스 시스템. 앤트로픽의 $9 vs 
 | 에이전트 | 모델 | 역할 |
 |---------|------|------|
 | Planner | Opus | 스펙 확장 + Sprint 분해 + 소크라테스식 질문 + 자체 모호성 체크 |
-| Generator | Sonnet | Sprint 단위 코드 구현 |
-| Evaluator | Opus | 3단계 평가 (Contract + 열린 + Contrarian) + 피드백 생성 |
+| Generator | Opus | Sprint 단위 코드 구현 |
+| Evaluator | Opus | 4단계 평가 (Contract + 열린 + Contrarian + Contract 검토) + 피드백 생성 |
 
 ---
 
@@ -253,7 +253,7 @@ contract 기준으로 검증 + 구체적 피드백 생성.
 4. 컨벤션 문서들
 5. 이전 eval-log — 점수 추이 파악용 (Orchestrator가 전달)
 
-### 평가 3단계
+### 평가 4단계
 
 **A. Contract 기준 (닫힌 평가)**
 - contract.md에 명시된 항목 pass/fail
@@ -277,7 +277,7 @@ contract 기준으로 검증 + 구체적 피드백 생성.
 
 ## 메타
 - 시각: 2026-03-31 14:30
-- Generator 모델: sonnet
+- Generator 모델: opus
 - Evaluator 모델: opus
 - 소요 시간: Generator 2분 30초, Evaluator 45초
 

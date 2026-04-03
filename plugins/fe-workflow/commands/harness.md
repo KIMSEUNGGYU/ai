@@ -76,13 +76,14 @@ eval-log에서 "통과 판정: PASS" 또는 "FAIL"을 확인.
 
 - **PASS** → TaskUpdate 완료, 다음 Sprint
 - **FAIL**:
-  - eval-log에서 feedback 섹션을 추출 → `feedback-r{R}.md`에 Write
-  - eval-log에 "Contract 수정 제안" 섹션이 있으면 → contract.md에 "보완 기준 (Round {R}에서 추가)" 섹션으로 append
   - 수렴 감지 (점수 × 개선폭 기반):
-    - 점수가 너무 낮음 → 방향 전환 (pivot). 완전히 다른 접근으로 2-2 재실행.
-    - 점수 개선폭이 큼 → feedback 전달 후 2-2 재실행.
+    - 점수가 너무 낮음 → 방향 전환 (pivot). 사람에게 알림.
     - 점수 개선폭이 미미 → 현재 상태 수용 (accept). 사람에게 알림.
     - Eval Loop 최대 재시도(config) 도달 → 안전장치 종료. 사람에게 알림.
+  - 재시도하는 경우 (개선폭이 큼):
+    - eval-log에 "Contract 수정 제안" 섹션이 있으면 → contract.md에 "보완 기준 (Round {R}에서 추가)" 섹션으로 append
+    - eval-log에서 feedback 섹션을 추출 → `feedback-r{R}.md`에 Write
+    - feedback 전달 후 2-2 재실행.
 
 #### 2-5. Sprint 완료
 - domain-context.md 업데이트 (새로 생성된 공유 DTO, remote, query 등 반영)

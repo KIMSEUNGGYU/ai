@@ -31,11 +31,11 @@
 Part 3 완료. SDK 마이그레이션 + 루프 개선(Ouroboros 영감) 적용. 다음은 Part 4 (실전 테스트 + 프롬프트 튜닝).
 
 ## 결정사항
-- 3-에이전트 구조: Planner(Opus) + Generator(Sonnet) + Evaluator(Opus) — GAN 영감, Self-Evaluation Bias 해결
+- 3-에이전트 구조: Planner(Opus) + Generator(Opus) + Evaluator(Opus) — GAN 영감, Self-Evaluation Bias 해결
 - 2가지 구현 비교: Plugin(A) + 독립 서비스 claude -p(B) — 컨텍스트 격리 효과 비교 목적
 - Sprint Contract: Generator ↔ Evaluator 사전 합의 — 만들기 전에 완료 기준 명확화
 - 파일 기반 통신: 에이전트 간 파일로 소통 — 컨텍스트 격리 + 로그 자동 축적
-- Evaluator 3단계: Contract(닫힌) + 열린 평가 + Contrarian — 갇히지 않는 평가
+- Evaluator 4단계: Contract(닫힌) + 열린 평가 + Contrarian + Contract 검토 — 갇히지 않는 평가
 - Sprint 통과 = Contract 전부 pass AND 품질 점수 ≥ 임계값 — 둘 다 충족해야 통과
 - 품질 점수 공식: Contract(60%) + 열린(30%) + Contrarian(10%) — 보고서/추적용
 - Planner 모호성 체크: 목표(40%) + 제약(30%) + 성공기준(30%) — Ouroboros 영감
@@ -49,7 +49,7 @@ Part 3 완료. SDK 마이그레이션 + 루프 개선(Ouroboros 영감) 적용. 
 - Orchestrator는 LLM이 아닌 코드 로직 — if/else 분기, 모델 호출 불필요
 - disallowedTools 패턴 통일 — planner, evaluator에 disallowedTools 사용 (기존 에이전트와 일관성)
 - Generator 신규 작성 — 기존 code-writer 확장이 아닌 하네스 전용으로 새로 설계. 자기검증 제거 (Evaluator가 담당), contract 범위 엄수에 집중
-- Contract 초안 생성 = Planner — spec을 만든 에이전트가 contract도 가장 잘 정의. Generator(Sonnet, 구현 전용)는 contract 작성에 부적합
+- Contract 초안 생성 = Planner — spec을 만든 에이전트가 contract도 가장 잘 정의. Generator(구현 전용)는 contract 작성에 부적합
 - implementing 개별 호출 시 Eval Loop 미포함 — harness가 Build Loop를 소유. 개별 호출 시 /fe:evaluating을 따로 실행
 - _backup은 플러그인 밖으로 — .ai/backup/fe-workflow/. 플러그인 자동 탐색에 잡히지 않도록
 - 독립 서비스(B) 호출: claude -p 대신 Claude Agent SDK — 구독 과금 + 스트리밍/세션 resume. morning-brief와 동일 패턴

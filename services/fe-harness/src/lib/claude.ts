@@ -6,7 +6,7 @@ interface ClaudeOptions {
 }
 
 export async function callClaude(prompt: string, options: ClaudeOptions = {}): Promise<string> {
-  const { model = 'sonnet', systemPrompt } = options;
+  const { model = 'opus', systemPrompt } = options;
 
   let result = '';
 
