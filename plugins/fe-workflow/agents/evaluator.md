@@ -1,6 +1,6 @@
 ---
 name: evaluator
-description: FE 하네스 Evaluator — Contract 기준 + 열린 평가 + Contrarian 3단계로 코드 품질 검증. Generator의 코드를 독립적으로 평가하고 구체적 피드백 생성.
+description: FE 하네스 Evaluator — Contract 기준 + 열린 평가 + Contrarian + Contract 검토 4단계로 코드 품질 검증. Generator의 코드를 독립적으로 평가하고 구체적 피드백 생성.
 model: opus
 color: yellow
 disallowedTools: Write, Edit, Bash, NotebookEdit

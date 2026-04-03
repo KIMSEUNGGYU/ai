@@ -105,16 +105,26 @@ contract 형식:
       const code = await runGenerator(spec, currentContract, lastFeedback, '', config);
       console.log(`    Generator 완료`);
 
-      // Static Gate
-      const gateResult = runStaticGate(targetDir, config.staticGate);
+      // Static Gate (재시도 포함)
+      let gateResult = runStaticGate(targetDir, config.staticGate);
+      let gateRetry = 0;
+      while (!gateResult.passed && gateRetry < config.limits.staticGateRetries) {
+        gateRetry++;
+        console.log(`    Static Gate FAIL (${gateRetry}/${config.limits.staticGateRetries}): ${gateResult.errors.length}개 에러`);
+        const errorFeedback = `Static Gate 에러를 수정해:\n${gateResult.errors.join('\n')}`;
+        await runGenerator(spec, currentContract, errorFeedback, '', config);
+        gateResult = runStaticGate(targetDir, config.staticGate);
+      }
       if (!gateResult.passed) {
-        console.log(`    Static Gate FAIL: ${gateResult.errors.length}개 에러`);
-        let gateRetry = 0;
-        while (!gateResult.passed && gateRetry < config.limits.staticGateRetries) {
-          gateRetry++;
-          // TODO: Generator에게 에러 전달 후 재생성
-          break; // 단순 버전: 한번 실패하면 다음 Eval로
-        }
+        console.log(`    Static Gate ${config.limits.staticGateRetries}회 실패 → Sprint 중단`);
+        sprintResults.push({
+          sprintNumber: sprint.number,
+          name: sprint.name,
+          rounds: round,
+          finalScore: 0,
+          result: 'stopped',
+        });
+        break;
       }
       console.log(`    Static Gate 통과`);
 
@@ -138,7 +148,11 @@ contract 형식:
       console.log(`    수렴 체크: ${convergence.action} (${convergence.reason})`);
 
       if (convergence.action === 'accept') {
-        console.log(`    정체로 수용`);
+        console.log(`    수용: ${convergence.reason}`);
+        break;
+      }
+      if (convergence.action === 'pivot') {
+        console.log(`    방향 전환: ${convergence.reason}`);
         break;
       }
       if (convergence.action === 'stop') {
@@ -165,7 +179,12 @@ contract 형식:
       name: sprint.name,
       rounds: round,
       finalScore: evalHistory[evalHistory.length - 1]?.qualityScore ?? 0,
-      result: sprintPassed ? 'pass' : round >= config.limits.evalLoopRetries ? 'stopped' : 'stagnation',
+      result: sprintPassed ? 'pass' : (() => {
+        const convergence = checkConvergence(evalHistory);
+        if (convergence.action === 'pivot') return 'pivot';
+        if (convergence.action === 'accept') return 'accept';
+        return 'stopped';
+      })(),
     });
   }
 

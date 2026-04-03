@@ -41,7 +41,7 @@ export interface SprintResult {
   name: string;
   rounds: number;
   finalScore: number;
-  result: 'pass' | 'stagnation' | 'stopped';
+  result: 'pass' | 'accept' | 'pivot' | 'stopped';
 }
 
 export interface OrchestrateOptions {

@@ -45,5 +45,5 @@ ${feedbackSection}
 contract의 "이번 Sprint에서 만드는 것" 항목을 구현해.
 코드만 출력. 파일 경로와 전체 내용을 포함해.`;
 
-  return callClaude(prompt, { model: 'sonnet', systemPrompt });
+  return callClaude(prompt, { model: 'opus', systemPrompt });
 }

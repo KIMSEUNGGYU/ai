@@ -1,7 +1,7 @@
 ---
 name: generator
 description: FE 하네스 Generator — Sprint Contract 기반 코드 구현. 참조 코드 패턴을 따르고, 범위를 엄격히 지킨다. 자기검증은 하지 않는다 (Evaluator가 담당).
-model: sonnet
+model: opus
 color: green
 disallowedTools: Bash, NotebookEdit
 references:

@@ -21,6 +21,12 @@ export function parseEvalLog(content: string): EvalResult {
     }
   }
 
+  // B. 열린 평가 점수 파싱 — 가장 심각한 이슈의 값 적용
+  const openEvalScore = parseSeverityScore(content, /## B\. 열린 평가\n([\s\S]*?)(?=\n## [C-Z])/);
+
+  // C. Contrarian 점수 파싱 — 가장 심각한 약점의 값 적용
+  const contrarianScore = parseSeverityScore(content, /## C\. Contrarian\n([\s\S]*?)(?=\n## [D-Z])/);
+
   const passed = passedMatch?.[1] === 'PASS';
   const qualityScore = parseFloat(scoreMatch?.[1] ?? '0');
   const totalCriteria = contractDetails.length || 1;
@@ -44,8 +50,8 @@ export function parseEvalLog(content: string): EvalResult {
     passed,
     qualityScore,
     contractPassRate: passedCriteria / totalCriteria,
-    openEvalScore: 0,
-    contrarianScore: 0,
+    openEvalScore,
+    contrarianScore,
     contractDetails,
     direction,
     feedback,
@@ -53,43 +59,68 @@ export function parseEvalLog(content: string): EvalResult {
   };
 }
 
+/**
+ * 섹션에서 심각도를 파싱하여 가장 심각한 값을 반환.
+ * 심각(0.5), 중간(0.7/0.6), 경미(0.85/0.8) 패턴을 찾음.
+ * 이슈가 없으면 1.0 반환.
+ */
+function parseSeverityScore(content: string, sectionRegex: RegExp): number {
+  const section = content.match(sectionRegex);
+  if (!section) return 1.0;
+
+  const sectionText = section[1];
+  const severityPattern = /\[(심각|중간|경미)\]/g;
+  const severityMap: Record<string, number> = {
+    '심각': 0.5,
+    '중간': 0.65, // B의 0.7과 C의 0.6 평균 — 실제로는 섹션별로 다르지만 파싱 시점에 충분
+    '경미': 0.825,
+  };
+
+  let worstScore = 1.0;
+  let match;
+  while ((match = severityPattern.exec(sectionText)) !== null) {
+    const score = severityMap[match[1]] ?? 1.0;
+    if (score < worstScore) worstScore = score;
+  }
+
+  return worstScore;
+}
+
+// --- 수렴 감지 ---
+
+const SCORE_TOO_LOW = 5.0;
+const DELTA_THRESHOLD = 0.3;
+
 export interface ConvergenceCheck {
   action: 'continue' | 'accept' | 'pivot' | 'stop';
   reason: string;
 }
 
 export function checkConvergence(history: EvalResult[]): ConvergenceCheck {
-  if (history.length === 0) return { action: 'continue', reason: 'first round' };
+  if (history.length === 0) return { action: 'continue', reason: '첫 라운드' };
 
   const latest = history[history.length - 1];
-  if (latest.passed) return { action: 'continue', reason: 'passed' };
 
-  // 악화 감지: fail 수 증가
-  if (history.length >= 2) {
-    const prev = history[history.length - 2];
-    const prevFails = prev.contractDetails.filter(d => d.result === 'fail').length;
-    const currFails = latest.contractDetails.filter(d => d.result === 'fail').length;
-    if (currFails > prevFails) {
-      return { action: 'pivot', reason: `fail 수 증가 (${prevFails} → ${currFails})` };
-    }
+  // 통과하면 계속
+  if (latest.passed) return { action: 'continue', reason: '통과' };
+
+  // 점수가 너무 낮으면 방향 전환
+  if (latest.qualityScore < SCORE_TOO_LOW) {
+    return { action: 'pivot', reason: `점수 너무 낮음 (${latest.qualityScore})` };
   }
 
-  // 정체 감지: 3회 연속 동일 점수
-  if (history.length >= 3) {
-    const last3 = history.slice(-3).map(h => h.qualityScore);
-    if (last3[0] === last3[1] && last3[1] === last3[2]) {
-      return { action: 'accept', reason: `3회 연속 동점 (${last3[0]})` };
-    }
+  // 첫 라운드는 개선폭 비교 불가
+  if (history.length < 2) return { action: 'continue', reason: '기준점 수집 중' };
+
+  // 개선폭 계산
+  const prev = history[history.length - 2];
+  const delta = latest.qualityScore - prev.qualityScore;
+
+  // 개선폭이 크면 계속
+  if (delta >= DELTA_THRESHOLD) {
+    return { action: 'continue', reason: `개선 중 (Δ${delta.toFixed(1)})` };
   }
 
-  // 진동 감지: N ≈ N-2
-  if (history.length >= 3) {
-    const curr = latest.qualityScore;
-    const twoAgo = history[history.length - 3].qualityScore;
-    if (Math.abs(curr - twoAgo) < 0.5) {
-      return { action: 'stop', reason: `진동 감지 (${twoAgo} → ... → ${curr})` };
-    }
-  }
-
-  return { action: 'continue', reason: 'improving' };
+  // 개선폭이 미미하면 멈춤 (결과물은 가져감)
+  return { action: 'accept', reason: `개선폭 미미 (Δ${delta.toFixed(1)})` };
 }
