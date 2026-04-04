@@ -110,9 +110,9 @@ export function isAppError(error: unknown): error is AppError {
 ```
 
 **실패 케이스:**
-- 번들러 코드 스플리팅 — 클래스가 여러 청크에 중복 포함
-- 프레임워크 경계 — Server/Client Component 간 직렬화
-- 실행 컨텍스트 차이 — iframe, Web Worker 간 전달
+- 패키지 버전 중복 — 모노레포/node_modules에서 같은 클래스가 다른 인스턴스로 존재
+- 프레임워크 경계 — Server/Client Component 간 직렬화 시 프로토타입 체인 소실
+- 실행 컨텍스트 차이 — iframe, Web Worker 등 별도 realm에서 클래스 참조가 다름
 
 ### 구조적 타입 체크 (Duck Typing)
 
@@ -289,8 +289,48 @@ export const queryClient = new QueryClient({
 
 ---
 
+---
+
+## 6. 에러 메시지 중앙 관리
+
+AppErrorKind별 사용자 노출 메시지를 한 곳에서 관리한다:
+
+```typescript
+// lib/error/errorMessages.ts
+export const errorCopy: Record<AppErrorKind, { title: string; desc?: string }> = {
+  Auth:     { title: '로그인이 필요합니다', desc: '세션이 만료되었어요.' },
+  NotFound: { title: '찾을 수 없어요', desc: '요청한 리소스가 없어요.' },
+  Network:  { title: '네트워크 오류', desc: '인터넷 연결을 확인해주세요.' },
+  Server:   { title: '서버에 문제가 있어요', desc: '잠시 후 다시 시도해주세요.' },
+  Unknown:  { title: '문제가 발생했어요', desc: '잠시 후 다시 시도해주세요.' },
+};
+```
+
+---
+
+## 7. Sentry afterResponse 인터셉터
+
+401은 제외하고 나머지 HTTP 에러를 Sentry에 자동 리포트한다:
+
+```typescript
+async function afterResponseErrorReporter(
+  request: Request,
+  options: NormalizedOptions,
+  response: Response,
+) {
+  if (is.falsy(response.ok) && response.status !== 401) {
+    const error = new HTTPError(response, request, options);
+    sentryService.captureApiError(error);
+  }
+  return response;
+}
+```
+
+---
+
 ## 변경 히스토리
 
 | 날짜 | 변경사항 |
 |------|----------|
 | 2026-02-08 | 초판 (error-handling 소스 기반) |
+| 2026-04-04 | §6 에러 메시지 중앙 관리, §7 Sentry 인터셉터 추가 |

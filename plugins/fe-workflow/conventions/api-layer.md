@@ -460,14 +460,48 @@ mutationOptions({
     queryClient.setQueryData(todoKeys.detail(newTodo.id), newTodo);
     return { previous };
   },
-  onError: (_, __, context) => {
-    queryClient.setQueryData(todoKeys.detail(newTodo.id), context?.previous);
+  onError: (_, variables, context) => {
+    queryClient.setQueryData(todoKeys.detail(variables.id), context?.previous);
   },
   onSettled: () => {
     queryClient.invalidateQueries({ queryKey: todoKeys.all });
   },
 });
 ```
+
+---
+
+## 8. 검색 디바운스 패턴
+
+검색어는 로컬 useState로 즉시 반영, 디바운스된 값만 쿼리/URL에 전달한다:
+
+```typescript
+const [localSearch, setLocalSearch] = useState(filters.search);
+const debouncedUpdateSearch = useDebounce((search: string) => setFilters({ search }), 500);
+
+<SearchTextField
+  value={localSearch}
+  onChange={e => {
+    setLocalSearch(e.target.value);
+    debouncedUpdateSearch(e.target.value);
+  }}
+/>
+```
+
+---
+
+## 9. keepPreviousData 깜빡임 방지
+
+필터/검색 전환 시 이전 데이터를 유지하여 깜빡임을 방지한다:
+
+```typescript
+const { data } = useInfiniteQuery({
+  ...queryOptions.infinite({ filters }),
+  placeholderData: keepPreviousData,  // 필터 변경 시 이전 데이터 유지
+});
+```
+
+`useQuery`에서도 동일하게 적용. 필터, 페이지네이션, 검색 등 파라미터가 바뀌는 쿼리에 사용.
 
 ---
 
@@ -504,3 +538,5 @@ mutationOptions({
 | 2026-03-04 | Prefetch, Optimistic Update 패턴 추가 |
 | 2026-03-04 | DTO 속성 JSDoc 주석 규칙 추가, 섹션 번호 정리 |
 | 2026-03-05 | staleTime 톤 다운 (필수 → 필요 시), DO/DON'T 조정 |
+| 2026-04-04 | 회사 전용 섹션(에러 핸들러, 토큰 갱신, Sentry) → conventions-ishopcare/api-infra.md로 분리 |
+| 2026-04-04 | §8 검색 디바운스, §9 keepPreviousData 추가 |

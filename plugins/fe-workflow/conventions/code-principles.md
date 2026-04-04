@@ -481,6 +481,55 @@ const isIdDocument = current.labelName === '대표자 신분증';
 
 ---
 
+## 10. 상태 모델링: 플래그 조합 vs 판별 유니온
+
+> 여러 boolean/nullable 플래그로 상태를 표현하지 말고, 판별 유니온으로 가능한 상태만 타입에 열거한다.
+
+```typescript
+// ❌ 플래그 조합 — 모순 상태 가능 (isLoading=true인데 data도 있음)
+const [data, setData] = useState<User | null>(null);
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState<Error | null>(null);
+
+// ✅ 판별 유니온 — 가능한 상태만 타입으로 표현
+type State =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: User }
+  | { status: 'error'; error: Error };
+
+// switch(state.status)로 분기, exhaustive 체크로 누락 방지
+```
+
+**판단 기준:** 2개 이상의 상태값이 조합되어 분기를 만들고, 각 케이스에서 사용 가능한 데이터가 다르면 판별 유니온 적용. React Query의 useSuspenseQuery처럼 라이브러리가 이미 처리해주는 경우는 직접 모델링 불필요.
+
+---
+
+## 11. UI Optional → API Required: Type Guard 패턴
+
+> UI Form에서는 nullable이지만 API 요청 시 필수인 필드를 `!`나 `as` 대신 Type Guard로 처리한다.
+
+```typescript
+// Form 타입: UI에서는 nullable
+type FormData = { requiredField: string | null; optionalField?: string; };
+// Submit 타입: API에서는 required
+type SubmitData = { requiredField: string; optionalField?: string; };
+
+// Type Guard
+function isValidSubmit(data: FormData): data is SubmitData {
+  return data.requiredField !== null;
+}
+
+// 사용
+const handleSubmit = async (data: FormData) => {
+  if (!isValidSubmit(data)) return;
+  // data는 SubmitData — requiredField가 string으로 확정
+  await apiCall({ field: data.requiredField }); // 타입 안전
+};
+```
+
+---
+
 ## ✅ DO & ❌ DON'T
 
 ### ✅ DO
@@ -584,3 +633,4 @@ function OrderTabContent({ orderNo, item }: Props) {
 | 2026-02-27 | 이른 추상화 구체적 안티패턴 4가지 추가 (ISH-1229 리뷰 학습) |
 | 2026-03-04 | mutation+overlay 훅 추출 안티패턴 추가 (ISH-1261 리뷰 학습) |
 | 2026-03-07 | §9 타입 설계와 분기 전략 추가 — 리터럴 union 추출, 서버 string→FE 분류, match vs 조건부 렌더링 판단 기준 (ISH-1266 리뷰 학습) |
+| 2026-04-04 | §10 플래그 조합 vs 판별 유니온, §11 UI Optional→API Required Type Guard 추가 |
