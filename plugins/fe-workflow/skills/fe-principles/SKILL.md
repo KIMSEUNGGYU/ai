@@ -25,7 +25,7 @@ description: >
 | 작업 유형 | 필수 읽기 |
 |-----------|-----------|
 | API/Remote/Query/Mutation | `conventions/api-layer.md` |
-| 폼(react-hook-form, zod) | `conventions/coding-style.md` + `conventions/folder-structure.md` |
+| 폼(react-hook-form, zod) | `conventions/form-patterns.md` + `conventions/folder-structure.md` |
 | 새 파일/폴더 생성 | `conventions/folder-structure.md` |
 | 컴포넌트/훅 작성 | `conventions/coding-style.md` |
 | 리팩토링 | `conventions/code-principles.md` |
@@ -36,5 +36,6 @@ description: >
 
 - **`conventions/api-layer.md`** — Remote, Query, Mutation, DTO 상세 패턴
 - **`conventions/code-principles.md`** — 코드 철학 상세 + 안티패턴 예시
-- **`conventions/coding-style.md`** — Form, useEffect, 네이밍, 코딩 스타일 상세
+- **`conventions/coding-style.md`** — useEffect, 네이밍, 코딩 스타일 상세
+- **`conventions/form-patterns.md`** — react-hook-form + Zod, register vs Controller, watch 최소화
 - **`conventions/folder-structure.md`** — 폴더 규칙, 파일 접미사, 배치 규칙 상세

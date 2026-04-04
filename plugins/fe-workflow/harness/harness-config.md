@@ -5,6 +5,7 @@
 - conventions/folder-structure.md
 - conventions/api-layer.md
 - conventions/coding-style.md
+- conventions/form-patterns.md
 
 ## Static Gate 명령
 - 모노레포: `pnpm --filter @services/{service} run typecheck` (service는 사용자에게 확인)

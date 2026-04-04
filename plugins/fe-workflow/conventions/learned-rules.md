@@ -10,10 +10,8 @@
 
 ## React 패턴
 
-- `watch` 사용 최소화. 동적 검증도 가능하면 `resolver`만으로 해결. watch는 매 입력마다 전체 리렌더링을 유발. (→ form-patterns.md watch vs useWatch 참조)
 - `isEditable` 분기가 필드마다 반복되면 view/edit 컴포넌트를 분리. 같은 파일 안에서 고수준(export, 분기) → 저수준(view, edit, 헬퍼) 순서로 배치. 분기 중복은 가독성을 해치고 변경 시 누락 위험.
 - prop 이름은 동작 의도를 정확히 반영. `onComplete`인데 선택 시점에 호출되면 사용자가 오해. 최소 놀람의 원칙.
-- 동일 조건 분기가 여러 곳에 중복되면 단일 함수로 통합. 조건이 바뀔 때 한 곳만 수정하면 되도록 (SSOT).
 
 ## API/서버 연동
 

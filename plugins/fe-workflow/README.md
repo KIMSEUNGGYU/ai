@@ -38,15 +38,26 @@ FE 전용 플러그인 — 하네스 기반 자동 구현 + 품질 평가.
 
 ## Conventions
 
-agents가 references로 읽고 기준으로 적용하는 참조 문서:
+agents가 references로 읽고 기준으로 적용하는 범용 참조 문서:
 
 | 파일 | 내용 |
 |------|------|
-| code-principles.md | SRP, SSOT, 추상화, 네이밍, 인지부하 |
+| code-principles.md | SRP, SSOT, 추상화, 네이밍, 인지부하, 판별 유니온 |
 | folder-structure.md | Page First, 지역성, models/ vs types/ |
-| api-layer.md | httpClient, DTO, React Query, queryOptions |
-| coding-style.md | Form, Zod, 이벤트 핸들러, Boolean Props, @tossteam/is |
-| error-handling.md | ErrorBoundary, AppError, AsyncBoundary (비활성 — 파일 유지, 참조 제거) |
+| api-layer.md | httpClient, DTO, React Query, queryOptions, 디바운스, keepPreviousData |
+| coding-style.md | useEffect, 이벤트 핸들러, Boolean Props, 네이밍 |
+| form-patterns.md | react-hook-form + Zod, register vs Controller, watch 최소화 |
+| learned-rules.md | /done 자가학습 축적 규칙 (정기 통합/삭제 대상) |
+
+### Conventions-ishopcare (회사 전용)
+
+ishopcare 프로젝트에서만 적용되는 회사 전용 확장:
+
+| 파일 | 내용 |
+|------|------|
+| api-infra.md | httpClient 에러 핸들러, 토큰 갱신, Sentry |
+| libraries.md | @tossteam/is, overlay-kit, Toss 패키지 |
+| tds-form.md | TDS 컴포넌트 + react-hook-form 연동 |
 
 ## Hooks
 
@@ -68,7 +79,7 @@ agents가 references로 읽고 기준으로 적용하는 참조 문서:
 ```
 fe-workflow/
 ├── .claude-plugin/
-│   └── plugin.json              ← v0.35.0
+│   └── plugin.json              ← v0.40.0
 ├── agents/
 │   ├── planner.md
 │   ├── generator.md
@@ -78,12 +89,19 @@ fe-workflow/
 │   ├── planning.md
 │   ├── implementing.md
 │   └── evaluating.md
-├── conventions/                 ← 5개
+├── conventions/                 ← 범용 6개
 │   ├── code-principles.md
 │   ├── folder-structure.md
 │   ├── api-layer.md
-│   ├── error-handling.md        ← 비활성
-│   └── coding-style.md
+│   ├── coding-style.md
+│   ├── form-patterns.md
+│   └── learned-rules.md
+├── conventions-ishopcare/       ← 회사 전용 3개
+│   ├── api-infra.md
+│   ├── libraries.md
+│   └── tds-form.md
+├── drafts/                      ← 비활성/초안
+│   └── error-handling.md
 ├── harness/
 │   ├── harness-config.md
 │   └── templates/
