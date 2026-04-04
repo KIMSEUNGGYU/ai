@@ -49,6 +49,7 @@ const SKIP_FILES = new Set(['log.md']);
 async function loadProjectFiles(projectName) {
   const projectPath = join(hqRoot, '10_projects', projectName);
   const parts = [];
+  const fileNames = [];
   try {
     const entries = await readdir(projectPath, { withFileTypes: true });
     const mdFiles = entries.filter(e => e.isFile() && e.name.endsWith('.md') && !SKIP_FILES.has(e.name));
@@ -57,11 +58,12 @@ async function loadProjectFiles(projectName) {
         const content = await readFile(join(projectPath, file.name), 'utf-8');
         if (content.trim().length > 50) {
           parts.push(`[second-brain] projects/${projectName}/${file.name}:\n${content}`);
+          fileNames.push(file.name);
         }
       } catch { /* skip */ }
     }
   } catch { /* 폴더 없으면 무시 */ }
-  return parts;
+  return { parts, fileNames };
 }
 
 // stdin에서 hook 입력 읽기
@@ -158,20 +160,36 @@ const loadedProjects = new Set(); // 중복 방지
 
 // 1) cwd 매칭 프로젝트 로드
 if (matched) {
-  const parts = await loadProjectFiles(matched.project);
+  const { parts, fileNames } = await loadProjectFiles(matched.project);
   contextParts.push(...parts);
   loadedProjects.add(matched.project);
-  messageParts.push(`[second-brain] 프로젝트 지식 로드: ${matched.project}`);
+  const fileSummary = fileNames.map(f => {
+    const content = parts.find(p => p.includes(`/${f}:`));
+    const lines = content ? content.split('\n').length : 0;
+    return `${f}:${lines}줄`;
+  }).join(', ');
+  messageParts.push(`[second-brain] 프로젝트 지식 로드: ${matched.project} (${fileSummary})`);
+
+  // 모노레포 루트 감지: 이 프로젝트의 cwd를 포함하는 더 구체적인 매핑이 있으면 루트
+  const childProjects = projectMap
+    .filter(m => m.cwd !== matched.cwd && m.cwd.startsWith(matched.cwd))
+    .map(m => m.project);
+  if (childProjects.length > 0) {
+    messageParts.push(`[second-brain] 모노레포 루트 감지. 어떤 서비스에서 작업할지 AskUserQuestion으로 물어보세요. 가용: ${childProjects.join(', ')}`);
+    contextParts.push(
+      `[second-brain] 모노레포 루트에서 실행됨. 반드시 AskUserQuestion 도구로 어떤 서비스 프로젝트에서 작업할지 물어본 뒤, 답변받은 프로젝트의 컨텍스트를 hq/10_projects/{project}/ 에서 읽어서 참고하세요.\n가용 프로젝트: ${childProjects.join(', ')}`
+    );
+  }
 }
 
 // 2) active frontmatter context: 추가 프로젝트 로드
 for (const project of activeContextProjects) {
   if (loadedProjects.has(project)) continue; // 이미 로드됨
-  const parts = await loadProjectFiles(project);
+  const { parts, fileNames } = await loadProjectFiles(project);
   if (parts.length > 0) {
     contextParts.push(...parts);
     loadedProjects.add(project);
-    messageParts.push(`[second-brain] 추가 프로젝트 지식 로드: ${project}`);
+    messageParts.push(`[second-brain] 추가 프로젝트 지식 로드: ${project} (${fileNames.join(', ')})`);
   }
 }
 
