@@ -285,6 +285,32 @@ function PasswordStrength({ control }: { control: Control<FormValues> }) {
 ```
 
 
+## Zod 독립 사용: 필터 검증 스키마
+
+react-hook-form 없이도 Zod를 독립적으로 사용하여 필터/검색 조건을 검증할 수 있다. 검증 정책이 스키마에 응집되고, `safeParse`로 에러 메시지를 UI에 바로 표시:
+
+```typescript
+// schemas/bookingFilter.schema.ts — 검증 정책 응집
+const bookingFilterSchema = z
+  .object({
+    startTime: z.string().min(1),
+    endTime: z.string().min(1),
+    attendees: z.number().min(1, '참석 인원은 1명 이상이어야 합니다.'),
+  })
+  .refine(data => data.endTime > data.startTime, {
+    message: '종료 시간은 시작 시간보다 늦어야 합니다.',
+  });
+
+// 컴포넌트에서 사용 — react-hook-form 없이 검증
+const result = bookingFilterSchema.safeParse({ startTime, endTime, attendees });
+if (!result.success) {
+  return <ErrorText message={result.error.issues[0].message} />;
+}
+```
+
+**판단 기준:** 폼 제출이 있으면 react-hook-form + zodResolver, 필터/검색 같은 실시간 검증이면 Zod 독립 사용.
+
+
 ---
 
 ## 변경 히스토리
@@ -293,3 +319,4 @@ function PasswordStrength({ control }: { control: Control<FormValues> }) {
 |------|----------|
 | 2026-04-04 | coding-style.md에서 Form 섹션 분리 + 6개 고급 패턴 추가 (setValueAs 포맷팅, Optional 변환, 동적 스키마, refine 한계, useImperativeHandle) |
 | 2026-04-04 | 7개 패턴 추가 — Select nullable+refine, superset/subset 스키마, resolver 동적 생성, safeParse, mode별 isValid, register 한계, watch vs useWatch |
+| 2026-04-04 | Zod 독립 사용(필터 검증 스키마) 추가 (Toss 모의고사 PR 학습) |

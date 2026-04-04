@@ -625,6 +625,165 @@ function OrderTabContent({ orderNo, item }: Props) {
 
 ---
 
+## 12. 자율적인 컴포넌트 (Self-Contained Component)
+
+> 컴포넌트가 자신의 데이터를 직접 조회한다. 부모는 조립만.
+
+부모가 데이터를 조회해서 props로 내려주면, 데이터 추가/변경 시 부모까지 수정해야 한다. 컴포넌트가 자신의 데이터를 직접 조회하면 변경이 해당 컴포넌트 안에서 끝난다:
+
+```tsx
+// ❌ 부모가 데이터 조회 + 분배 — 부모 책임 비대
+function ReservationStatusPage() {
+  const { data: rooms } = useSuspenseQuery(roomQuery.list());
+  const { data: myReservations } = useSuspenseQuery(reservationQuery.myList());
+  return <MyReservationList rooms={rooms} reservations={myReservations} />;
+}
+
+// ✅ 각 컴포넌트가 자신의 데이터를 직접 조회
+function ReservationStatusPage() {
+  return (
+    <>
+      <ReservationTimeline date={date} />
+      <MyReservationList title="내 예약" onCancelSuccess={...} />
+    </>
+  );
+}
+
+function MyReservationList({ title, onCancelSuccess }: Props) {
+  const { data: rooms } = useQuery(roomQuery.list());
+  const { data: myReservations } = useQuery(reservationQuery.myList());
+  // ... 렌더링
+}
+```
+
+**판단 기준:** 컴포넌트가 표시하는 데이터가 해당 컴포넌트에서만 사용되면 직접 조회. 여러 형제가 같은 데이터를 공유해야 하면 부모에서 조회.
+
+---
+
+## 13. render prop으로 행동 주입
+
+> 리스트의 각 항목에 대한 액션이 사용처마다 다를 때, render prop으로 주입하면 리스트 자체의 재사용성이 유지된다.
+
+```tsx
+interface MyReservationListProps {
+  renderRight: (reservation: Reservation) => React.ReactNode;
+}
+
+function MyReservationList({ renderRight }: MyReservationListProps) {
+  const { data: myReservations } = useQuery(reservationQuery.myList());
+  return myReservations.map(reservation => (
+    <ListRow
+      contents={<ListRow.Text2Rows top={reservation.roomName} bottom={reservation.time} />}
+      right={renderRight(reservation)}
+    />
+  ));
+}
+
+// 사용처에서 행동 주입
+<MyReservationList
+  renderRight={(reservation) => (
+    <Button onClick={() => cancelMutation.mutateAsync(reservation.id)}>취소</Button>
+  )}
+/>
+```
+
+**판단 기준:** 데이터 표시는 동일하고 액션만 다를 때 사용. 표시까지 다르면 별도 컴포넌트가 맞음.
+
+---
+
+## 14. 도메인 모델 응집
+
+> 엔티티의 스키마, 타입, 판별 함수, 검증 로직을 하나의 model 파일에 모은다. 정책 변경이 한 곳에서 끝남.
+
+```typescript
+// models/reservation.model.ts
+export const ReservationSchema = z.object({
+  id: z.string(),
+  roomId: z.string(),
+  date: z.string(),
+  start: z.string(),
+  end: z.string(),
+  attendees: z.number(),
+});
+export type Reservation = z.infer<typeof ReservationSchema>;
+
+// 도메인 판별 함수도 같은 파일에
+export function isTimeOverlapping(
+  reservation: Reservation, startTime: string, endTime: string
+): boolean {
+  return reservation.start < endTime && reservation.end > startTime;
+}
+```
+
+**판단 기준:** 스키마 + 타입만이면 models/(DTO)에 유지. 판별 함수나 검증 로직이 추가되면 model 파일로 응집.
+
+---
+
+## 15. onValueChange: 변환된 값 전달
+
+> `onChange(event)` 대신 `onValueChange(parsedValue)`로 파싱된 값을 바로 전달하면, 사용처에서 변환 코드를 반복하지 않는다.
+
+```tsx
+// ❌ 사용처에서 매번 변환
+<input type="number" onChange={e => setAttendees(Number(e.target.value))} />
+
+// ✅ 컴포넌트가 변환 책임을 가짐
+interface NumberFieldProps {
+  value: number;
+  onValueChange: (value: number) => void;
+  min?: number;
+}
+
+function NumberField({ value, onValueChange, min, ...rest }: NumberFieldProps) {
+  return (
+    <input
+      type="number"
+      value={value}
+      min={min}
+      onChange={e => onValueChange(Number(e.target.value))}
+      {...rest}
+    />
+  );
+}
+
+// 사용처 — 깔끔
+<NumberField value={attendees} onValueChange={setAttendees} min={1} />
+```
+
+**판단 기준:** `onChange(event)`는 이벤트 객체 자체가 필요할 때, `onValueChange(value)`는 파싱된 값만 필요할 때. 재사용 컴포넌트라면 `onValueChange` 선호.
+
+---
+
+## 16. Suspense/Error fallback을 정적 속성으로 부착
+
+> Loading/Error fallback이 해당 컴포넌트와 밀접할 때, 정적 속성으로 부착하면 한 import에서 함께 사용 가능.
+
+```tsx
+function Timeline({ date }: { date: string }) {
+  const { data: rooms } = useSuspenseQuery(roomQuery.list());
+  // ... 렌더링
+}
+
+Timeline.Loading = () => <div>예약 현황을 불러오는 중...</div>;
+Timeline.Error = ({ error, resetErrorBoundary }: FallbackProps) => (
+  <div>
+    <span>{error.message}</span>
+    <Button onClick={resetErrorBoundary}>재시도</Button>
+  </div>
+);
+
+// 사용처 — 관련 코드가 한 곳에서 import
+<ErrorBoundary FallbackComponent={Timeline.Error}>
+  <Suspense fallback={<Timeline.Loading />}>
+    <Timeline date={date} />
+  </Suspense>
+</ErrorBoundary>
+```
+
+**판단 기준:** fallback이 해당 컴포넌트의 도메인/UI와 밀접하면 정적 속성. 범용 fallback(전체 화면 로딩 등)은 별도 컴포넌트.
+
+---
+
 ## 변경 히스토리
 
 | 날짜 | 변경사항 |
@@ -634,3 +793,4 @@ function OrderTabContent({ orderNo, item }: Props) {
 | 2026-03-04 | mutation+overlay 훅 추출 안티패턴 추가 (ISH-1261 리뷰 학습) |
 | 2026-03-07 | §9 타입 설계와 분기 전략 추가 — 리터럴 union 추출, 서버 string→FE 분류, match vs 조건부 렌더링 판단 기준 (ISH-1266 리뷰 학습) |
 | 2026-04-04 | §10 플래그 조합 vs 판별 유니온, §11 UI Optional→API Required Type Guard 추가 |
+| 2026-04-04 | §12~§16 추가 — 자율적인 컴포넌트, render prop, 도메인 모델 응집, onValueChange, Suspense fallback 정적 속성 (Toss 모의고사 PR 학습) |
