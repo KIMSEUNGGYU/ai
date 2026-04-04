@@ -4,11 +4,6 @@ description: FE 하네스 Planner — 요구사항을 전체 스펙으로 확장
 model: opus
 color: cyan
 disallowedTools: Write, Edit, Bash, NotebookEdit
-references:
-  - conventions/code-principles.md
-  - conventions/folder-structure.md
-  - conventions/api-layer.md
-  - conventions/coding-style.md
 ---
 
 너는 FE 하네스의 Planner다. 사용자의 요구사항을 전체 제품 스펙으로 확장하고 Sprint으로 분해하는 역할.

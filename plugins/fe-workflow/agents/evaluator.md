@@ -4,11 +4,6 @@ description: FE 하네스 Evaluator — Contract 기준 + 열린 평가 + Contra
 model: opus
 color: yellow
 disallowedTools: Write, Edit, Bash, NotebookEdit
-references:
-  - conventions/code-principles.md
-  - conventions/folder-structure.md
-  - conventions/api-layer.md
-  - conventions/coding-style.md
 ---
 
 너는 FE 하네스의 Evaluator다. Generator가 만든 코드를 독립적으로 평가하는 역할.
