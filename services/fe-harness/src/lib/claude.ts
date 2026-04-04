@@ -1,5 +1,8 @@
 import { query } from '@anthropic-ai/claude-agent-sdk';
 
+// 중첩 세션 방지 — 모듈 로드 시 1회만 실행 (I5)
+delete process.env.CLAUDECODE;
+
 interface ClaudeOptions {
   model?: 'opus' | 'sonnet';
   systemPrompt?: string;
@@ -8,9 +11,6 @@ interface ClaudeOptions {
 
 export async function callClaude(prompt: string, options: ClaudeOptions = {}): Promise<string> {
   const { model = 'opus', systemPrompt, cwd } = options;
-
-  // 중첩 세션 방지 (Ouroboros 패턴)
-  delete process.env.CLAUDECODE;
 
   let result = '';
 

@@ -1,4 +1,5 @@
 import { join } from 'node:path';
+import { execSync } from 'node:child_process';
 import { HarnessFiles } from './lib/files.js';
 import { runStaticGate } from './lib/static-gate.js';
 import { parseEvalLog, checkConvergence } from './lib/scoring.js';
@@ -35,17 +36,43 @@ function loadConfig(conventionsDir: string, service?: string): HarnessConfig {
 
 function parseSprintsFromSpec(spec: string): SprintPlan[] {
   const sprints: SprintPlan[] = [];
-  const regex = /### Sprint (\d+):\s*(.+)\n\s*범위:\s*(.+)\n\s*산출물:\s*(.+)/g;
+  // Sprint 헤더로 분할 후 각 섹션에서 범위/산출물 추출 (여러 줄 지원)
+  const headerRegex = /### Sprint (\d+):\s*(.+)/g;
+  const headers: Array<{ number: number; name: string; startIndex: number }> = [];
   let match;
-  while ((match = regex.exec(spec)) !== null) {
-    sprints.push({
+  while ((match = headerRegex.exec(spec)) !== null) {
+    headers.push({
       number: parseInt(match[1]),
       name: match[2].trim(),
-      scope: match[3].trim(),
-      deliverables: match[4].trim(),
+      startIndex: match.index + match[0].length,
+    });
+  }
+
+  for (let i = 0; i < headers.length; i++) {
+    const sectionEnd = i + 1 < headers.length ? headers[i + 1].startIndex : spec.length;
+    const section = spec.slice(headers[i].startIndex, sectionEnd);
+
+    const scopeMatch = section.match(/범위:\s*\n?([\s\S]*?)(?=\n\s*산출물:)/);
+    const deliverablesMatch = section.match(/산출물:\s*\n?([\s\S]*?)(?=\n\s*###|\n\s*$|$)/);
+
+    sprints.push({
+      number: headers[i].number,
+      name: headers[i].name,
+      scope: scopeMatch?.[1]?.trim() ?? '',
+      deliverables: deliverablesMatch?.[1]?.trim() ?? '',
     });
   }
   return sprints;
+}
+
+function getChangedFiles(cwd: string): string[] {
+  try {
+    // modified + untracked 모두 감지
+    const output = execSync('git status --porcelain', { cwd, stdio: 'pipe' }).toString().trim();
+    return output ? output.split('\n').map(l => l.slice(3).trim()) : [];
+  } catch {
+    return [];
+  }
 }
 
 export async function orchestrate(options: OrchestrateOptions): Promise<void> {
@@ -118,8 +145,22 @@ contract 형식:
       console.log(`  Round ${round}:`);
 
       // Generate
-      const code = await runGenerator(spec, currentContract, lastFeedback, '', config, targetDir);
-      console.log(`    Generator 완료`);
+      try {
+        await runGenerator(spec, currentContract, lastFeedback, '', config, targetDir);
+      } catch (e) {
+        console.log(`    Generator 크래시: ${e instanceof Error ? e.message : e}`);
+        sprintResults.push({
+          sprintNumber: sprint.number,
+          name: sprint.name,
+          rounds: round,
+          finalScore: evalHistory[evalHistory.length - 1]?.qualityScore ?? 0,
+          result: 'stopped',
+        });
+        break;
+      }
+      // Generator 반환값 대신 git diff로 변경 파일 감지 (C2)
+      const changedFiles = getChangedFiles(targetDir);
+      console.log(`    Generator 완료 (${changedFiles.length}개 파일 변경)`);
 
       // Static Gate (재시도 포함)
       let gateResult = runStaticGate(targetDir, config.staticGate);
@@ -127,7 +168,12 @@ contract 형식:
       while (!gateResult.passed && gateRetry < config.limits.staticGateRetries) {
         gateRetry++;
         console.log(`    Static Gate FAIL (${gateRetry}/${config.limits.staticGateRetries}): ${gateResult.errors.length}개 에러`);
-        const errorFeedback = `Static Gate 에러를 수정해:\n${gateResult.errors.join('\n')}`;
+        const rawErrors = gateResult.errors.join('\n');
+        const MAX_ERROR_LENGTH = 3000;
+        const truncatedErrors = rawErrors.length > MAX_ERROR_LENGTH
+          ? rawErrors.slice(0, MAX_ERROR_LENGTH) + `\n\n... (${rawErrors.length - MAX_ERROR_LENGTH}자 생략)`
+          : rawErrors;
+        const errorFeedback = `Static Gate 에러를 수정해:\n${truncatedErrors}`;
         try {
           await runGenerator(spec, currentContract, errorFeedback, '', config, targetDir);
         } catch {
@@ -150,7 +196,20 @@ contract 형식:
       console.log(`    Static Gate 통과`);
 
       // Evaluate
-      const evalOutput = await runEvaluator(currentContract, code, '', config, targetDir);
+      let evalOutput: string;
+      try {
+        evalOutput = await runEvaluator(currentContract, changedFiles.join('\n'), '', config, targetDir);
+      } catch (e) {
+        console.log(`    Evaluator 크래시: ${e instanceof Error ? e.message : e}`);
+        sprintResults.push({
+          sprintNumber: sprint.number,
+          name: sprint.name,
+          rounds: round,
+          finalScore: evalHistory[evalHistory.length - 1]?.qualityScore ?? 0,
+          result: 'stopped',
+        });
+        break;
+      }
       const evalResult = parseEvalLog(evalOutput);
       evalHistory.push(evalResult);
 

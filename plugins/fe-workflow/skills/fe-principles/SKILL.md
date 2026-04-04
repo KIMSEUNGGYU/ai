@@ -24,17 +24,17 @@ description: >
 
 | 작업 유형 | 필수 읽기 |
 |-----------|-----------|
-| API/Remote/Query/Mutation | `references/api-layer.md` |
-| 폼(react-hook-form, zod) | `references/coding-style.md` + `references/folder-structure.md` |
-| 새 파일/폴더 생성 | `references/folder-structure.md` |
-| 컴포넌트/훅 작성 | `references/coding-style.md` |
-| 리팩토링 | `references/code-principles.md` |
+| API/Remote/Query/Mutation | `conventions/api-layer.md` |
+| 폼(react-hook-form, zod) | `conventions/coding-style.md` + `conventions/folder-structure.md` |
+| 새 파일/폴더 생성 | `conventions/folder-structure.md` |
+| 컴포넌트/훅 작성 | `conventions/coding-style.md` |
+| 리팩토링 | `conventions/code-principles.md` |
 
 **여러 작업 유형이 겹치면 해당하는 모든 파일을 읽는다.**
 
 ## References
 
-- **`references/api-layer.md`** — Remote, Query, Mutation, DTO 상세 패턴
-- **`references/code-principles.md`** — 코드 철학 상세 + 안티패턴 예시
-- **`references/coding-style.md`** — Form, useEffect, 네이밍, 코딩 스타일 상세
-- **`references/folder-structure.md`** — 폴더 규칙, 파일 접미사, 배치 규칙 상세
+- **`conventions/api-layer.md`** — Remote, Query, Mutation, DTO 상세 패턴
+- **`conventions/code-principles.md`** — 코드 철학 상세 + 안티패턴 예시
+- **`conventions/coding-style.md`** — Form, useEffect, 네이밍, 코딩 스타일 상세
+- **`conventions/folder-structure.md`** — 폴더 규칙, 파일 접미사, 배치 규칙 상세
