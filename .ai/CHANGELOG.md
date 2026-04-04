@@ -1,5 +1,11 @@
 # 작업 이력
 
+## 2026-04-03
+- 세션 컨텍스트 정리 + FE 하네스 검증 ✅
+  - 세션: 0b6ed4ad-0a4e-476f-8e82-a56e3a6809e0 (2026-04-03)
+  - 완료: conventions "확인 후 응답 원칙" 통합, rules 8→4 파일 축소(learnings 3+profile 삭제→흡수), INDEX.md 28→5줄, context.md/policies.md 삭제, session-manager log.md 자동 로드 제외(v0.25.1), FE 하네스 4도구 검증(Critical 4+Important 5), 테스트 전략 결정(A+B)
+  - 자가학습: 2건 반영 (decisions — 테스트 전략, log.md 로딩)
+
 ## 2026-03-21
 - /recap 스킬 구현 + cc-monitor 배포 — 세컨드 브레인 일일 리캡 시스템 ✅
   - 세션: beb59631-7404-4ccb-8b4c-48d1dabd65de (2026-03-20~21)

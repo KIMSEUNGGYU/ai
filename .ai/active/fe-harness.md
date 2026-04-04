@@ -37,6 +37,8 @@
 - [x] SDK 동결 — maxTurns 제거, 동작하는 상태로 확정
 - [x] **Plugin(A) 실테스트 — 쿠폰 리스트 페이지, 2 Sprint 전부 PASS (8.55, 9.4)**
 - [x] **SDK vs Plugin 비교 → Plugin 주력 결정**
+- [x] agents references: 필드 검증 → 공식 API 아님, 3개 에이전트에서 제거
+- [x] tests/minimal.md 생성 — Plugin 수정 후 스모크 테스트용 최소 케이스
 - [ ] I4: referenceCode 항상 빈 문자열 — 후순위 (프롬프트 튜닝 때)
 - [ ] 단위 테스트 작성 — parseSprintsFromSpec, checkConvergence, scoring 등
 - [ ] 검증 스크립트 (verify-harness.sh)
@@ -45,6 +47,7 @@
 ## 현재 컨텍스트
 SDK(B)와 Plugin(A) 모두 실테스트 완주 성공. Plugin이 평가 품질(Evaluator가 패턴 불일치 정확 감지), 안정성(크래시 없음), 디버깅 용이성에서 우세하여 Plugin 주력으로 결정.
 SDK는 maxTurns 없이 동작하는 상태로 동결 (자동화 배치 니즈 생기면 재활용).
+agents references: 필드 제거 완료 (공식 API 아님). tests/minimal.md 생성 (스모크 테스트 케이스).
 다음: 실전 업무에서 Plugin 하네스 활용 시작. 프롬프트 튜닝은 실전 데이터 축적 후.
 
 ## 결정사항
